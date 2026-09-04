@@ -1,0 +1,13 @@
+#include <procmetrix/version.h>
+
+unsigned int procmetrix_version_major(void) {
+    return @PROCMETRIX_VERSION_MAJOR@;
+}
+
+unsigned int procmetrix_version_minor(void) {
+    return @PROCMETRIX_VERSION_MINOR@;
+}
+
+unsigned int procmetrix_version_patch(void) {
+    return @PROCMETRIX_VERSION_PATCH@;
+}

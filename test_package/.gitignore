@@ -4,9 +4,5 @@
 CMakeUserPresets.json
 
 # Build output
-out
-build
-
-# Reports
-coverage
-report
+\out
+\build
