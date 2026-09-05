@@ -26,6 +26,7 @@ target_sources(
         "include/procmetrix/api.h"
         "include/procmetrix/cpu.h"
         "include/procmetrix/mem.h"
+        "include/procmetrix/error.h"
         "include/procmetrix/version.h"
         "include/procmetrix/procmetrix.h")
 
@@ -35,6 +36,13 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC 
     $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> )
+
+# Per-platform sources
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    "src/linux/cpu.c"
+    "include/internal/linux/cpu_linux_internal.h")
+endif()
 
 # Only build tests if enabled
 option(PROCMETRIX_BUILD_TESTS "Build unit tests" ON)
