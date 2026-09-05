@@ -16,7 +16,7 @@ target_sources(
     ${CMAKE_PROJECT_NAME}
     # SOURCE FILES
     PRIVATE
-        "src/procmetrix.c"
+        "src/cpu.c"
     # GENERATED FILES
         "${VERSION_FILE}"
     # PUBLIC INCLUDES

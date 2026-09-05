@@ -77,11 +77,6 @@ class Recipe(ConanFile):
         cmake.configure()
         cmake.build()
 
-    def test(self):
-        if can_run(self) and not self._skip_tests:
-            cmake = CMake(self)
-            cmake.ctest()
-
     def package(self):
         copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
 

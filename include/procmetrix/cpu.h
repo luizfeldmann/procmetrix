@@ -75,6 +75,22 @@ extern "C"
     //! @param[out] read_count Number of elements actually read (optional, can be NULL).
     PROCMETRIX_API procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_times, size_t max_count, size_t *read_count);
 
+    //! Calculates the delta time between two time counters snapshots.
+    //! @details Negative time deltas are clamped at zero.
+    //! @param[in] before Previous CPU times snapshot.
+    //! @param[in] after Current CPU times snapshot.
+    //! @param[out] delta Receives the CPU times with the time difference.
+    PROCMETRIX_API procmetrix_error_t procmetrix_cpu_times_delta(const procmetrix_cpu_times_t *before, const procmetrix_cpu_times_t *after, procmetrix_cpu_times_t *delta);
+
+    //! Calculates the sum of all CPU times.
+    PROCMETRIX_API double procmetrix_cpu_times_sum(const procmetrix_cpu_times_t *cpu_times);
+
+    //! Calculates the utilization ratio of the CPU from the given time difference.
+    //! @param[in] delta A CPU times difference computed by #procmetrix_cpu_times_delta
+    //! @return A ratio in range [0 .. 1].
+    //!         Where 0.0 means fully idle and 1.0 means fully busy.
+    PROCMETRIX_API double procmetrix_cpu_utilization_ratio(const procmetrix_cpu_times_t *delta);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
