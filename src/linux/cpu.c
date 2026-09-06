@@ -446,3 +446,9 @@ procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_time
 
     return result;
 }
+
+procmetrix_error_t procmetrix_cpu_freqs(procmetrix_cpu_freq_t *cpu_freqs, size_t max_count, size_t *read_count)
+{
+    //! @todo
+    return PROCMETRIX_NOT_IMPLEMENTED;
+}

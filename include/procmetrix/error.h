@@ -29,6 +29,12 @@ extern "C"
 
         //! Unable to parse the contents of some data returned by the operating system.
         PROCMETRIX_ERROR_MALFORMED,
+
+        //! Failed allocation.
+        PROCMETRIX_ERROR_OUT_OF_MEMORY,
+
+        //! The function isn't implemented for this platform.
+        PROCMETRIX_NOT_IMPLEMENTED,
     } procmetrix_error_t;
 
 #ifdef __cplusplus

@@ -3,6 +3,8 @@
 
 // STD
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 // Public impl
 
@@ -106,4 +108,72 @@ double procmetrix_cpu_utilization_ratio(const procmetrix_cpu_times_t *delta)
 
     // Enforce bounds
     return fmax(0.0, fmin(percentage, 1.0));
+}
+
+procmetrix_error_t procmetrix_cpu_freqs_average(const procmetrix_cpu_freq_t *cpu_freqs, size_t count, procmetrix_cpu_freq_t *average)
+{
+    // Sanity
+    if (NULL == cpu_freqs || NULL == average)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Give a sensible result regardless of error validation below
+    memset(average, 0, sizeof(procmetrix_cpu_freq_t));
+
+    // Avoid division by zero on empty list
+    if (0 == count)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Sum totals
+    for (size_t i = 0; i < count; ++i)
+    {
+        average->freq_cur += cpu_freqs[i].freq_cur;
+        average->freq_min += cpu_freqs[i].freq_min;
+        average->freq_max += cpu_freqs[i].freq_max;
+    }
+
+    // Get the average
+    average->freq_cur /= count;
+    average->freq_min /= count;
+    average->freq_max /= count;
+
+    return PROCMETRIX_ERROR_NONE;
+}
+
+procmetrix_error_t procmetrix_cpu_freq_system(procmetrix_cpu_freq_t *system_freq)
+{
+    // Sanity
+    if (NULL == system_freq)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Avoid undefined result even in case of errors
+    memset(system_freq, 0, sizeof(procmetrix_cpu_freq_t));
+
+    // Allocate an array element per logical CPU
+    size_t ncpus = procmetrix_cpu_count_logical();
+    if (0 == ncpus)
+        return PROCMETRIX_ERROR_UNKNOWN;
+
+    procmetrix_cpu_freq_t *cpu_freqs =
+        (procmetrix_cpu_freq_t *)malloc(sizeof(procmetrix_cpu_freq_t) * ncpus);
+
+    if (NULL == cpu_freqs)
+        return PROCMETRIX_ERROR_OUT_OF_MEMORY;
+
+    // Read the frequencies
+    size_t read_count = 0;
+
+    procmetrix_error_t status = procmetrix_cpu_freqs(cpu_freqs, ncpus, &read_count);
+
+    if (PROCMETRIX_ERROR_NONE == status || PROCMETRIX_ERROR_MORE_DATA == status)
+    {
+        if (0 == read_count)
+            status = PROCMETRIX_ERROR_UNKNOWN;
+        else
+            status = procmetrix_cpu_freqs_average(cpu_freqs, read_count, system_freq);
+    }
+
+    // Cleanup
+    free(cpu_freqs);
+
+    return status;
 }

@@ -281,3 +281,65 @@ TEST(procmetrix_cpu_utilization_ratio, delay)
     EXPECT_GT(cpu_ratio, 0.0);
     GTEST_LOG_(INFO) << "CPU percentage: " << std::round(cpu_ratio * 100.0); 
 }
+
+/* Frequency */
+
+TEST(procmetrix_cpu_freqs_average, null_args)
+{
+    procmetrix_cpu_freq_t freq;
+
+    // Null input
+    EXPECT_EQ(
+        procmetrix_cpu_freqs_average(nullptr, 1, &freq),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+    
+    // Null output
+    EXPECT_EQ(
+        procmetrix_cpu_freqs_average(&freq, 1, nullptr),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+    
+    // Empty count
+    EXPECT_EQ(
+        procmetrix_cpu_freqs_average(&freq, 0, &freq),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_cpu_freqs_average, single)
+{
+    procmetrix_cpu_freq_t freq {
+        2000,
+        1000,
+        3000,
+    };
+
+    procmetrix_cpu_freq_t average;
+
+    // The average of a single item must be itself
+    EXPECT_EQ(
+        procmetrix_cpu_freqs_average(&freq, 1, &average),
+        PROCMETRIX_ERROR_NONE);
+
+    EXPECT_DOUBLE_EQ(average.freq_cur, freq.freq_cur);
+    EXPECT_DOUBLE_EQ(average.freq_min, freq.freq_min);
+    EXPECT_DOUBLE_EQ(average.freq_max, freq.freq_max);
+}
+
+TEST(procmetrix_cpu_freqs_average, average)
+{
+    procmetrix_cpu_freq_t freqs[] { 
+        { 3000.0, 1000.0, 4000.0 },
+        { 4000.0, 2000.0, 5000.0 },
+        { 5000.0, 3000.0, 6000.0 }
+    };
+
+    procmetrix_cpu_freq_t average;
+
+    // The average of a single item must be itself
+    EXPECT_EQ(
+        procmetrix_cpu_freqs_average(freqs, std::size(freqs), &average),
+        PROCMETRIX_ERROR_NONE);
+
+    EXPECT_DOUBLE_EQ(average.freq_cur, 4000.0);
+    EXPECT_DOUBLE_EQ(average.freq_min, 2000.0);
+    EXPECT_DOUBLE_EQ(average.freq_max, 5000.0);
+}

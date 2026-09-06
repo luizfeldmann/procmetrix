@@ -99,6 +99,37 @@ extern "C"
     //!         Where 0.0 means fully idle and 1.0 means fully busy.
     PROCMETRIX_API double procmetrix_cpu_utilization_ratio(const procmetrix_cpu_times_t *delta);
 
+    //! The current frequency and scaling range for a CPU, in Mhz
+    typedef struct procmetrix_cpu_freq
+    {
+        //! Current frequency
+        double freq_cur;
+
+        //! Minimum frequency
+        double freq_min;
+
+        //! Maximum frequency
+        double freq_max;
+    } procmetrix_cpu_freq_t;
+
+    //! Reads the frequencies for each CPU in MHz.
+    //! @param[out] cpu_freqs Array of structures that will be filled with the CPU frequencies.
+    //! @param[in] max_count Number of elements allocated in the array.
+    //! @param[out] read_count Number of elements actually read (optional, can be NULL).
+    PROCMETRIX_API procmetrix_error_t procmetrix_cpu_freqs(procmetrix_cpu_freq_t *cpu_freqs, size_t max_count, size_t *read_count);
+
+    //! Calculates the average frequency from the array of per-CPU frequencies.
+    //! @param[in] cpu_freqs Array of structures containing the frequencies of each CPU.
+    //! @param[in] count Number of items in the input array.
+    //! @param[out] average Pointer to struct to be filled with the average.
+    PROCMETRIX_API procmetrix_error_t procmetrix_cpu_freqs_average(const procmetrix_cpu_freq_t *cpu_freqs, size_t count, procmetrix_cpu_freq_t *average);
+
+    //! Estimates the system-wide CPU frequencies in MHz.
+    //! @details This is the arithmetic average of all the CPUs.
+    //!          Equivalent of calling #procmetrix_cpu_freqs followed by #procmetrix_cpu_freqs_average.
+    //! @param[out] system_freq System-wide CPU frequencies.
+    PROCMETRIX_API procmetrix_error_t procmetrix_cpu_freq_system(procmetrix_cpu_freq_t *system_freq);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
