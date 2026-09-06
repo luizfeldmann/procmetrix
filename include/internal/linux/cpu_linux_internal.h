@@ -7,6 +7,9 @@
 // STD
 #include <stdio.h>
 
+// Linux
+#include <glob.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -17,6 +20,9 @@ extern "C"
 
     //! @private
     PROCMETRIX_API size_t procmetrix_impl_linux_procstat_count_cpus(FILE *stat_file);
+
+    //! @private
+    PROCMETRIX_API size_t procmetrix_impl_linux_cpu_count_physical_topology(const glob_t *sysfs_cpus);
 
     //! @private
     PROCMETRIX_API procmetrix_error_t procmetrix_impl_linux_cpu_times_total(FILE *stat_file, procmetrix_cpu_times_t *cpu_times);

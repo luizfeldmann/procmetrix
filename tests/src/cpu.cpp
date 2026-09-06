@@ -11,6 +11,24 @@ using namespace ::testing;
 
 // Test cases
 
+/** CPU counts */
+
+TEST(procmetrix_cpu_count_logical, non_zero)
+{
+    size_t logical_cpus = procmetrix_cpu_count_logical();
+    EXPECT_GT(logical_cpus, 0);
+    GTEST_LOG_(INFO) << "logical cpus: " << logical_cpus;
+}
+
+TEST(procmetrix_cpu_count_physical, non_zero)
+{
+    size_t physical_cpus = procmetrix_cpu_count_physical();
+    EXPECT_GT(physical_cpus, 0);
+    GTEST_LOG_(INFO) << "physical cpus: " << physical_cpus;
+}
+
+/** Total times */
+
 TEST(procmetrix_cpu_times_total, null_args)
 {
     // Null output pointer
@@ -31,6 +49,8 @@ TEST(procmetrix_cpu_times_total, sanity)
     EXPECT_GT(cpu_times.idle, 0.0);
     EXPECT_GT(cpu_times.system, 0.0);
 }
+
+/** Times per CPU */
 
 TEST(procmetrix_cpu_times_per_cpu, null_args)
 {
@@ -69,6 +89,8 @@ TEST(procmetrix_cpu_times_per_cpu, sanity)
         EXPECT_GT(cpu_times[i].system, 0.0);
     }
 }
+
+/** Times delta */
 
 TEST(procmetrix_cpu_times_delta, null_args)
 {
@@ -187,6 +209,8 @@ TEST(procmetrix_cpu_times_delta, compute)
     EXPECT_FLOAT_EQ(delta.dpc, 0.0);
 }
 
+/* Sum of times */
+
 TEST(procmetrix_cpu_times_sum, null_args)
 {
     EXPECT_DOUBLE_EQ(
@@ -224,6 +248,8 @@ TEST(procmetrix_cpu_times_sum, delay)
     // so comparing wall-clock delay with cpu metrics can be flaky
     // lets use a very large tolerance and treat this test a "sanity" only
 }
+
+/* Utilization ratio */
 
 TEST(procmetrix_cpu_utilization_ratio, null_args)
 {

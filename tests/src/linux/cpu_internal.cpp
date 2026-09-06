@@ -1,15 +1,161 @@
 // Private impl
 #include <internal/linux/cpu_linux_internal.h>
 
+// STD
+#include <fstream>
+
 // Testing
 #include <gtest/gtest.h>
 
 // Helpers
-#include "CMemFilePtr.h"
+#include "linux/CMemFilePtr.h"
+#include "linux/CTempDirGlob.h"
 
 // Test cases
 
-/* COUNT CPUS */
+/* COUNT CPUS (PHYSICAL) */
+
+TEST(procmetrix_impl_linux_cpu_count_physical_topology, null_args)
+{
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_topology(nullptr), 0);
+}
+
+TEST(procmetrix_impl_linux_cpu_count_physical_topology, single_core_no_smt)
+{
+    // Create temp sysfs
+    CTempDirGlob temp;
+
+    // CPU 0
+    ASSERT_TRUE(temp.CreateDir("cpu0"));
+    ASSERT_TRUE(temp.CreateDir("cpu0/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu0/topology/core_id", "0"));
+    ASSERT_TRUE(temp.WriteFile("cpu0/topology/physical_package_id", "0"));
+
+    // Glob the generated files
+    glob_t glob;
+    EXPECT_TRUE(temp.Glob(&glob));
+
+    // Count the physical CPUs
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_topology(&glob), 1);
+
+    // Cleanup
+    globfree(&glob);
+}
+
+TEST(procmetrix_impl_linux_cpu_count_physical_topology, dual_core_no_smt)
+{
+    // Create temp sysfs
+    CTempDirGlob temp;
+
+    // CPU 0
+    ASSERT_TRUE(temp.CreateDir("cpu0"));
+    ASSERT_TRUE(temp.CreateDir("cpu0/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu0/topology/core_id", "0"));
+    ASSERT_TRUE(temp.WriteFile("cpu0/topology/physical_package_id", "0"));
+
+    // CPU 1
+    ASSERT_TRUE(temp.CreateDir("cpu1"));
+    ASSERT_TRUE(temp.CreateDir("cpu1/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu1/topology/core_id", "1"));
+    ASSERT_TRUE(temp.WriteFile("cpu1/topology/physical_package_id", "0"));
+
+    // Glob the generated files
+    glob_t glob;
+    EXPECT_TRUE(temp.Glob(&glob));
+
+    // Count the physical CPUs
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_topology(&glob), 2);
+
+    // Cleanup
+    globfree(&glob);
+}
+
+TEST(procmetrix_impl_linux_cpu_count_physical_topology, dual_core_hyperthreading)
+{
+    // Create temp sysfs
+    CTempDirGlob temp;
+
+    // CPU 0
+    ASSERT_TRUE(temp.CreateDir("cpu0"));
+    ASSERT_TRUE(temp.CreateDir("cpu0/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu0/topology/core_id", "0"));
+    ASSERT_TRUE(temp.WriteFile("cpu0/topology/physical_package_id", "0"));
+
+    // CPU 1
+    ASSERT_TRUE(temp.CreateDir("cpu1"));
+    ASSERT_TRUE(temp.CreateDir("cpu1/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu1/topology/core_id", "1"));
+    ASSERT_TRUE(temp.WriteFile("cpu1/topology/physical_package_id", "0"));
+
+    // CPU 2
+    ASSERT_TRUE(temp.CreateDir("cpu2"));
+    ASSERT_TRUE(temp.CreateDir("cpu2/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu2/topology/core_id", "0"));
+    ASSERT_TRUE(temp.WriteFile("cpu2/topology/physical_package_id", "0"));
+
+    // CPU 3
+    ASSERT_TRUE(temp.CreateDir("cpu3"));
+    ASSERT_TRUE(temp.CreateDir("cpu3/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu3/topology/core_id", "1"));
+    ASSERT_TRUE(temp.WriteFile("cpu3/topology/physical_package_id", "0"));
+
+    // Glob the generated files
+    glob_t glob;
+    EXPECT_TRUE(temp.Glob(&glob));
+
+    // Count the physical CPUs
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_topology(&glob), 2);
+
+    // Cleanup
+    globfree(&glob);
+}
+
+TEST(procmetrix_impl_linux_cpu_count_physical_topology, quad_core_dual_socket)
+{
+    // Create temp sysfs
+    CTempDirGlob temp;
+
+    // CPU 0
+    ASSERT_TRUE(temp.CreateDir("cpu0"));
+    ASSERT_TRUE(temp.CreateDir("cpu0/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu0/topology/core_id", "0"));
+    ASSERT_TRUE(temp.WriteFile("cpu0/topology/physical_package_id", "0"));
+
+    // CPU 1
+    ASSERT_TRUE(temp.CreateDir("cpu1"));
+    ASSERT_TRUE(temp.CreateDir("cpu1/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu1/topology/core_id", "1"));
+    ASSERT_TRUE(temp.WriteFile("cpu1/topology/physical_package_id", "0"));
+
+    // CPU 2
+    ASSERT_TRUE(temp.CreateDir("cpu2"));
+    ASSERT_TRUE(temp.CreateDir("cpu2/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu2/topology/core_id", "0"));
+    ASSERT_TRUE(temp.WriteFile("cpu2/topology/physical_package_id", "1"));
+
+    // CPU 3
+    ASSERT_TRUE(temp.CreateDir("cpu3"));
+    ASSERT_TRUE(temp.CreateDir("cpu3/topology"));
+    ASSERT_TRUE(temp.WriteFile("cpu3/topology/core_id", "1"));
+    ASSERT_TRUE(temp.WriteFile("cpu3/topology/physical_package_id", "1"));
+
+    // Glob the generated files
+    glob_t glob;
+    EXPECT_TRUE(temp.Glob(&glob));
+
+    // Count the physical CPUs
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_topology(&glob), 4);
+
+    // Cleanup
+    globfree(&glob);
+}
+
+/* COUNT CPUS (LOGICAL) */
 
 TEST(procmetrix_impl_linux_procstat_count_cpus, null_args)
 {

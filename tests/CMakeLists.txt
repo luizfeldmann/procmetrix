@@ -13,10 +13,6 @@ target_include_directories(unitTests PRIVATE "include")
 target_link_libraries(unitTests PRIVATE ${CMAKE_PROJECT_NAME}
     GTest::GTest GTest::Main)
 
-# Test utils
-target_sources(unitTests PRIVATE
-    "include/CMemFilePtr.h")
-
 # Generic test for all platforms
 target_sources(unitTests PRIVATE
     "src/sanity.cpp"
@@ -25,6 +21,10 @@ target_sources(unitTests PRIVATE
 # Per-platform sources
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_sources(unitTests PRIVATE
+        # Utils
+        "include/linux/CMemFilePtr.h"
+        "include/linux/CTempDirGlob.h"
+        # Test cases
         "src/linux/cpu_internal.cpp" )
 endif()
 

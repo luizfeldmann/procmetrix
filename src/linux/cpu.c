@@ -3,15 +3,18 @@
 
 // Internal
 #include <internal/linux/cpu_linux_internal.h>
+#include <internal/linux/core_topology.h>
 
 // STD
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <stdlib.h>
 
 // Linux
 #include <fcntl.h>
 #include <unistd.h>
+#include <linux/limits.h>
 
 // Constants
 
@@ -90,6 +93,58 @@ static int scan_cpuinfo_processor_line(const char *line)
 }
 
 // Impl
+
+size_t procmetrix_impl_linux_cpu_count_physical_topology(const glob_t *sysfs_cpus)
+{
+    // Sanity
+    if (NULL == sysfs_cpus)
+        return 0;
+
+    // Iterate the CPU topology files nad list core keys
+    procmetrix_core_topo_list_t list;
+    procmetrix_core_topo_list_init(&list);
+
+    for (size_t i = 0; i < sysfs_cpus->gl_pathc; i++)
+    {
+        // Format path to files
+        char core_id_path[PATH_MAX];
+        char package_id_path[PATH_MAX];
+
+        snprintf(core_id_path, sizeof(core_id_path), "%s/topology/core_id", sysfs_cpus->gl_pathv[i]);
+        snprintf(package_id_path, sizeof(package_id_path), "%s/topology/physical_package_id", sysfs_cpus->gl_pathv[i]);
+
+        // Open the files
+        FILE *core_id_file = linux_open_file_rdonly_cloexec(core_id_path);
+        FILE *package_id_file = linux_open_file_rdonly_cloexec(package_id_path);
+
+        // Parse the files
+        if (NULL != core_id_file && NULL != package_id_file)
+        {
+            size_t core_id;
+            size_t package_id;
+
+            // Add key to the list
+            if (1 == fscanf(core_id_file, "%zu", &core_id) && 1 == fscanf(package_id_file, "%zu", &package_id))
+                procmetrix_core_topo_list_add(&list, package_id, core_id);
+        }
+
+        // Cleanup
+        if (NULL != core_id_file)
+            fclose(core_id_file);
+
+        if (NULL != package_id_file)
+            fclose(package_id_file);
+    }
+
+    // Count unique entries
+    procmetrix_core_topo_list_sort(&list);
+    size_t physical_count = procmetrix_core_topo_list_count_unique(&list);
+
+    // Cleanup
+    procmetrix_core_topo_list_free(&list);
+
+    return physical_count;
+}
 
 size_t procmetrix_impl_linux_cpuinfo_count_processors(FILE *cpuinfo_file)
 {
@@ -228,6 +283,21 @@ procmetrix_error_t procmetrix_impl_linux_cpu_times_per_cpu(FILE *stat_file, proc
 }
 
 // Public impl
+
+size_t procmetrix_cpu_count_physical(void)
+{
+    // Glob cpu topology from sysfs
+    glob_t g;
+    if (0 != glob("/sys/devices/system/cpu/cpu[0-9]*", 0, NULL, &g))
+        return 0;
+
+    size_t physical_count = procmetrix_impl_linux_cpu_count_physical_topology(&g);
+
+    // Cleanup
+    globfree(&g);
+
+    return physical_count;
+}
 
 size_t procmetrix_cpu_count_logical(void)
 {
