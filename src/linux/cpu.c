@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 // Linux
 #include <fcntl.h>
@@ -93,6 +94,59 @@ static int scan_cpuinfo_processor_line(const char *line)
 }
 
 // Impl
+
+size_t procmetrix_impl_linux_cpu_count_physical_cpuinfo(FILE *cpuinfo_file)
+{
+    // Sanity
+    if (NULL == cpuinfo_file)
+        return 0;
+
+    // List pairs of core id and package id
+    procmetrix_core_topo_list_t list;
+    procmetrix_core_topo_list_init(&list);
+
+    // State variables
+    size_t physical_id = 0;
+    bool has_physical_id = false;
+
+    size_t core_id = 0;
+    bool has_core_id = false;
+
+    // Iterate the file lines
+    char line[1024];
+    while (NULL != fgets(line, sizeof(line), cpuinfo_file))
+    {
+        size_t value = 0;
+
+        if (1 == sscanf(line, "physical id : %zu", &value))
+        {
+            has_physical_id = true;
+            physical_id = value;
+        }
+        else if (1 == sscanf(line, "core id : %zu", &value))
+        {
+            has_core_id = true;
+            core_id = value;
+        }
+
+        // When both values are found, append to list
+        if (has_core_id && has_physical_id)
+        {
+            procmetrix_core_topo_list_add(&list, physical_id, core_id);
+            has_core_id = false;
+            has_physical_id = false;
+        }
+    }
+
+    // Count unique entries
+    procmetrix_core_topo_list_sort(&list);
+    size_t physical_count = procmetrix_core_topo_list_count_unique(&list);
+
+    // Cleanup
+    procmetrix_core_topo_list_free(&list);
+
+    return physical_count;
+}
 
 size_t procmetrix_impl_linux_cpu_count_physical_topology(const glob_t *sysfs_cpus)
 {
@@ -288,15 +342,34 @@ size_t procmetrix_cpu_count_physical(void)
 {
     // Glob cpu topology from sysfs
     glob_t g;
-    if (0 != glob("/sys/devices/system/cpu/cpu[0-9]*", 0, NULL, &g))
-        return 0;
+    if (0 == glob("/sys/devices/system/cpu/cpu[0-9]*", 0, NULL, &g))
+    {
+        size_t physical_count = procmetrix_impl_linux_cpu_count_physical_topology(&g);
 
-    size_t physical_count = procmetrix_impl_linux_cpu_count_physical_topology(&g);
+        // Cleanup
+        globfree(&g);
 
-    // Cleanup
-    globfree(&g);
+        if (physical_count > 0)
+            return physical_count;
+    }
 
-    return physical_count;
+    // Fallback:
+    // Read "physical id" and "core id" from /proc/cpuinfo
+    FILE *cpuinfo_file = linux_open_file_rdonly_cloexec(g_proccpuinfo_file);
+    if (NULL != cpuinfo_file)
+    {
+        size_t physical_count = procmetrix_impl_linux_cpu_count_physical_cpuinfo(cpuinfo_file);
+
+        // Cleanup
+        fclose(cpuinfo_file);
+
+        // Success
+        if (physical_count > 0)
+            return physical_count;
+    }
+
+    // Unable to determine
+    return 0;
 }
 
 size_t procmetrix_cpu_count_logical(void)

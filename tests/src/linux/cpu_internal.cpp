@@ -155,6 +155,93 @@ TEST(procmetrix_impl_linux_cpu_count_physical_topology, quad_core_dual_socket)
     globfree(&glob);
 }
 
+TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, null_args)
+{
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_cpuinfo(nullptr), 0);
+}
+
+TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, empty)
+{
+    // Empty file
+    CMemFilePtr memfp("");
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 0);
+}
+
+TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, single_core)
+{
+    CMemFilePtr memfp(
+        "processor   : 0\n"
+        "physical id : 0\n"
+        "core id     : 0\n"
+    );
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 1);
+}
+
+TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_no_smt)
+{
+    CMemFilePtr memfp(
+        "processor   : 0\n"
+        "physical id : 0\n"
+        "core id     : 0\n"
+        "processor   : 1\n"
+        "physical id : 0\n"
+        "core id     : 1\n"
+    );
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 2);
+}
+
+TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_hyperthreading)
+{
+    CMemFilePtr memfp(
+        "processor      :0 \n"
+        "physical id    :0 \n"
+        "core id        :0 \n"
+        "processor      :1 \n"
+        "physical id    :0 \n"
+        "core id        :0 \n"
+        "processor      :2 \n"
+        "physical id    :0 \n"
+        "core id        :1 \n"
+        "processor      :3 \n"
+        "physical id    :0 \n"
+        "core id        :1 \n"
+    );
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 2);
+}
+
+TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, quad_core_dual_socket)
+{
+    CMemFilePtr memfp(
+        "processor      : 0 \n"
+        "physical id    : 0 \n"
+        "core id        : 0 \n"
+
+        "processor      : 1 \n"
+        "physical id    : 0 \n"
+        "core id        : 1 \n"
+
+        "processor      : 2 \n"
+        "physical id    : 1 \n"
+        "core id        : 0 \n"
+
+        "processor      : 3 \n"
+        "physical id    : 1 \n"
+        "core id        : 1 \n"
+    );
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 4);
+}
+
 /* COUNT CPUS (LOGICAL) */
 
 TEST(procmetrix_impl_linux_procstat_count_cpus, null_args)
