@@ -6,7 +6,6 @@
 
 // STD
 #include <string.h>
-#include <ctype.h>
 #include <stdint.h>
 #include <inttypes.h>
 
@@ -18,6 +17,9 @@
 
 //! Path to the stats file
 static const char *g_procstat_file = "/proc/stat";
+
+//! Path to the cpu info file
+static const char *g_proccpuinfo_file = "/proc/cpuinfo";
 
 // Internal impl
 
@@ -55,6 +57,7 @@ static void jiffies_to_seconds(const proc_stat_t *stat, procmetrix_cpu_times_t *
     cpu_times->guest_nice = (double)stat->guest_nice / ticks_per_second;
 }
 
+//! Opens a file as readonly and close on exec
 static FILE *linux_open_file_rdonly_cloexec(const char *path)
 {
     int fd = open(path, O_RDONLY);
@@ -72,7 +75,60 @@ static FILE *linux_open_file_rdonly_cloexec(const char *path)
     return fp;
 }
 
+//! Checks if a line is "cpuX" format
+static int scan_procstat_cpux_line(const char *line)
+{
+    unsigned u = 0;
+    return sscanf(line, "cpu%u", &u);
+}
+
+//! Checks if a lines is "processor : X" format
+static int scan_cpuinfo_processor_line(const char *line)
+{
+    unsigned u = 0;
+    return sscanf(line, "processor : %u", &u);
+}
+
 // Impl
+
+size_t procmetrix_impl_linux_cpuinfo_count_processors(FILE *cpuinfo_file)
+{
+    // Sanity
+    if (NULL == cpuinfo_file)
+        return 0;
+
+    // Count lines
+    size_t processor_count = 0;
+
+    char line[1024];
+    while (NULL != fgets(line, sizeof(line), cpuinfo_file))
+        if (0 != scan_cpuinfo_processor_line(line))
+            ++processor_count;
+    return processor_count;
+}
+
+size_t procmetrix_impl_linux_procstat_count_cpus(FILE *stat_file)
+{
+    // Sanity
+    if (NULL == stat_file)
+        return 0;
+
+    // Skip first line (aggregate CPU times)
+    char line[1024];
+    if (NULL == fgets(line, sizeof(line), stat_file))
+        return 0;
+
+    // Read all the cpuX lines
+    size_t cpu_count = 0;
+    while (NULL != fgets(line, sizeof(line), stat_file))
+    {
+        if (0 == scan_procstat_cpux_line(line))
+            break;
+        ++cpu_count;
+    }
+
+    return cpu_count;
+}
 
 procmetrix_error_t procmetrix_impl_linux_cpu_times_total(FILE *stat_file, procmetrix_cpu_times_t *cpu_times)
 {
@@ -139,11 +195,9 @@ procmetrix_error_t procmetrix_impl_linux_cpu_times_per_cpu(FILE *stat_file, proc
     while (NULL != fgets(buf, sizeof(buf), stat_file))
     {
         // Check if the line starts with "cpu" followed by a number
-        if (strncmp(buf, "cpu", 3) != 0 || !isdigit(buf[3]))
-        {
-            // Not a CPU line, end of CPU lines reached
+        // If not a CPU line, then end of CPU lines was reached
+        if (0 == scan_procstat_cpux_line(buf))
             break;
-        }
 
         // Read the CPU times from the line
         proc_stat_t stat = {0};
@@ -174,6 +228,49 @@ procmetrix_error_t procmetrix_impl_linux_cpu_times_per_cpu(FILE *stat_file, proc
 }
 
 // Public impl
+
+size_t procmetrix_cpu_count_logical(void)
+{
+    // Primary implementation
+    long nproc = sysconf(_SC_NPROCESSORS_ONLN);
+    if (nproc > 0)
+        return nproc;
+
+    // Fallback:
+    // Count "processor: X" lines in cpuinfo
+    FILE *cpuinfo_file = linux_open_file_rdonly_cloexec(g_proccpuinfo_file);
+    if (NULL != cpuinfo_file)
+    {
+        // Parse counting lines
+        nproc = procmetrix_impl_linux_procstat_count_cpus(cpuinfo_file);
+
+        // Cleanup
+        fclose(cpuinfo_file);
+
+        // Success
+        if (nproc > 0)
+            return nproc;
+    }
+
+    // Fallback:
+    // Count "cpuX" lines in procstat
+    FILE *procstat_file = linux_open_file_rdonly_cloexec(g_procstat_file);
+    if (NULL != procstat_file)
+    {
+        // Parse counting lines
+        nproc = procmetrix_impl_linux_cpuinfo_count_processors(cpuinfo_file);
+
+        // Cleanup
+        fclose(procstat_file);
+
+        // Success
+        if (nproc > 0)
+            return nproc;
+    }
+
+    // Unable to determine
+    return 0;
+}
 
 procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t *cpu_times)
 {

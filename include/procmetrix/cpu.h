@@ -12,6 +12,10 @@ extern "C"
 {
 #endif // __cplusplus
 
+    //! Gets the number of local CPUs, i.e. the number of physical cores multiplied by the number of threads that can run on each core
+    //! @return Zero if undetermined or error.
+    PROCMETRIX_API size_t procmetrix_cpu_count_logical(void);
+
     //! Every attribute represents the seconds the CPU has spent in the given mode.
     typedef struct procmetrix_cpu_times
     {

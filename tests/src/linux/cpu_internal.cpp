@@ -9,6 +9,78 @@
 
 // Test cases
 
+/* COUNT CPUS */
+
+TEST(procmetrix_impl_linux_procstat_count_cpus, null_args)
+{
+    EXPECT_EQ(
+        procmetrix_impl_linux_procstat_count_cpus(nullptr), 0);
+}
+
+TEST(procmetrix_impl_linux_procstat_count_cpus, empty)
+{
+    // Empty file
+    CMemFilePtr memfp("");
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_procstat_count_cpus(memfp.get()), 0);
+}
+
+TEST(procmetrix_impl_linux_procstat_count_cpus, count)
+{
+    CMemFilePtr memfp(
+        "cpu\n"
+        "cpu0\n"
+        "cpu1\n"
+        "cpu2\n"
+        "whatver"
+    );
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_procstat_count_cpus(memfp.get()), 3);
+}
+
+TEST(procmetrix_impl_linux_cpuinfo_count_processors, null_args)
+{
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpuinfo_count_processors(nullptr), 0);
+}
+
+TEST(procmetrix_impl_linux_cpuinfo_count_processors, empty)
+{
+    // Empty file
+    CMemFilePtr memfp("");
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpuinfo_count_processors(memfp.get()), 0);
+}
+
+TEST(procmetrix_impl_linux_cpuinfo_count_processors, count)
+{
+    CMemFilePtr memfp(
+        "processor      : 0\n"
+        "physical id    : 0\n"
+        "siblings       : 8\n"
+        "core id        : 0\n"
+        "processor      : 1\n"
+        "physical id    : 0\n"
+        "siblings       : 8\n"
+        "core id        : 0\n"
+    );
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpuinfo_count_processors(memfp.get()), 2);
+}
+
+/* TOTAL TIMES */
+
+TEST(procmetrix_impl_linux_cpu_times_total, null_args)
+{
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_times_total(nullptr, nullptr), 
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
 TEST(procmetrix_impl_linux_cpu_times_total, empty_file)
 {
     // Empty file
@@ -57,6 +129,8 @@ TEST(procmetrix_impl_linux_cpu_times_total, full)
     EXPECT_DOUBLE_EQ(cpu_times.guest, 500.0 / ticks_per_second);
     EXPECT_DOUBLE_EQ(cpu_times.guest_nice, 600.0 / ticks_per_second);
 }
+
+/* PER-CPU TIMES */
 
 TEST(procmetrix_impl_linux_cpu_times_per_cpu, empty_file)
 {
