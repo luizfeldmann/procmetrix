@@ -343,3 +343,41 @@ TEST(procmetrix_cpu_freqs_average, average)
     EXPECT_DOUBLE_EQ(average.freq_min, 2000.0);
     EXPECT_DOUBLE_EQ(average.freq_max, 5000.0);
 }
+
+TEST(procmetrix_cpu_freqs, null_args)
+{
+    size_t read_count = 0;
+    procmetrix_cpu_freq_t cpu_freqs;
+
+    // Null array
+    EXPECT_EQ(
+        procmetrix_cpu_freqs(nullptr, 1, &read_count),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Zero output array size
+    EXPECT_EQ(
+        procmetrix_cpu_freqs(&cpu_freqs, 0, &read_count),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_cpu_freq_system, null_args)
+{
+    // Null output array
+    EXPECT_EQ(
+        procmetrix_cpu_freq_system(nullptr),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_cpu_freq_system, non_zero)
+{
+    procmetrix_cpu_freq_t system_freqs;
+
+    EXPECT_EQ(
+        procmetrix_cpu_freq_system(&system_freqs),
+        PROCMETRIX_ERROR_NONE);
+
+    // Min and Max values are probably not present in a virtualized CI runner
+    // Check only for current frequency being non-zero
+    EXPECT_GT(system_freqs.freq_cur, 0.0);
+    GTEST_LOG_(INFO) << "system cpu freq [Mhz]: " << system_freqs.freq_cur;
+}

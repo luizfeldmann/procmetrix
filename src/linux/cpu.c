@@ -93,6 +93,35 @@ static int scan_cpuinfo_processor_line(const char *line)
     return sscanf(line, "processor : %u", &u);
 }
 
+procmetrix_error_t read_sysfs_cpu_scaling_freq_field(const char *base_path, const char *field_name, uint64_t *field_value)
+{
+    // Sanity
+    if (NULL == base_path || NULL == field_name || NULL == field_value)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Format path to field
+    char scaling_freq_field_path[PATH_MAX];
+    snprintf(scaling_freq_field_path, sizeof(scaling_freq_field_path), "%s/%s", base_path, field_name);
+
+    // Open field file
+    FILE *scaling_freq_field_file = linux_open_file_rdonly_cloexec(scaling_freq_field_path);
+    if (NULL == scaling_freq_field_file)
+        return PROCMETRIX_ERROR_FILE_READ;
+
+    // Read the field value
+    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
+    if (1 != fscanf(scaling_freq_field_file, "%" SCNu64, field_value))
+    {
+        status = PROCMETRIX_ERROR_MALFORMED;
+        *field_value = 0;
+    }
+
+    // Cleanup
+    fclose(scaling_freq_field_file);
+
+    return status;
+}
+
 // Impl
 
 size_t procmetrix_impl_linux_cpu_count_physical_cpuinfo(FILE *cpuinfo_file)
@@ -336,6 +365,115 @@ procmetrix_error_t procmetrix_impl_linux_cpu_times_per_cpu(FILE *stat_file, proc
     return PROCMETRIX_ERROR_NONE;
 }
 
+procmetrix_error_t procmetrix_impl_linux_cpu_freqs_policies(const glob_t *sysfs_policies, procmetrix_cpu_freq_t *cpu_freqs, size_t max_count, size_t *read_count)
+{
+    // Sanity
+    if (NULL == sysfs_policies || NULL == cpu_freqs || 0 == max_count)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Defensively clear garbage
+    memset(cpu_freqs, 0, max_count * sizeof(procmetrix_cpu_freq_t));
+    if (NULL != read_count)
+        *read_count = 0;
+
+    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
+
+    // Read each policy
+    for (size_t i = 0; i < sysfs_policies->gl_pathc; ++i)
+    {
+        // Open list of affected CPUs
+        char affected_cpus_path[PATH_MAX];
+        snprintf(affected_cpus_path, sizeof(affected_cpus_path), "%s/affected_cpus", sysfs_policies->gl_pathv[i]);
+
+        FILE *affected_cpus_file = linux_open_file_rdonly_cloexec(affected_cpus_path);
+        if (NULL == affected_cpus_file)
+        {
+            // Cannot proceed because output could be filled in non-contiguous chunks
+            // Say, information was read for cpus 0, 2, but missing for 1, 4
+            status = PROCMETRIX_ERROR_FILE_READ;
+            break;
+        }
+
+        // Read the fields
+        // Don't produce a global error if we fail to read the fields for some cpus, we'll keep zero there
+        // Having incomplete frequency data is common
+        uint64_t scaling_cur_freq = 0, scaling_max_freq = 0, scaling_min_freq = 0;
+        (void)read_sysfs_cpu_scaling_freq_field(sysfs_policies->gl_pathv[i], "scaling_cur_freq", &scaling_cur_freq);
+        (void)read_sysfs_cpu_scaling_freq_field(sysfs_policies->gl_pathv[i], "scaling_max_freq", &scaling_max_freq);
+        (void)read_sysfs_cpu_scaling_freq_field(sysfs_policies->gl_pathv[i], "scaling_min_freq", &scaling_min_freq);
+
+        // For each affected CPU
+        size_t affected_cpu = 0;
+        while (1 == fscanf(affected_cpus_file, "%zu", &affected_cpu))
+        {
+            // Check if CPU index is in range of the array
+            if (affected_cpu >= max_count)
+            {
+                status = PROCMETRIX_ERROR_MORE_DATA;
+                break;
+            }
+
+            // Must use "max()" function because the list may be out of order
+            if (NULL != read_count && *read_count < affected_cpu + 1)
+                *read_count = affected_cpu + 1;
+
+            // Copy data to the item, convert from KHz to MHz
+            cpu_freqs[affected_cpu].freq_cur = (double)scaling_cur_freq / 1000.0;
+            cpu_freqs[affected_cpu].freq_max = (double)scaling_max_freq / 1000.0;
+            cpu_freqs[affected_cpu].freq_min = (double)scaling_min_freq / 1000.0;
+        }
+
+        // Cleanup
+        fclose(affected_cpus_file);
+    }
+
+    return status;
+}
+
+procmetrix_error_t procmetrix_impl_linux_cpuinfo_freqs(FILE *cpuinfo_file, procmetrix_cpu_freq_t *cpu_freqs, size_t max_count, size_t *read_count)
+{
+    // Sanity
+    if (NULL == cpuinfo_file || NULL == cpu_freqs || 0 == max_count)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Defensively clear garbage
+    memset(cpu_freqs, 0, max_count * sizeof(procmetrix_cpu_freq_t));
+    if (NULL != read_count)
+        *read_count = 0;
+
+    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
+
+    // Read file lines
+    char line[1024];
+    size_t cpu_index = 0;
+    while (NULL != fgets(line, sizeof(line), cpuinfo_file))
+    {
+        // x86 says "cpu MHz", ppc "clock" (with a MHz suffix),
+        // s390x "cpu MHz dynamic" plus a "static" one we skip.
+        double value = 0.0;
+        if (1 == sscanf(line, "cpu MHz : %lf", &value) ||
+            1 == sscanf(line, "clock : %lf MHz", &value) ||
+            1 == sscanf(line, "cpu MHz dynamic : %lf", &value))
+        {
+            // Check if we can fit the output
+            if (cpu_index >= max_count)
+            {
+                status = PROCMETRIX_ERROR_MORE_DATA;
+                break;
+            }
+
+            // Store the current value
+            cpu_freqs[cpu_index++].freq_cur = value;
+        }
+    }
+
+    // Total read items
+    if (NULL != read_count)
+        *read_count = cpu_index;
+
+    return status;
+}
+
 // Public impl
 
 size_t procmetrix_cpu_count_physical(void)
@@ -385,7 +523,7 @@ size_t procmetrix_cpu_count_logical(void)
     if (NULL != cpuinfo_file)
     {
         // Parse counting lines
-        nproc = procmetrix_impl_linux_procstat_count_cpus(cpuinfo_file);
+        nproc = procmetrix_impl_linux_cpuinfo_count_processors(cpuinfo_file);
 
         // Cleanup
         fclose(cpuinfo_file);
@@ -401,7 +539,7 @@ size_t procmetrix_cpu_count_logical(void)
     if (NULL != procstat_file)
     {
         // Parse counting lines
-        nproc = procmetrix_impl_linux_cpuinfo_count_processors(cpuinfo_file);
+        nproc = procmetrix_impl_linux_procstat_count_cpus(cpuinfo_file);
 
         // Cleanup
         fclose(procstat_file);
@@ -449,6 +587,37 @@ procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_time
 
 procmetrix_error_t procmetrix_cpu_freqs(procmetrix_cpu_freq_t *cpu_freqs, size_t max_count, size_t *read_count)
 {
-    //! @todo
-    return PROCMETRIX_NOT_IMPLEMENTED;
+    // Sanity
+    if (NULL == cpu_freqs || 0 == max_count)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Glob CPU freq policies from sysfs
+    glob_t g;
+    if (0 == glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*", 0, NULL, &g))
+    {
+        procmetrix_error_t result = procmetrix_impl_linux_cpu_freqs_policies(&g, cpu_freqs, max_count, read_count);
+
+        // Cleanup
+        globfree(&g);
+
+        return result;
+    }
+
+    // Fallback:
+    // Read from /proc/cpuinfo
+    // Only current value will be read, while min and max will be zeroed
+    FILE *cpuinfo_file = linux_open_file_rdonly_cloexec(g_proccpuinfo_file);
+    if (NULL != cpuinfo_file)
+    {
+        // Parse counting lines
+        procmetrix_error_t result = procmetrix_impl_linux_cpuinfo_freqs(cpuinfo_file, cpu_freqs, max_count, read_count);
+
+        // Cleanup
+        fclose(cpuinfo_file);
+
+        return result;
+    }
+
+    // Unable to read policies
+    return PROCMETRIX_ERROR_FILE_READ;
 }

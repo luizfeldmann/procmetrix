@@ -467,3 +467,179 @@ TEST(procmetrix_impl_linux_cpu_times_per_cpu, array_too_small)
     // Only read the first two lines
     EXPECT_EQ(read_count, 2);
 }
+
+/** FREQUENCIES */
+
+TEST(procmetrix_impl_linux_cpu_freqs_policies, null_args)
+{
+    glob_t glob;
+    size_t read_count = 0;
+    procmetrix_cpu_freq_t cpu_freq { 0 };
+
+    //! Null glob
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_freqs_policies(nullptr, &cpu_freq, 1, &read_count),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+    
+    // Null output array
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_freqs_policies(&glob, nullptr, 1, &read_count),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Zero output size
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_freqs_policies(&glob, &cpu_freq, 0, &read_count),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_impl_linux_cpu_freqs_policies, tempfiles)
+{
+    // Create temp sysfs
+    CTempDirGlob temp;
+
+    // Policy 0
+    // Affects cputs 0, 2
+    ASSERT_TRUE(temp.CreateDir("policy0"));
+    ASSERT_TRUE(temp.WriteFile("policy0/affected_cpus", "0 2"));
+    ASSERT_TRUE(temp.WriteFile("policy0/scaling_cur_freq", "2000000")); // Values are in kHz
+    ASSERT_TRUE(temp.WriteFile("policy0/scaling_min_freq", "1000000"));
+    ASSERT_TRUE(temp.WriteFile("policy0/scaling_max_freq", "3000000"));
+
+    // Policy 1
+    // Affects cpus 1, 3
+    ASSERT_TRUE(temp.CreateDir("policy1"));
+    ASSERT_TRUE(temp.WriteFile("policy1/affected_cpus", "1 3"));
+    ASSERT_TRUE(temp.WriteFile("policy1/scaling_cur_freq", "3000000"));
+    ASSERT_TRUE(temp.WriteFile("policy1/scaling_min_freq", "2000000"));
+    ASSERT_TRUE(temp.WriteFile("policy1/scaling_max_freq", "4000000"));
+
+    // Glob the generated files
+    glob_t glob;
+    EXPECT_TRUE(temp.Glob(&glob));
+
+    // Parse the filesystem
+    size_t read_count = 0;
+    procmetrix_cpu_freq_t cpu_freq[4] { 0 };
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_freqs_policies(&glob, cpu_freq, std::size(cpu_freq), &read_count),
+        PROCMETRIX_ERROR_NONE);
+
+    // Cleanup
+    globfree(&glob);
+
+    // Check read output
+    EXPECT_EQ(read_count, 4);
+
+    EXPECT_DOUBLE_EQ(cpu_freq[0].freq_cur, 2000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[0].freq_min, 1000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[0].freq_max, 3000.0);
+
+    EXPECT_DOUBLE_EQ(cpu_freq[2].freq_cur, 2000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[2].freq_min, 1000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[2].freq_max, 3000.0);
+
+    EXPECT_DOUBLE_EQ(cpu_freq[1].freq_cur, 3000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[1].freq_min, 2000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[1].freq_max, 4000.0);
+    
+    EXPECT_DOUBLE_EQ(cpu_freq[3].freq_cur, 3000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[3].freq_min, 2000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[3].freq_max, 4000.0);
+}
+
+TEST(procmetrix_impl_linux_cpuinfo_freqs, null_args)
+{
+    size_t read_count = 0;
+    procmetrix_cpu_freq_t cpu_freq { 0 };
+    CMemFilePtr memfp("");
+
+    // Null file
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpuinfo_freqs(nullptr, &cpu_freq, 1, &read_count),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Null output
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), nullptr, 1, &read_count),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Zero size output
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), &cpu_freq, 0, &read_count),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_impl_linux_cpuinfo_freqs, empty)
+{
+    size_t read_count = 0;
+    procmetrix_cpu_freq_t cpu_freq { 0 };
+
+    // Empty input file
+    CMemFilePtr memfp("");
+
+    // Succeeds reading zero items
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), &cpu_freq, 1, &read_count),
+        PROCMETRIX_ERROR_NONE);
+
+    EXPECT_EQ(read_count, 0);
+}
+
+TEST(procmetrix_impl_linux_cpuinfo_freqs, mix_items)
+{
+    size_t read_count = 0;
+    procmetrix_cpu_freq_t cpu_freq[4];
+
+    CMemFilePtr memfp(
+        // x86 format
+        "processor : 0\n"
+        "cpu MHz   : 2533.3\n"
+
+        "processor : 1\n"
+        "cpu MHz   : 3000\n"
+
+        // Power PC format
+        "processor : 2\n"
+        "cpu MHz   : 2400.0\n"
+
+        // s390x
+        "processor      :3\n"
+        "cpu MHz dynamic:1234.5\n"
+    );
+
+    // Succeeds reading all items
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), cpu_freq, std::size(cpu_freq), &read_count),
+        PROCMETRIX_ERROR_NONE);
+
+    EXPECT_EQ(read_count, 4);
+    EXPECT_DOUBLE_EQ(cpu_freq[0].freq_cur, 2533.3);
+    EXPECT_DOUBLE_EQ(cpu_freq[1].freq_cur, 3000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[2].freq_cur, 2400.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[3].freq_cur, 1234.5);
+}
+
+TEST(procmetrix_impl_linux_cpuinfo_freqs, overflow)
+{
+    // Array fits 2 but actual count is 4
+    size_t read_count = 0;
+    procmetrix_cpu_freq_t cpu_freq[2];
+
+    CMemFilePtr memfp(
+        "cpu MHz   : 1000\n"
+        "cpu MHz   : 2000\n"
+        "cpu MHz   : 3000\n"
+        "cpu MHz   : 4000\n"
+    );
+
+    // Returns "more data was available"
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), cpu_freq, std::size(cpu_freq), &read_count),
+        PROCMETRIX_ERROR_MORE_DATA);
+    
+    // The first 2 items were read correctly
+    EXPECT_EQ(read_count, 2);
+    EXPECT_DOUBLE_EQ(cpu_freq[0].freq_cur, 1000.0);
+    EXPECT_DOUBLE_EQ(cpu_freq[1].freq_cur, 2000.0);
+}
