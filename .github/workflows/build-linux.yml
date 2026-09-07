@@ -45,7 +45,7 @@ jobs:
 
       - name: Coverage
         if: inputs.coverage
-        run: gcovr --root . --cobertura build/coverage-${{inputs.conan-profile}}.xml
+        run: gcovr --root . --filter "^src/" --cobertura build/coverage-${{inputs.conan-profile}}.xml
 
       - name: Upload coverage
         if: inputs.coverage

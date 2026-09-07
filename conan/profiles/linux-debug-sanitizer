@@ -1,0 +1,17 @@
+include(default)
+
+[settings]
+build_type=Debug
+
+[conf]
+user.procmetrix:run_tests=True
+user.procmetrix:profile_name=linux-debug-sanitizer
+
+tools.build:cflags+=["-fsanitize=address", "-fsanitize=undefined", "-fno-omit-frame-pointer"]
+tools.build:cxxflags+=["-fsanitize=address","-fsanitize=undefined","-fno-omit-frame-pointer"]
+tools.build:sharedlinkflags+=["-fsanitize=address","-fsanitize=undefined"]
+tools.build:exelinkflags+=["-fsanitize=address","-fsanitize=undefined"]
+
+[runenv]
+ASAN_OPTIONS+=halt_on_error=1:detect_leaks=1
+UBSAN_OPTIONS+=print_stacktrace=1:halt_on_error=1

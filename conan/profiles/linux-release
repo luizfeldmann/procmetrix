@@ -5,3 +5,4 @@ build_type=Release
 
 [conf]
 user.procmetrix:run_tests=True
+user.procmetrix:profile_name=linux-release

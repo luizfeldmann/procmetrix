@@ -28,13 +28,21 @@ jobs:
       conan-profile: linux-release
       coverage: false
 
-  linux-debug:
+  linux-debug-coverage:
     uses: ./.github/workflows/build-linux.yml
     permissions:
       contents: read
     with:
-      conan-profile: linux-debug
+      conan-profile: linux-debug-coverage
       coverage: true
+
+  linux-debug-sanitizer:
+    uses: ./.github/workflows/build-linux.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: linux-debug-sanitizer
+      coverage: false
 
   # Publish Doxygen as GitHub Pages
   publish-docs:
@@ -43,7 +51,8 @@ jobs:
     # Requires all builds to pass
     needs:
       - linux-release
-      - linux-debug
+      - linux-debug-coverage
+      - linux-debug-sanitizer
 
     runs-on: ubuntu-latest
 
