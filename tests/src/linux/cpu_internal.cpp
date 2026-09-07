@@ -409,6 +409,11 @@ TEST(procmetrix_impl_linux_cpu_times_per_cpu, multi_line)
         "cpu\n"
         "cpu0 1000 2000 3000 4000 5000 6000 7000 8000 9000 10000\n"
         "cpu1 1500 2500 3500 4500 5500 6500 7500 8500 9500 15000\n"
+        // Test it sucesfully ignores other metrics after the cpus section
+        "intr 100000\n"
+        "ctxt 100000\n"
+        "btime 100000\n"
+        "processes 100000\n"
     );
 
     size_t read_count = 0;
@@ -492,13 +497,36 @@ TEST(procmetrix_impl_linux_cpu_freqs_policies, null_args)
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
-TEST(procmetrix_impl_linux_cpu_freqs_policies, tempfiles)
+TEST(procmetrix_impl_linux_cpu_freqs_policies, missing_files)
+{
+    // Create temp sysfs
+    CTempDirGlob temp;
+
+    // The policies exist but the "affected_cpus" files are missing
+    ASSERT_TRUE(temp.CreateDir("policy0"));
+    ASSERT_TRUE(temp.CreateDir("policy1"));
+
+    // Glob the generated files
+    glob_t glob;
+    EXPECT_TRUE(temp.Glob(&glob));
+
+    // Enable to read the desired files from the FS
+    procmetrix_cpu_freq_t cpu_freq[2] { 0 };
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_freqs_policies(&glob, cpu_freq, std::size(cpu_freq), nullptr),
+        PROCMETRIX_ERROR_FILE_READ);
+
+    // Cleanup
+    globfree(&glob);
+}
+
+TEST(procmetrix_impl_linux_cpu_freqs_policies, all_files)
 {
     // Create temp sysfs
     CTempDirGlob temp;
 
     // Policy 0
-    // Affects cputs 0, 2
+    // Affects cpus 0, 2
     ASSERT_TRUE(temp.CreateDir("policy0"));
     ASSERT_TRUE(temp.WriteFile("policy0/affected_cpus", "0 2"));
     ASSERT_TRUE(temp.WriteFile("policy0/scaling_cur_freq", "2000000")); // Values are in kHz
@@ -546,6 +574,43 @@ TEST(procmetrix_impl_linux_cpu_freqs_policies, tempfiles)
     EXPECT_DOUBLE_EQ(cpu_freq[3].freq_cur, 3000.0);
     EXPECT_DOUBLE_EQ(cpu_freq[3].freq_min, 2000.0);
     EXPECT_DOUBLE_EQ(cpu_freq[3].freq_max, 4000.0);
+}
+
+TEST(procmetrix_impl_linux_cpu_freqs_policies, overflow)
+{
+    // Create temp sysfs
+    CTempDirGlob temp;
+
+    // Policy 0
+    // Affects all 8 cpus
+    ASSERT_TRUE(temp.CreateDir("policy0"));
+    ASSERT_TRUE(temp.WriteFile("policy0/affected_cpus", "0 1 2 3 4 5 6 7"));
+
+    // Only current frequency is present and the others are missing
+    ASSERT_TRUE(temp.WriteFile("policy0/scaling_cur_freq", "2345678"));
+
+    // Glob the generated files
+    glob_t glob;
+    EXPECT_TRUE(temp.Glob(&glob));
+
+    // Parse the filesystem
+    // Array is smaller than the number of CPUs
+    size_t read_count = 0;
+    procmetrix_cpu_freq_t cpu_freq[4] { 0 };
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_cpu_freqs_policies(&glob, cpu_freq, std::size(cpu_freq), &read_count),
+        PROCMETRIX_ERROR_MORE_DATA);
+
+    // Cleanup
+    globfree(&glob);
+
+    // Check read output
+    // All the available slots in the array where filled
+    EXPECT_EQ(read_count, std::size(cpu_freq));
+
+    for (size_t i = 0; i < read_count; ++i)
+        EXPECT_DOUBLE_EQ(cpu_freq[i].freq_cur, 2345.6780);
 }
 
 TEST(procmetrix_impl_linux_cpuinfo_freqs, null_args)
