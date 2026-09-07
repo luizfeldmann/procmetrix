@@ -1,6 +1,10 @@
+//! @file
+//! @brief Common error codes for the library.
+
 #ifndef _PROCMETRIX_ERROR_H_
 #define _PROCMETRIX_ERROR_H_
 
+// Lib
 #include <procmetrix/api.h>
 
 #ifdef __cplusplus

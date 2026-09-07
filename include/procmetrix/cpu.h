@@ -1,3 +1,7 @@
+//! @file
+//! @ingroup cpu
+//! @brief Functions to retrieve CPU metrics and statistics.
+
 #ifndef _PROCMETRIX_CPU_H_
 #define _PROCMETRIX_CPU_H_
 
@@ -11,6 +15,8 @@
 extern "C"
 {
 #endif // __cplusplus
+    //! @addtogroup cpu
+    //! @{
 
     //! Gets the number of physical CPU cores.
     //! @return Zero if undetermined or error.
@@ -130,6 +136,7 @@ extern "C"
     //! @param[out] system_freq System-wide CPU frequencies.
     PROCMETRIX_API procmetrix_error_t procmetrix_cpu_freq_system(procmetrix_cpu_freq_t *system_freq);
 
+    //! @}
 #ifdef __cplusplus
 }
 #endif // __cplusplus

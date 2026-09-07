@@ -1,3 +1,6 @@
+//! @file
+//! @brief Macros for API import/export
+
 #ifndef _PROCMETRIX_API_H_
 #define _PROCMETRIX_API_H_
 
