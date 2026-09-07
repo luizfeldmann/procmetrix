@@ -2,6 +2,8 @@
 
 A lightweight C library for retrieving system metrics such as CPU utilization, frequency, and memory usage information.
 
+[![.github/workflows/ci.yml](https://github.com/luizfeldmann/procmetrix/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/luizfeldmann/procmetrix/actions/workflows/ci.yml)
+
 ---
 
 # Features
@@ -50,7 +52,7 @@ ctest
 
 # Documentation
 
-The latest documentation is published here.
+The latest documentation is [published here](https://luizfeldmann.github.io/procmetrix/).
 
 You can also build the docs yourself by running:
 ```sh

@@ -77,6 +77,18 @@ class Recipe(ConanFile):
         cmake.configure()
         cmake.build()
 
+        # In the CI, run tests after the build
+        run_tests = self.conf.get("user.procmetrix:run_tests", default=False, check_type=bool)
+        if run_tests:
+            profile_name = self.conf.get("user.procmetrix:profile_name", default="default", check_type=str)
+
+            cmake.ctest(cli_args=[
+                # Print only error logs
+                "--output-on-failure",
+                # Generate report
+                "--output-junit", f"test-results-{profile_name}.xml"
+            ])
+
     def package(self):
         copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
 

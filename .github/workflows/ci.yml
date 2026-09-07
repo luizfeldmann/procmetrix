@@ -19,10 +19,31 @@ permissions:
   contents: read
 
 jobs:
+  # Linux builds
+  linux-release:
+    uses: ./.github/workflows/build-linux.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: linux-release
+      coverage: false
+
+  linux-debug:
+    uses: ./.github/workflows/build-linux.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: linux-debug
+      coverage: true
+
   # Publish Doxygen as GitHub Pages
   publish-docs:
     # Only when updating main
     if: github.event_name == 'push' && github.ref_name == 'main'
+    # Requires all builds to pass
+    needs:
+      - linux-release
+      - linux-debug
 
     runs-on: ubuntu-latest
 

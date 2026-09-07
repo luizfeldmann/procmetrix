@@ -1,0 +1,62 @@
+on:
+  workflow_call:
+    inputs:
+      conan-profile:
+        type: string
+        required: true
+      coverage:
+        type: boolean
+        required: true
+
+jobs:
+  linux-build-and-test:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:bookworm
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y \
+            git \
+            build-essential \
+            gcovr \
+            cmake \
+            python3 \
+            python3-pip \
+            python3-venv
+
+      - name: Setup Python
+        run: |
+          python3 -m venv venv
+          echo "$PWD/venv/bin" >> $GITHUB_PATH
+
+      - name: Setup Conan
+        run: |
+          pip install --upgrade pip
+          pip install conan
+          conan profile detect --force
+
+      - name: Build
+        run: conan build . --build=missing --profile=conan/profiles/${{inputs.conan-profile}}
+
+      - name: Coverage
+        if: inputs.coverage
+        run: gcovr --root . --cobertura build/coverage-${{inputs.conan-profile}}.xml
+
+      - name: Upload coverage
+        if: inputs.coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{inputs.conan-profile}}
+          path: build/coverage-${{inputs.conan-profile}}.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{inputs.conan-profile}}
+          path: build/**/test-results*.xml

@@ -1,0 +1,12 @@
+include(default)
+
+[settings]
+build_type=Debug
+
+[conf]
+user.procmetrix:run_tests=True
+user.procmetrix:profile_name=linux-debug
+tools.build:cflags=["--coverage"]
+tools.build:cxxflags=["--coverage"]
+tools.build:sharedlinkflags=["--coverage"]
+tools.build:exelinkflags=["--coverage"]

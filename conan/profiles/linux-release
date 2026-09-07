@@ -1,0 +1,7 @@
+include(default)
+
+[settings]
+build_type=Release
+
+[conf]
+user.procmetrix:run_tests=True
