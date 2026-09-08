@@ -3,6 +3,7 @@
 
 // STD
 #include <string>
+#include <fstream>
 
 // Linux
 #include <glob.h>

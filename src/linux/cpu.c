@@ -1,7 +1,5 @@
-// Lib
-#include <procmetrix/cpu.h>
-
 // Internal
+#include <internal/linux/common_linux_internal.h>
 #include <internal/linux/cpu_linux_internal.h>
 #include <internal/linux/core_topology.h>
 
@@ -13,7 +11,6 @@
 #include <stdbool.h>
 
 // Linux
-#include <fcntl.h>
 #include <unistd.h>
 #include <linux/limits.h>
 
@@ -61,24 +58,6 @@ static void jiffies_to_seconds(const proc_stat_t *stat, procmetrix_cpu_times_t *
     cpu_times->guest_nice = (double)stat->guest_nice / ticks_per_second;
 }
 
-//! Opens a file as readonly and close on exec
-static FILE *linux_open_file_rdonly_cloexec(const char *path)
-{
-    int fd = open(path, O_RDONLY);
-    if (fd < 0)
-        return NULL;
-
-#ifdef FD_CLOEXEC
-    fcntl(fd, F_SETFD, FD_CLOEXEC);
-#endif
-
-    FILE *fp = fdopen(fd, "r");
-    if (fp == NULL)
-        close(fd);
-
-    return fp;
-}
-
 //! Checks if a line is "cpuX" format
 static int scan_procstat_cpux_line(const char *line)
 {
@@ -104,7 +83,7 @@ procmetrix_error_t read_sysfs_cpu_scaling_freq_field(const char *base_path, cons
     snprintf(scaling_freq_field_path, sizeof(scaling_freq_field_path), "%s/%s", base_path, field_name);
 
     // Open field file
-    FILE *scaling_freq_field_file = linux_open_file_rdonly_cloexec(scaling_freq_field_path);
+    FILE *scaling_freq_field_file = procmetrix_impl_linux_open_file_rdonly_cloexec(scaling_freq_field_path);
     if (NULL == scaling_freq_field_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
@@ -197,8 +176,8 @@ size_t procmetrix_impl_linux_cpu_count_physical_topology(const glob_t *sysfs_cpu
         snprintf(package_id_path, sizeof(package_id_path), "%s/topology/physical_package_id", sysfs_cpus->gl_pathv[i]);
 
         // Open the files
-        FILE *core_id_file = linux_open_file_rdonly_cloexec(core_id_path);
-        FILE *package_id_file = linux_open_file_rdonly_cloexec(package_id_path);
+        FILE *core_id_file = procmetrix_impl_linux_open_file_rdonly_cloexec(core_id_path);
+        FILE *package_id_file = procmetrix_impl_linux_open_file_rdonly_cloexec(package_id_path);
 
         // Parse the files
         if (NULL != core_id_file && NULL != package_id_file)
@@ -385,7 +364,7 @@ procmetrix_error_t procmetrix_impl_linux_cpu_freqs_policies(const glob_t *sysfs_
         char affected_cpus_path[PATH_MAX];
         snprintf(affected_cpus_path, sizeof(affected_cpus_path), "%s/affected_cpus", sysfs_policies->gl_pathv[i]);
 
-        FILE *affected_cpus_file = linux_open_file_rdonly_cloexec(affected_cpus_path);
+        FILE *affected_cpus_file = procmetrix_impl_linux_open_file_rdonly_cloexec(affected_cpus_path);
         if (NULL == affected_cpus_file)
         {
             // Cannot proceed because output could be filled in non-contiguous chunks
@@ -493,7 +472,7 @@ size_t procmetrix_cpu_count_physical(void)
 
     // Fallback:
     // Read "physical id" and "core id" from /proc/cpuinfo
-    FILE *cpuinfo_file = linux_open_file_rdonly_cloexec(g_proccpuinfo_file);
+    FILE *cpuinfo_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_proccpuinfo_file);
     if (NULL != cpuinfo_file)
     {
         size_t physical_count = procmetrix_impl_linux_cpu_count_physical_cpuinfo(cpuinfo_file);
@@ -519,7 +498,7 @@ size_t procmetrix_cpu_count_logical(void)
 
     // Fallback:
     // Count "processor: X" lines in cpuinfo
-    FILE *cpuinfo_file = linux_open_file_rdonly_cloexec(g_proccpuinfo_file);
+    FILE *cpuinfo_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_proccpuinfo_file);
     if (NULL != cpuinfo_file)
     {
         // Parse counting lines
@@ -535,7 +514,7 @@ size_t procmetrix_cpu_count_logical(void)
 
     // Fallback:
     // Count "cpuX" lines in procstat
-    FILE *procstat_file = linux_open_file_rdonly_cloexec(g_procstat_file);
+    FILE *procstat_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_procstat_file);
     if (NULL != procstat_file)
     {
         // Parse counting lines
@@ -556,7 +535,7 @@ size_t procmetrix_cpu_count_logical(void)
 procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t *cpu_times)
 {
     // Open proc stat
-    FILE *stat_file = linux_open_file_rdonly_cloexec(g_procstat_file);
+    FILE *stat_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_procstat_file);
     if (stat_file == NULL)
         return PROCMETRIX_ERROR_FILE_READ;
 
@@ -572,7 +551,7 @@ procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t *cpu_times)
 procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_times, size_t maxCount, size_t *readCount)
 {
     // Open proc stat
-    FILE *stat_file = linux_open_file_rdonly_cloexec(g_procstat_file);
+    FILE *stat_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_procstat_file);
     if (stat_file == NULL)
         return PROCMETRIX_ERROR_FILE_READ;
 
@@ -606,7 +585,7 @@ procmetrix_error_t procmetrix_cpu_freqs(procmetrix_cpu_freq_t *cpu_freqs, size_t
     // Fallback:
     // Read from /proc/cpuinfo
     // Only current value will be read, while min and max will be zeroed
-    FILE *cpuinfo_file = linux_open_file_rdonly_cloexec(g_proccpuinfo_file);
+    FILE *cpuinfo_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_proccpuinfo_file);
     if (NULL != cpuinfo_file)
     {
         // Parse counting lines

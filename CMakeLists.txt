@@ -40,6 +40,13 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 # Per-platform sources
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # Common
+    "src/linux/common.c"
+    "include/internal/linux/common_linux_internal.h"
+    # Memory
+    "src/linux/mem.c"
+    "include/internal/linux/mem_linux_internal.h"
+    # CPU
     "src/linux/core_topology.c"
     "include/internal/linux/core_topology.h"
     "src/linux/cpu.c"

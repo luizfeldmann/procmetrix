@@ -1,9 +1,6 @@
 // Private impl
 #include <internal/linux/cpu_linux_internal.h>
 
-// STD
-#include <fstream>
-
 // Testing
 #include <gtest/gtest.h>
 
