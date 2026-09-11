@@ -197,6 +197,86 @@ procmetrix_error_t procmetrix_impl_linux_system_virtual_memory(FILE *meminfo_fil
     return PROCMETRIX_ERROR_NONE;
 }
 
+procmetrix_error_t procmetrix_impl_linux_system_swap_memory(FILE *meminfo_file, FILE *vmstat_file, procmetrix_swap_memory_t *swap_memory)
+{
+    // Sanity
+    if (NULL == swap_memory)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Defensively return consistent result in case of error
+    memset(swap_memory, 0, sizeof(procmetrix_swap_memory_t));
+
+    if (NULL == meminfo_file)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Help to stop early
+    bool has_total = false,
+         has_free = false,
+         has_sin = false,
+         has_sout = false;
+
+    // Read the meminfo
+    char line[1024];
+    while (NULL != fgets(line, sizeof(line), meminfo_file))
+    {
+        uint64_t temp_value = 0;
+
+        if (1 == sscanf(line, "SwapTotal: %" SCNu64, &temp_value))
+        {
+            swap_memory->total = 1024ull * temp_value;
+            has_total = true;
+        }
+        else if (1 == sscanf(line, "SwapFree: %" SCNu64, &temp_value))
+        {
+            swap_memory->free = 1024ull * temp_value;
+            has_free = true;
+        }
+
+        // Stop sooner if we found all that's relevant
+        if (has_total && has_free)
+            break;
+    }
+
+    // Read the vmstat
+    long page_size = sysconf(_SC_PAGE_SIZE);
+
+    if (NULL != vmstat_file && page_size > 0)
+    {
+        while (NULL != fgets(line, sizeof(line), vmstat_file))
+        {
+            uint64_t temp_value = 0;
+
+            if (1 == sscanf(line, "pswpin %" SCNu64, &temp_value))
+            {
+                swap_memory->swap_in = (uint64_t)page_size * temp_value;
+                has_sin = true;
+            }
+            else if (1 == sscanf(line, "pswpout %" SCNu64, &temp_value))
+            {
+                swap_memory->swap_out = (uint64_t)page_size * temp_value;
+                has_sout = true;
+            }
+
+            // Stop sooner if we found all that's relevant
+            if (has_sin && has_sout)
+                break;
+        }
+    }
+
+    // Validate
+    if (!has_total || !has_free)
+        return PROCMETRIX_ERROR_MALFORMED;
+
+    if (swap_memory->free > swap_memory->total)
+        return PROCMETRIX_ERROR_MALFORMED;
+
+    // Derive usage and ratio
+    swap_memory->used = swap_memory->total - swap_memory->free;
+    swap_memory->ratio = (double)swap_memory->used / (double)swap_memory->total;
+
+    return PROCMETRIX_ERROR_NONE;
+}
+
 // Public impl
 
 procmetrix_error_t procmetrix_system_virtual_memory(procmetrix_virtual_memory_t *virtual_memory)
@@ -222,6 +302,33 @@ procmetrix_error_t procmetrix_system_virtual_memory(procmetrix_virtual_memory_t 
     fclose(meminfo_file);
     if (NULL != zoneinfo_file)
         fclose(zoneinfo_file);
+
+    return status;
+}
+
+procmetrix_error_t procmetrix_system_swap_memory(procmetrix_swap_memory_t *swap_memory)
+{
+    // Sanity
+    if (NULL == swap_memory)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Consistent results regardless of errors
+    memset(swap_memory, 0, sizeof(procmetrix_swap_memory_t));
+
+    // Open meminfo file
+    FILE *meminfo_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_meminfo_file);
+    if (NULL == meminfo_file)
+        return PROCMETRIX_ERROR_FILE_READ;
+
+    // vmstat file is only needes for sin and pswpin/pswpout
+    FILE *vmstat_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_vmstat_file);
+
+    procmetrix_error_t status = procmetrix_impl_linux_system_swap_memory(meminfo_file, vmstat_file, swap_memory);
+
+    // Cleanup
+    fclose(meminfo_file);
+    if (NULL != vmstat_file)
+        fclose(vmstat_file);
 
     return status;
 }

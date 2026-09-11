@@ -189,3 +189,78 @@ TEST(procmetrix_impl_linux_system_virtual_memory, estimate)
     // Estimate
     EXPECT_EQ(virtual_memory.available, 4077563904ull);
 }
+
+/** Swap memory */
+
+TEST(procmetrix_impl_linux_system_swap_memory, null_args_empty)
+{
+    CMemFilePtr memfp1(
+        "SwapTotal: 1234 kB"
+    );
+    CMemFilePtr memfp2(
+        "SwapFree: 5678 kB"
+    );
+
+    procmetrix_swap_memory_t swap_memory;
+
+    // Null file
+    EXPECT_EQ(
+        procmetrix_impl_linux_system_swap_memory(nullptr, nullptr, &swap_memory),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Null output
+    EXPECT_EQ(
+        procmetrix_impl_linux_system_swap_memory(memfp1.get(), nullptr, nullptr),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Has total, missing free
+    EXPECT_EQ(
+        procmetrix_impl_linux_system_swap_memory(memfp1.get(), nullptr, &swap_memory),
+        PROCMETRIX_ERROR_MALFORMED);
+    
+    // Has free, missing total
+    EXPECT_EQ(
+        procmetrix_impl_linux_system_swap_memory(memfp2.get(), nullptr, &swap_memory),
+        PROCMETRIX_ERROR_MALFORMED);
+}
+
+TEST(procmetrix_impl_linux_system_swap_memory, minimal)
+{
+    // Only the mandatory fields have been provided
+    CMemFilePtr memfp(
+        "SwapTotal:  5678 kB\n"
+        "SwapFree:   1234 kB\n"
+    );
+    
+    procmetrix_swap_memory_t swap_memory;
+    EXPECT_EQ(
+        procmetrix_impl_linux_system_swap_memory(memfp.get(), nullptr, &swap_memory),
+        PROCMETRIX_ERROR_NONE);
+    
+    EXPECT_EQ(swap_memory.total,  1024 * 5678);
+    EXPECT_EQ(swap_memory.free,   1024 * 1234);
+    EXPECT_EQ(swap_memory.used,   1024 * (5678 - 1234));
+}
+
+TEST(procmetrix_impl_linux_system_swap_memory, all)
+{
+    CMemFilePtr memstat(
+        "SwapTotal:  2000 kB\n"
+        "SwapFree:   1000 kB\n"
+    );
+
+    CMemFilePtr vmstat(
+        "pswpin  100 kB\n"
+        "pswpout 200 kB\n"
+    );
+    
+    procmetrix_swap_memory_t swap_memory;
+    EXPECT_EQ(
+        procmetrix_impl_linux_system_swap_memory(memstat.get(), vmstat.get(), &swap_memory),
+        PROCMETRIX_ERROR_NONE);
+    
+    EXPECT_EQ(swap_memory.total,    1024 * 2000);
+    EXPECT_EQ(swap_memory.free,     1024 * 1000);
+    EXPECT_EQ(swap_memory.swap_in,  4096 * 100);
+    EXPECT_EQ(swap_memory.swap_out, 4096 * 200);
+}

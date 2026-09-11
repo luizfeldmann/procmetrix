@@ -58,13 +58,39 @@ extern "C"
         //! (Linux, BSD)
         uint64_t slab;
 
-        //! Usage ratio caculated as \f$ 1 - (available / total) \f$.
+        //! Usage ratio caculated as 1 - (available / total).
         double ratio;
     } procmetrix_virtual_memory_t;
 
     //! Return statistics about system memory usage in bytes.
     //! @param[out] virtual_memory Pointer to struct where the retrieved metrics will be stored.
     PROCMETRIX_API procmetrix_error_t procmetrix_system_virtual_memory(procmetrix_virtual_memory_t *virtual_memory);
+
+    //! System swap memory statistics
+    typedef struct procmetrix_swap_memory
+    {
+        //! Total swap memory.
+        uint64_t total;
+
+        //! Used swap memory.
+        uint64_t used;
+
+        //! Free swap memory.
+        uint64_t free;
+
+        //! Cumulative bytes swapped in from disk.
+        uint64_t swap_in;
+
+        //! Cumulative bytes swapped out from disk.
+        uint64_t swap_out;
+
+        //! Usage ratio caculated as 1 - (available / total).
+        double ratio;
+    } procmetrix_swap_memory_t;
+
+    //! Return statistics about system swap memory in bytes.
+    //! @param[out] swap_memory Pointer to struct where the retrieved metrics will be stored.
+    PROCMETRIX_API procmetrix_error_t procmetrix_system_swap_memory(procmetrix_swap_memory_t *swap_memory);
 
     //! @}
 #ifdef __cplusplus
