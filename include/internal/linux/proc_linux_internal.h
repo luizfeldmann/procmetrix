@@ -13,6 +13,7 @@ extern "C"
 #endif // __cplusplus
 
     //! Reads the parent process ID from /proc/<pid>/stat
+    //! @private
     PROCMETRIX_API procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *stat_data, procmetrix_pid_t *ppid);
 
 #ifdef __cplusplus

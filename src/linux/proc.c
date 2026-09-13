@@ -20,24 +20,40 @@
 
 // Util
 
-static procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read(procmetrix_pid_t pid, char *buf, size_t len)
+static procmetrix_error_t procmetrix_impl_linux_proc_pid_read(const char *filename, procmetrix_pid_t pid, char *buf, size_t len)
 {
+    // Sanity (1)
+    if (NULL == buf || 0 == len)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Defensively clear result
+    memset(buf, 0, len);
+
+    // Sanity (2)
+    if (NULL == filename || 0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
     // Path to the file
-    char stat_path[PATH_MAX];
-    snprintf(stat_path, sizeof(stat_path), "/proc/%" PRIu32 "/stat", (unsigned)pid);
+    char read_path[PATH_MAX];
+    snprintf(read_path, sizeof(read_path), "/proc/%" PRIu32 "/%s", pid, filename);
 
     // Open the file
-    FILE *stat_file = procmetrix_impl_linux_open_file_rdonly_cloexec(stat_path);
-    if (NULL == stat_file)
+    FILE *read_file = procmetrix_impl_linux_open_file_rdonly_cloexec(read_path);
+    if (NULL == read_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Read the file line
     procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
-    if (fgets(buf, len, stat_file) == NULL)
+    if (fgets(buf, len, read_file) == NULL)
         status = PROCMETRIX_ERROR_MALFORMED;
+    else
+    {
+        // Remove trailing newline
+        buf[strcspn(buf, "\n")] = '\0';
+    }
 
     // Cleanup
-    fclose(stat_file);
+    fclose(read_file);
 
     return status;
 }
@@ -132,7 +148,7 @@ procmetrix_error_t procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetr
 
     // Read the input file
     char buf[4096];
-    procmetrix_error_t status = procmetrix_impl_linux_proc_pid_stat_read(pid, buf, sizeof(buf));
+    procmetrix_error_t status = procmetrix_impl_linux_proc_pid_read("stat", pid, buf, sizeof(buf));
     if (PROCMETRIX_ERROR_NONE != status)
         return status;
 
@@ -140,5 +156,10 @@ procmetrix_error_t procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetr
     status = procmetrix_impl_linux_proc_pid_stat_read_ppid(buf, ppid);
 
     return status;
+}
+
+procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, size_t len)
+{
+    return procmetrix_impl_linux_proc_pid_read("comm", pid, name, len);
 }
 

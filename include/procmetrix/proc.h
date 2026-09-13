@@ -45,6 +45,12 @@ extern "C"
     //! @param[out] ppid Receives the parent process ID.
     PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetrix_pid_t *ppid);
 
+    //! Gets the process' name.
+    //! @param[in] pid ID of the process to find the name.
+    //! @param[out] name Receives the name of the process.
+    //! @param[in] len Capacity of the name buffer.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, size_t len);
+
 
     //! @}
 #ifdef __cplusplus

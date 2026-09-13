@@ -87,3 +87,31 @@ TEST(procmetrix_get_proc_parent_pid, own_parent_exists)
     // Own parent exists
     EXPECT_TRUE(procmetrix_pid_exists(parent_pid));
 }
+
+TEST(procmetrix_get_proc_name, null_args)
+{
+    char name[256];
+
+    // PID 0
+    EXPECT_EQ(
+        procmetrix_get_proc_name(0, name, sizeof(name)),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Null buffer
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    EXPECT_EQ(
+        procmetrix_get_proc_name(own_pid, nullptr, 0),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_get_proc_name, own_name)
+{
+    char name[256];
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+
+    EXPECT_EQ(
+        procmetrix_get_proc_name(own_pid, name, sizeof(name)),
+        PROCMETRIX_ERROR_NONE);
+
+    EXPECT_STREQ(name, "unitTests");
+}
