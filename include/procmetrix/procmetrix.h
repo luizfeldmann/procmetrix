@@ -16,4 +16,8 @@
 //! Memory usage metrics and statistics.
 #include <procmetrix/mem.h>
 
+//! @defgroup proc Process
+//! Processes' information.
+#include <procmetrix/proc.h>
+
 #endif // _PROCMETRIX_H_

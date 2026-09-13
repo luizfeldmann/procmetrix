@@ -16,6 +16,7 @@ target_link_libraries(unitTests PRIVATE ${CMAKE_PROJECT_NAME}
 # Generic test for all platforms
 target_sources(unitTests PRIVATE
     "src/sanity.cpp"
+    "src/proc.cpp"
     "src/mem.cpp"
     "src/cpu.cpp")
 

@@ -17,6 +17,7 @@ target_sources(
     # SOURCE FILES
     PRIVATE
         "src/cpu.c"
+        "src/proc.c"
     # GENERATED FILES
         "${VERSION_FILE}"
     # PUBLIC INCLUDES
@@ -26,6 +27,7 @@ target_sources(
         "include/procmetrix/api.h"
         "include/procmetrix/cpu.h"
         "include/procmetrix/mem.h"
+        "include/procmetrix/proc.h"
         "include/procmetrix/error.h"
         "include/procmetrix/version.h"
         "include/procmetrix/procmetrix.h")
@@ -43,6 +45,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Common
     "src/linux/common.c"
     "include/internal/linux/common_linux_internal.h"
+    # Process
+    "src/linux/proc.c"
     # Memory
     "src/linux/mem.c"
     "include/internal/linux/mem_linux_internal.h"
