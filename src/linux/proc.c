@@ -1,9 +1,14 @@
 // Lib
 #include <procmetrix/proc.h>
 
+// Internal
+#include <internal/linux/common_linux_internal.h>
+#include <internal/linux/proc_linux_internal.h>
+
 // STD
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <inttypes.h>
 
@@ -11,8 +16,52 @@
 #include <glob.h>
 #include <signal.h>
 #include <unistd.h>
+#include <linux/limits.h>
 
-// Impl
+// Util
+
+static procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read(procmetrix_pid_t pid, char *buf, size_t len)
+{
+    // Path to the file
+    char stat_path[PATH_MAX];
+    snprintf(stat_path, sizeof(stat_path), "/proc/%" PRIu32 "/stat", (unsigned)pid);
+
+    // Open the file
+    FILE *stat_file = procmetrix_impl_linux_open_file_rdonly_cloexec(stat_path);
+    if (NULL == stat_file)
+        return PROCMETRIX_ERROR_FILE_READ;
+
+    // Read the file line
+    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
+    if (fgets(buf, len, stat_file) == NULL)
+        status = PROCMETRIX_ERROR_MALFORMED;
+
+    // Cleanup
+    fclose(stat_file);
+
+    return status;
+}
+
+// Private Impl
+
+procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *stat_data, procmetrix_pid_t *ppid)
+{
+    // Sanity
+    if (NULL == stat_data || NULL == ppid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Find delemiter
+    const char *rparen = strrchr(stat_data, ')');
+    if (NULL == rparen)
+        return PROCMETRIX_ERROR_MALFORMED;
+
+    if (sscanf(rparen + 1, " %*c %" SCNu32, ppid) != 1)
+        return PROCMETRIX_ERROR_MALFORMED;
+
+    return PROCMETRIX_ERROR_NONE;
+}
+
+// Public Impl
 
 procmetrix_pid_t procmetrix_get_pid()
 {
@@ -72,3 +121,24 @@ procmetrix_error_t procmetrix_list_pids(procmetrix_pid_t **list, size_t *out_cou
 
     return status;
 }
+
+procmetrix_error_t procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetrix_pid_t *ppid)
+{
+    // Sanity
+    if (0 == pid || NULL == ppid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    *ppid = 0;
+
+    // Read the input file
+    char buf[4096];
+    procmetrix_error_t status = procmetrix_impl_linux_proc_pid_stat_read(pid, buf, sizeof(buf));
+    if (PROCMETRIX_ERROR_NONE != status)
+        return status;
+
+    // Invoke impl
+    status = procmetrix_impl_linux_proc_pid_stat_read_ppid(buf, ppid);
+
+    return status;
+}
+

@@ -29,7 +29,7 @@ extern "C"
         uint64_t available;
 
         //! Memory used, calculated differently depending on the platform.
-        //! does not necessarily match \f$ total - free \f$.
+        //! does not necessarily match total - free.
         uint64_t used;
 
         //! Memory not being used at all (zeroed).

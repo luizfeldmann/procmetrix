@@ -58,3 +58,32 @@ TEST(procmetrix_list_pids, contains_own_pid)
     // Cleanup
     procmetrix_free_pids(&list);
 }
+
+TEST(procmetrix_get_proc_parent_pid, null_args)
+{
+    // Invalid input pid
+    procmetrix_pid_t parent_pid;
+    EXPECT_EQ(
+        procmetrix_get_proc_parent_pid(0, &parent_pid),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+    
+    // Null output
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    EXPECT_EQ(
+        procmetrix_get_proc_parent_pid(own_pid, nullptr),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_get_proc_parent_pid, own_parent_exists)
+{
+    procmetrix_pid_t parent_pid = 0;
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+
+    // Reads own parent sucesfully
+    EXPECT_EQ(
+        procmetrix_get_proc_parent_pid(own_pid, &parent_pid),
+        PROCMETRIX_ERROR_NONE);
+
+    // Own parent exists
+    EXPECT_TRUE(procmetrix_pid_exists(parent_pid));
+}

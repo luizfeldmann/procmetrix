@@ -47,6 +47,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "include/internal/linux/common_linux_internal.h"
     # Process
     "src/linux/proc.c"
+    "include/internal/linux/proc_linux_internal.h"
     # Memory
     "src/linux/mem.c"
     "include/internal/linux/mem_linux_internal.h"
