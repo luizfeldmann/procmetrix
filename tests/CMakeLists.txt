@@ -26,6 +26,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         # Utils
         "include/linux/CMemFilePtr.h"
         "include/linux/CTempDirGlob.h"
+        "include/utils.h"
+        "src/utils.cpp"
         # Test cases
         "src/linux/proc_internal.cpp"
         "src/linux/mem_internal.cpp"

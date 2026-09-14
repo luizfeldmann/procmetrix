@@ -51,6 +51,18 @@ extern "C"
     //! @param[in] len Capacity of the name buffer.
     PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, size_t len);
 
+    //! Gets the process' executable's full path.
+    //! @param[in] pid ID of the process to find the executable.
+    //! @param[out] path Receives the executable path.
+    //! @param[in] len Capacity of the path buffer.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_exe(procmetrix_pid_t pid, char *path, size_t len);
+
+    //! Gets the process' current working directory.
+    //! @param[in] pid ID of the process to find the working dir.
+    //! @param[out] cwd Receives the working dir.
+    //! @param[in] len Capacity of the path buffer.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_cwd(procmetrix_pid_t pid, char *cwd, size_t len);
+
 
     //! @}
 #ifdef __cplusplus

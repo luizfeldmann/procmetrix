@@ -3,11 +3,18 @@
 
 // Testing
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
+using namespace ::testing;
+
+// Utils
+#include "utils.h"
 
 // STD
 #include <algorithm>
 
 // Test cases
+
+/** PID exists */
 
 TEST(procmetrix_pid_exists, own_pid)
 {
@@ -16,6 +23,8 @@ TEST(procmetrix_pid_exists, own_pid)
     ASSERT_NE(own_pid, 0);
     EXPECT_TRUE(procmetrix_pid_exists(own_pid));
 }
+
+/** PID list */
 
 TEST(procmetrix_list_pids, null_args)
 {
@@ -59,6 +68,8 @@ TEST(procmetrix_list_pids, contains_own_pid)
     procmetrix_free_pids(&list);
 }
 
+/** PID parent */
+
 TEST(procmetrix_get_proc_parent_pid, null_args)
 {
     // Invalid input pid
@@ -88,6 +99,8 @@ TEST(procmetrix_get_proc_parent_pid, own_parent_exists)
     EXPECT_TRUE(procmetrix_pid_exists(parent_pid));
 }
 
+/** Proc name */
+
 TEST(procmetrix_get_proc_name, null_args)
 {
     char name[256];
@@ -114,4 +127,53 @@ TEST(procmetrix_get_proc_name, own_name)
         PROCMETRIX_ERROR_NONE);
 
     EXPECT_STREQ(name, "unitTests");
+}
+
+/** Proc exe */
+
+TEST(procmetrix_get_proc_exe, null_args)
+{
+    char exe_path[1024];
+
+    // PID 0
+    EXPECT_EQ(
+        procmetrix_get_proc_exe(0, exe_path, sizeof(exe_path)),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Null buffer
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    EXPECT_EQ(
+        procmetrix_get_proc_exe(own_pid, nullptr, 0),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_get_proc_exe, own_path)
+{
+    char exe_path[1024];
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+
+    EXPECT_EQ(
+        procmetrix_get_proc_exe(own_pid, exe_path, sizeof(exe_path)),
+        PROCMETRIX_ERROR_NONE);
+
+    #ifdef _WIN32
+        EXPECT_THAT(exe_path, EndsWith("unitTests.exe"));
+    #else
+        EXPECT_THAT(exe_path, EndsWith("unitTests"));
+    #endif
+}
+
+/** Proc working dir */
+
+TEST(procmetrix_get_proc_cwd, own_cwd)
+{
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    
+    // Read own working directory
+    char cwd_path[1024];
+    EXPECT_EQ(
+        procmetrix_get_proc_cwd(own_pid, cwd_path, sizeof(cwd_path)),
+        PROCMETRIX_ERROR_NONE);
+
+    EXPECT_EQ(get_working_dir(), cwd_path);
 }

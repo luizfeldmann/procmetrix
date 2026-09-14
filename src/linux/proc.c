@@ -58,6 +58,35 @@ static procmetrix_error_t procmetrix_impl_linux_proc_pid_read(const char *filena
     return status;
 }
 
+static procmetrix_error_t procmetrix_impl_linux_proc_pid_follow_symlink(const char *filename, procmetrix_pid_t pid, char *buf, size_t len)
+{
+    // Sanity
+    if (NULL == buf || 0 == len)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Defensively clear result
+    memset(buf, 0, len);
+
+    // Sanity (2)
+    if (NULL == filename || 0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Path to the symlink
+    char link_path[PATH_MAX];
+    snprintf(link_path, sizeof(link_path),
+             "/proc/%" PRIu32 "/%s", pid, filename);
+
+    // Read the symlink
+    size_t read_count = readlink(link_path, buf, len - 1);
+    if (read_count < 0)
+        return PROCMETRIX_ERROR_FILE_READ;
+
+    // Safe truncation
+    buf[read_count] = '\0';
+
+    return PROCMETRIX_ERROR_NONE;
+}
+
 // Private Impl
 
 procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *stat_data, procmetrix_pid_t *ppid)
@@ -163,3 +192,12 @@ procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, si
     return procmetrix_impl_linux_proc_pid_read("comm", pid, name, len);
 }
 
+procmetrix_error_t procmetrix_get_proc_exe(procmetrix_pid_t pid, char *path, size_t len)
+{
+    return procmetrix_impl_linux_proc_pid_follow_symlink("exe", pid, path, len);
+}
+
+procmetrix_error_t procmetrix_get_proc_cwd(procmetrix_pid_t pid, char *cwd, size_t len)
+{
+    return procmetrix_impl_linux_proc_pid_follow_symlink("cwd", pid, cwd, len);
+}
