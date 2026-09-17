@@ -279,6 +279,37 @@ procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *sta
     return PROCMETRIX_ERROR_NONE;
 }
 
+procmetrix_error_t procmetrix_impl_linux_proc_read_statm(const char *statm_data, procmetrix_proc_memory_info_t *memory_info)
+{
+    // Sanity
+    if (NULL == memory_info)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    memset(memory_info, 0, sizeof(*memory_info));
+
+    if (NULL == statm_data)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Read fields
+    uint64_t vms = 0, rss = 0, shared = 0, text = 0, lib = 0, data = 0, dirty = 0;
+    if (7 != sscanf(statm_data, "%" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64,
+                    &vms, &rss, &shared, &text, &lib, &data, &dirty))
+        return PROCMETRIX_ERROR_MALFORMED;
+
+    // Convert pages to bytes
+    uint64_t page_size = (uint64_t)sysconf(_SC_PAGE_SIZE);
+
+    memory_info->vms = page_size * vms;
+    memory_info->rss = page_size * rss;
+    memory_info->shared = page_size * shared;
+    memory_info->text = page_size * text;
+    memory_info->lib = page_size * lib;
+    memory_info->data = page_size * data;
+    memory_info->dirty = page_size * dirty;
+
+    return PROCMETRIX_ERROR_NONE;
+}
+
 // Public Impl
 
 procmetrix_pid_t procmetrix_get_pid()
@@ -474,4 +505,35 @@ procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_
     free(varlines);
 
     return status;
+}
+
+procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmetrix_proc_memory_info_t *memory_info)
+{
+    // Sanity
+    if (NULL == memory_info)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Defensively clear result
+    memset(memory_info, 0, sizeof(*memory_info));
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open file
+    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("statm", pid);
+    if (NULL == read_file)
+        return PROCMETRIX_ERROR_FILE_READ;
+
+    // Read line content
+    char buf[128];
+    procmetrix_error_t result = procmetrix_impl_linux_proc_pid_read_line(read_file, buf, sizeof(buf));
+
+    // Cleanup
+    fclose(read_file);
+
+    // Invoke impl
+    if (PROCMETRIX_ERROR_NONE == result)
+        result = procmetrix_impl_linux_proc_read_statm(buf, memory_info);
+
+    return result;
 }

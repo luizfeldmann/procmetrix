@@ -16,11 +16,16 @@ extern "C"
     //! @private
     PROCMETRIX_API procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *stat_data, procmetrix_pid_t *ppid);
 
+    //! Reads the memory information from /proc/<pid>/statm
+    //! @private
+    procmetrix_error_t procmetrix_impl_linux_proc_read_statm(const char *statm_data, procmetrix_proc_memory_info_t *memory_info);
+
     //! Splits the input buffer by '\0' terminated tokens
     //! @private
     PROCMETRIX_API procmetrix_error_t procmetrix_impl_linux_split_zero_terminated_tokens(const char *buffer, size_t buffer_size, char ***tokens, size_t *num_tokens);
 
     //! Splits the array of '=' delimited key-value pairs as environment variables
+    //! @private
     PROCMETRIX_API procmetrix_error_t procmetrix_impl_linux_split_environ_vars(const char *const *varlines, size_t numvars, procmetrix_proc_environ_t *environ);
 
 #ifdef __cplusplus

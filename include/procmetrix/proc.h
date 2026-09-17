@@ -111,6 +111,50 @@ extern "C"
     //! Frees the environment list struct.
     PROCMETRIX_API void procmetrix_free_proc_environ(procmetrix_proc_environ_t *environ);
 
+    //! Memory information about a process
+    typedef struct procmetrix_proc_memory_info {
+        //! Resident Set Size
+        //! Non-swapped physical memory a process has used
+        //! On UNIX it matches RES column in "top"
+        //! On Windows this is an alias for wset field and it matches "Mem Usage" of task manager
+        uint64_t rss;
+
+        //! Virtual Memory Size
+        //! Total amount of virtual memory used by the process
+        //! On UNIX it matches VIRT column in "top"
+        //! On Windows this is an alias for pagefile field
+        uint64_t vms;
+
+        //! Memory that could be potentially shared with other processes
+        //! Matches SHR column in "top"
+        //! (Linux only)
+        uint64_t shared;
+
+        //! The amount of memory devoted to executable code
+        //! Matches CODE column in "top"
+        //! (Linux only)
+        uint64_t text;
+
+        //! The memory used by shared libraries
+        //! (Linux only)
+        uint64_t lib;
+
+        //! DRS (data resident set)
+        //! The amount of physical memory devoted to other than executable code
+        //! Matches DATA column in "top"
+        //! (Linux only)
+        uint64_t data;
+
+        //! The number of dirty pages
+        //! (Linux only)
+        uint64_t dirty;
+    } procmetrix_proc_memory_info_t;
+
+    //! Reads the memory information of a process.
+    //! @param[in] pid ID of the process to get the memory info.
+    //! @param[out] memory_info Receives the retrieved memory info.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmetrix_proc_memory_info_t* memory_info);
+
     //! @}
 #ifdef __cplusplus
 }

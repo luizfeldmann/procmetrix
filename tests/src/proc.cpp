@@ -275,3 +275,34 @@ TEST(procmetrix_get_proc_environ, own_env)
     EXPECT_EQ(environ.count, 0);
     EXPECT_EQ(environ.vars, nullptr);
 }
+
+/** Process memory */
+
+TEST(procmetrix_get_proc_memory_info, null_args)
+{
+    // Zero PID
+    procmetrix_proc_memory_info_t memory_info { 0 };
+    EXPECT_EQ(
+        procmetrix_get_proc_memory_info(0, &memory_info), 
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Null output
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    EXPECT_EQ(
+        procmetrix_get_proc_memory_info(own_pid, nullptr), 
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_get_proc_memory_info, own_pid)
+{
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    procmetrix_proc_memory_info_t memory_info { 0 };
+
+    EXPECT_EQ(
+        procmetrix_get_proc_memory_info(own_pid, &memory_info), 
+        PROCMETRIX_ERROR_NONE);
+
+    EXPECT_GT(memory_info.vms, 0);
+    EXPECT_GT(memory_info.rss, 0);
+    EXPECT_GE(memory_info.vms, memory_info.rss);
+}
