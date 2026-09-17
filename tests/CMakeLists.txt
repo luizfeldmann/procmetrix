@@ -15,10 +15,17 @@ target_link_libraries(unitTests PRIVATE ${CMAKE_PROJECT_NAME}
 
 # Generic test for all platforms
 target_sources(unitTests PRIVATE
+    # Utils
+    "include/utils.h"
+    "src/utils.cpp"
+    # Tests
     "src/sanity.cpp"
     "src/proc.cpp"
     "src/mem.cpp"
-    "src/cpu.cpp")
+    "src/cpu.cpp"
+    # Main
+    "include/main.h"
+    "src/main.cpp")
 
 # Per-platform sources
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -26,8 +33,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         # Utils
         "include/linux/CMemFilePtr.h"
         "include/linux/CTempDirGlob.h"
-        "include/utils.h"
-        "src/utils.cpp"
         # Test cases
         "src/linux/proc_internal.cpp"
         "src/linux/mem_internal.cpp"

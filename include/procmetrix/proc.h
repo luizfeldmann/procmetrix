@@ -63,6 +63,25 @@ extern "C"
     //! @param[in] len Capacity of the path buffer.
     PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_cwd(procmetrix_pid_t pid, char *cwd, size_t len);
 
+    //! List of command line argluments for a process
+    typedef struct procmetrix_proc_cmdline
+    {
+        //! Number of arguments
+        size_t argc;
+
+        //! Values of the arguments
+        char **argv;
+    } procmetrix_proc_cmdline_t;
+
+    //! Gets the process command line.
+    //! @details The list must be free'd by the caller.
+    //! @param[in] pid ID of the process to find the command line.
+    //! @param[out] cmdline Receives number and value of the command line arguments.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_cmdline(procmetrix_pid_t pid, procmetrix_proc_cmdline_t *cmdline);
+
+    //! Frees the command line arguments list struct.
+    PROCMETRIX_API void procmetrix_free_proc_cmdline(procmetrix_proc_cmdline_t *cmd_line);
+
 
     //! @}
 #ifdef __cplusplus

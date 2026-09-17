@@ -8,6 +8,7 @@ using namespace ::testing;
 
 // Utils
 #include "utils.h"
+#include "main.h"
 
 // STD
 #include <algorithm>
@@ -176,4 +177,47 @@ TEST(procmetrix_get_proc_cwd, own_cwd)
         PROCMETRIX_ERROR_NONE);
 
     EXPECT_EQ(get_working_dir(), cwd_path);
+}
+
+/** Process command line */
+
+TEST(procmetrix_get_proc_cmdline, null_args)
+{
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    procmetrix_proc_cmdline_t cmdline { 0 };
+
+    // Zero PID
+    EXPECT_EQ(
+        procmetrix_get_proc_cmdline(0, &cmdline), 
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    EXPECT_EQ(cmdline.argc, 0);
+    EXPECT_EQ(cmdline.argv, nullptr);
+
+    // Null output
+    EXPECT_EQ(
+        procmetrix_get_proc_cmdline(own_pid, nullptr),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_get_proc_cmdline, own_cmdline)
+{
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    procmetrix_proc_cmdline_t cmdline { 0 };
+
+    // Read own command line
+    EXPECT_EQ(
+        procmetrix_get_proc_cmdline(own_pid, &cmdline),
+        PROCMETRIX_ERROR_NONE);
+
+    // Compare to what was received in main()
+    const auto mainArgs = getMainArguments();
+    EXPECT_EQ(cmdline.argc, mainArgs.size());
+    if (cmdline.argc == mainArgs.size()) {
+        for (size_t i = 0; i < cmdline.argc; ++i)
+            EXPECT_EQ(cmdline.argv[i], mainArgs[i]);
+    }
+    
+    // Cleanup
+    procmetrix_free_proc_cmdline(&cmdline);
 }
