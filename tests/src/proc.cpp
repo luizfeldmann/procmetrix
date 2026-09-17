@@ -220,4 +220,58 @@ TEST(procmetrix_get_proc_cmdline, own_cmdline)
     
     // Cleanup
     procmetrix_free_proc_cmdline(&cmdline);
+
+    // No garbage after cleanup
+    EXPECT_EQ(cmdline.argc, 0);
+    EXPECT_EQ(cmdline.argv, nullptr);
+}
+
+/** Process environment */
+
+TEST(procmetrix_get_proc_environ, null_args)
+{
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    procmetrix_proc_environ_t environ { 0 };
+
+    // Zero PID
+    EXPECT_EQ(
+        procmetrix_get_proc_environ(0, &environ), 
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    EXPECT_EQ(environ.count, 0);
+    EXPECT_EQ(environ.vars, nullptr);
+
+    // Null output
+    EXPECT_EQ(
+        procmetrix_get_proc_environ(own_pid, nullptr), 
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_get_proc_environ, own_env)
+{
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    procmetrix_proc_environ_t environ { 0 };
+
+    // Read own environment
+    EXPECT_EQ(
+        procmetrix_get_proc_environ(own_pid, &environ), 
+        PROCMETRIX_ERROR_NONE);
+
+    // Environment is not empty
+    EXPECT_GT(environ.count, 0);
+    EXPECT_NE(environ.vars, nullptr);
+
+    // Check each var
+    if (environ.count != 0 && environ.vars)
+    {
+        for (size_t i = 0; i < environ.count; ++i)
+            EXPECT_STREQ(environ.vars[i].value, std::getenv(environ.vars[i].name));
+    }
+
+    // Cleanup
+    procmetrix_free_proc_environ(&environ);
+
+    // No garbage after cleanup
+    EXPECT_EQ(environ.count, 0);\
+    EXPECT_EQ(environ.vars, nullptr);
 }

@@ -82,6 +82,34 @@ extern "C"
     //! Frees the command line arguments list struct.
     PROCMETRIX_API void procmetrix_free_proc_cmdline(procmetrix_proc_cmdline_t *cmd_line);
 
+    //! Key-value pair for one environment variable in a process
+    typedef struct procmetrix_proc_environ_var
+    {
+        //! Key/name of the environment variable
+        char *name;
+
+        //! Value of the environment variable
+        char *value;
+    } procmetrix_proc_environ_var_t;
+
+    //! List of environment variables for a process
+    typedef struct procmetrix_proc_environ
+    {
+        //! Number of items.
+        size_t count;
+
+        //! Array of the environment variables
+        procmetrix_proc_environ_var_t *vars;
+    } procmetrix_proc_environ_t;
+
+    //! Gets the process environment.
+    //! @details The list must be free'd by the caller.
+    //! @param[in] pid ID of the process to find the environment.
+    //! @param[out] environ Receives number and key-value pairs for the environment.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_proc_environ_t *environ);
+
+    //! Frees the environment list struct.
+    PROCMETRIX_API void procmetrix_free_proc_environ(procmetrix_proc_environ_t *environ);
 
     //! @}
 #ifdef __cplusplus

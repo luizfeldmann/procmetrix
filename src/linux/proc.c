@@ -149,6 +149,70 @@ static procmetrix_error_t procmetrix_impl_linux_split_zero_terminated_tokens(cha
     return PROCMETRIX_ERROR_NONE;
 }
 
+static procmetrix_error_t procmetrix_impl_linux_split_environ_vars(char **varline, size_t numvars, procmetrix_proc_environ_t *environ)
+{
+    // Sanity
+    if (NULL == environ)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Consistent results even if error
+    memset(environ, 0, sizeof(*environ));
+
+    if (NULL == varline)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // If no variables, nothing to do
+    if (0 == numvars)
+        return PROCMETRIX_ERROR_NONE;
+
+    // Allocate for the key-value pairs
+    environ->vars =
+        (procmetrix_proc_environ_var_t *)calloc(numvars, sizeof(procmetrix_proc_environ_var_t));
+
+    if (NULL == environ->vars)
+        return PROCMETRIX_ERROR_OUT_OF_MEMORY;
+
+    // Assign each key-value
+    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
+
+    for (size_t i = 0; i < numvars; ++i)
+    {
+        char *line = varline[i];
+
+        // Split left and right of delimiet
+        char *delim = strchr(line, '=');
+
+        if (NULL != delim)
+        {
+            environ->vars[i].name = strndup(line, delim - line);
+            environ->vars[i].value = strdup(delim + 1);
+        }
+        else
+        {
+            // No right-side
+            environ->vars[i].name = strdup(line);
+        }
+
+        // Cleanup on strdup failure
+        if ((NULL == environ->vars[i].name) || ((NULL == environ->vars[i].value) && (NULL != delim)))
+        {
+            free(environ->vars[i].name);
+            environ->vars[i].name = NULL;
+
+            free(environ->vars[i].value);
+            environ->vars[i].value = NULL;
+
+            status = PROCMETRIX_ERROR_OUT_OF_MEMORY;
+            break;
+        }
+
+        // Count filled items
+        environ->count = i + 1;
+    }
+
+    return status;
+}
+
 static procmetrix_error_t procmetrix_impl_linux_read_zero_terminated_tokens(FILE *read_file, char ***tokens, size_t *num_tokens)
 {
     // Read the file
@@ -368,6 +432,46 @@ procmetrix_error_t procmetrix_get_proc_cmdline(procmetrix_pid_t pid, procmetrix_
 
     // Cleanup
     fclose(read_file);
+
+    return status;
+}
+
+procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_proc_environ_t *environ)
+{
+    // Sanity (1)
+    if (NULL == environ)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Consistent result even if error
+    memset(environ, 0, sizeof(*environ));
+
+    // Sanity (2)
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open the file
+    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("environ", pid);
+    if (NULL == read_file)
+        return PROCMETRIX_ERROR_FILE_READ;
+
+    // Tokenize the environment variables key=value pairs
+    size_t numvars = 0;
+    char **varlines = NULL;
+
+    procmetrix_error_t status = procmetrix_impl_linux_read_zero_terminated_tokens(
+        read_file, &varlines, &numvars);
+
+    // Cleanup file
+    fclose(read_file);
+
+    // Allocate space for key-value pairs
+    if (PROCMETRIX_ERROR_NONE == status)
+        status = procmetrix_impl_linux_split_environ_vars(varlines, numvars, environ);
+
+    // Cleanup temp env vars line buffers
+    for (size_t i = 0; i < numvars; ++i)
+        free(varlines[i]);
+    free(varlines);
 
     return status;
 }

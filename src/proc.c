@@ -31,3 +31,22 @@ void procmetrix_free_proc_cmdline(procmetrix_proc_cmdline_t *cmd_line)
     memset(cmd_line, 0, sizeof(*cmd_line));
 }
 
+void procmetrix_free_proc_environ(procmetrix_proc_environ_t *environ)
+{
+    // Sanity
+    if (NULL == environ)
+        return;
+
+    // Free each item in the array
+    for (size_t i = 0; i < environ->count; ++i)
+    {
+        free(environ->vars[i].name);
+        free(environ->vars[i].value);
+    }
+
+    // Free the array itself
+    free(environ->vars);
+
+    // No garbage left in the struct
+    memset(environ, 0, sizeof(*environ));
+}
