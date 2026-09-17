@@ -272,6 +272,6 @@ TEST(procmetrix_get_proc_environ, own_env)
     procmetrix_free_proc_environ(&environ);
 
     // No garbage after cleanup
-    EXPECT_EQ(environ.count, 0);\
+    EXPECT_EQ(environ.count, 0);
     EXPECT_EQ(environ.vars, nullptr);
 }

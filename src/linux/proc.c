@@ -107,7 +107,7 @@ static procmetrix_error_t procmetrix_impl_linux_read_full_file(FILE *read_file, 
     return status;
 }
 
-static procmetrix_error_t procmetrix_impl_linux_split_zero_terminated_tokens(char *buffer, size_t buffer_size, char ***tokens, size_t *num_tokens)
+procmetrix_error_t procmetrix_impl_linux_split_zero_terminated_tokens(const char *buffer, size_t buffer_size, char ***tokens, size_t *num_tokens)
 {
     // Sanity
     if (NULL == tokens || NULL == num_tokens)
@@ -149,7 +149,7 @@ static procmetrix_error_t procmetrix_impl_linux_split_zero_terminated_tokens(cha
     return PROCMETRIX_ERROR_NONE;
 }
 
-static procmetrix_error_t procmetrix_impl_linux_split_environ_vars(char **varline, size_t numvars, procmetrix_proc_environ_t *environ)
+procmetrix_error_t procmetrix_impl_linux_split_environ_vars(const char *const *varlines, size_t numvars, procmetrix_proc_environ_t *environ)
 {
     // Sanity
     if (NULL == environ)
@@ -158,7 +158,7 @@ static procmetrix_error_t procmetrix_impl_linux_split_environ_vars(char **varlin
     // Consistent results even if error
     memset(environ, 0, sizeof(*environ));
 
-    if (NULL == varline)
+    if (NULL == varlines)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // If no variables, nothing to do
@@ -177,10 +177,10 @@ static procmetrix_error_t procmetrix_impl_linux_split_environ_vars(char **varlin
 
     for (size_t i = 0; i < numvars; ++i)
     {
-        char *line = varline[i];
+        const char *line = varlines[i];
 
         // Split left and right of delimiet
-        char *delim = strchr(line, '=');
+        const char *delim = strchr(line, '=');
 
         if (NULL != delim)
         {
@@ -466,7 +466,7 @@ procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_
 
     // Allocate space for key-value pairs
     if (PROCMETRIX_ERROR_NONE == status)
-        status = procmetrix_impl_linux_split_environ_vars(varlines, numvars, environ);
+        status = procmetrix_impl_linux_split_environ_vars((const char *const *)varlines, numvars, environ);
 
     // Cleanup temp env vars line buffers
     for (size_t i = 0; i < numvars; ++i)
