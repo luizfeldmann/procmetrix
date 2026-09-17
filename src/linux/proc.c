@@ -23,7 +23,7 @@
 static FILE *procmetrix_impl_linux_proc_pid_open_file(const char *filename, procmetrix_pid_t pid)
 {
     // Sanity
-    if (NULL == filename || 0 == pid)
+    if (NULL == filename)
         return NULL;
 
     // Path to the file
@@ -34,23 +34,11 @@ static FILE *procmetrix_impl_linux_proc_pid_open_file(const char *filename, proc
     return procmetrix_impl_linux_open_file_rdonly_cloexec(read_path);
 }
 
-static procmetrix_error_t procmetrix_impl_linux_proc_pid_read_line(const char *filename, procmetrix_pid_t pid, char *buf, size_t len)
+static procmetrix_error_t procmetrix_impl_linux_proc_pid_read_line(FILE *read_file, char *buf, size_t len)
 {
     // Sanity
-    if (NULL == buf || 0 == len)
+    if (NULL == read_file || NULL == buf || 0 == len)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
-
-    // Defensively clear result
-    memset(buf, 0, len);
-
-    // Sanity
-    if (NULL == filename || 0 == pid)
-        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
-
-    // Open the file
-    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file(filename, pid);
-    if (NULL == read_file)
-        return PROCMETRIX_ERROR_FILE_READ;
 
     // Read the file line
     procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
@@ -62,15 +50,66 @@ static procmetrix_error_t procmetrix_impl_linux_proc_pid_read_line(const char *f
         buf[strcspn(buf, "\n")] = '\0';
     }
 
-    // Cleanup
-    fclose(read_file);
+    return status;
+}
+
+static procmetrix_error_t procmetrix_impl_linux_read_full_file(FILE *read_file, char **buffer, size_t *file_size)
+{
+    // Sanity
+    if (NULL == read_file || NULL == buffer || NULL == file_size)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Initial buffer allocation
+    size_t chunk = 0, capacity = 128;
+
+    *file_size = 0;
+    *buffer = (char *)malloc(capacity);
+
+    if (NULL == *buffer)
+        return PROCMETRIX_ERROR_OUT_OF_MEMORY;
+
+    // Read file chunks
+    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
+    while ((chunk = fread(*buffer + *file_size, 1, capacity - *file_size, read_file)) > 0)
+    {
+        *file_size += chunk;
+
+        // Grow buffer capacity geometrically
+        if (*file_size >= capacity)
+        {
+            capacity *= 2;
+
+            // Check rellocation success
+            char *new_buffer = (char *)realloc(*buffer, capacity);
+            if (NULL == new_buffer)
+            {
+                status = PROCMETRIX_ERROR_OUT_OF_MEMORY;
+                break;
+            }
+
+            // Continue
+            *buffer = new_buffer;
+        }
+    }
+
+    // Check if the loop exited due to error
+    if (ferror(read_file))
+        status = PROCMETRIX_ERROR_FILE_READ;
+
+    // Cleanup in case of error
+    if (PROCMETRIX_ERROR_NONE != status)
+    {
+        free(*buffer);
+        *buffer = NULL;
+        *file_size = 0;
+    }
 
     return status;
 }
 
-static procmetrix_error_t procmetrix_impl_linux_proc_pid_read_zero_terminated_tokens(const char *filename, procmetrix_pid_t pid, char ***tokens, size_t *num_tokens)
+static procmetrix_error_t procmetrix_impl_linux_split_zero_terminated_tokens(char *buffer, size_t buffer_size, char ***tokens, size_t *num_tokens)
 {
-    // Sanity (1)
+    // Sanity
     if (NULL == tokens || NULL == num_tokens)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
@@ -78,94 +117,49 @@ static procmetrix_error_t procmetrix_impl_linux_proc_pid_read_zero_terminated_to
     *tokens = NULL;
     *num_tokens = 0;
 
-    // Sanity (2)
-    if (NULL == filename || 0 == pid)
+    if (NULL == buffer || 0 == buffer_size)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
-    // Open the file
-    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file(filename, pid);
-    if (NULL == read_file)
-        return PROCMETRIX_ERROR_FILE_READ;
-
-    // Read the file
-    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
-
-    size_t read_bytes = 0;
-    size_t file_size = 0;
-    size_t capacity = 128;
-    char *buffer = (char *)malloc(capacity);
-
-    if (NULL == buffer)
-        status = PROCMETRIX_ERROR_OUT_OF_MEMORY;
-    else
-    {
-        while ((read_bytes = fread(buffer + file_size, 1, capacity - file_size, read_file)) > 0)
-        {
-            file_size += read_bytes;
-
-            // Grow buffer capacity geometrically
-            if (file_size == capacity)
-            {
-                capacity *= 2;
-
-                // Check rellocation success
-                char *new_buffer = (char *)realloc(buffer, capacity);
-                if (NULL == new_buffer)
-                {
-                    status = PROCMETRIX_ERROR_OUT_OF_MEMORY;
-                    free(buffer);
-                    buffer = NULL;
-                    file_size = 0;
-                    break;
-                }
-
-                // Continue
-                buffer = new_buffer;
-            }
-        }
-
-        // Check if the loop exited due to error
-        if (ferror(read_file))
-            status = PROCMETRIX_ERROR_FILE_READ;
-    }
-
-    // Close the file
-    fclose(read_file);
-    read_file = NULL;
-
     // Count how many null terminations
-    if (PROCMETRIX_ERROR_NONE == status)
+    for (size_t i = 0; i < buffer_size; ++i)
     {
-        for (size_t i = 0; i < file_size; ++i)
-        {
-            if (buffer[i] == '\0' || i == file_size - 1)
-                (*num_tokens)++;
-        }
+        if (buffer[i] == '\0' || i == buffer_size - 1)
+            (*num_tokens)++;
+    }
 
-        // Allocate a the output list
-        if (*num_tokens > 0)
+    // Allocate the output list
+    *tokens = (char **)calloc(*num_tokens, sizeof(char *));
+    if (NULL == *tokens)
+    {
+        *num_tokens = 0;
+        return PROCMETRIX_ERROR_OUT_OF_MEMORY;
+    }
+
+    // Fill out the list of tokens
+    for (size_t file_idx = 0, tok_idx = 0, start_idx = 0; file_idx < buffer_size; ++file_idx)
+    {
+        int is_last = 0;
+        if (buffer[file_idx] == '\0' || (is_last = (file_idx == buffer_size - 1)))
         {
-            *tokens = (char **)calloc(*num_tokens, sizeof(char *));
-            if (NULL == *tokens)
-            {
-                status = PROCMETRIX_ERROR_OUT_OF_MEMORY;
-                *num_tokens = 0;
-            }
-            else
-            {
-                // Fill out the list of tokens
-                for (size_t file_idx = 0, tok_idx = 0, start_idx = 0; file_idx < file_size; ++file_idx)
-                {
-                    int is_last = 0;
-                    if (buffer[file_idx] == '\0' || (is_last = (file_idx == file_size - 1)))
-                    {
-                        (*tokens)[tok_idx++] = strndup(buffer + start_idx, file_idx - start_idx + is_last);
-                        start_idx = file_idx + 1;
-                    }
-                }
-            }
+            (*tokens)[tok_idx++] = strndup(buffer + start_idx, file_idx - start_idx + is_last);
+            start_idx = file_idx + 1;
         }
     }
+
+    return PROCMETRIX_ERROR_NONE;
+}
+
+static procmetrix_error_t procmetrix_impl_linux_read_zero_terminated_tokens(FILE *read_file, char ***tokens, size_t *num_tokens)
+{
+    // Read the file
+    size_t file_size = 0;
+    char *buffer = NULL;
+    procmetrix_error_t status = procmetrix_impl_linux_read_full_file(read_file, &buffer, &file_size);
+    if (status != PROCMETRIX_ERROR_NONE)
+        return status;
+
+    // Split the tokens
+    status = procmetrix_impl_linux_split_zero_terminated_tokens(buffer, file_size, tokens, num_tokens);
 
     // Cleanup the buffer
     free(buffer);
@@ -285,26 +279,59 @@ procmetrix_error_t procmetrix_list_pids(procmetrix_pid_t **list, size_t *out_cou
 procmetrix_error_t procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetrix_pid_t *ppid)
 {
     // Sanity
-    if (0 == pid || NULL == ppid)
+    if (NULL == ppid)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
+    // Consistent result even in case of error
     *ppid = 0;
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open file
+    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("stat", pid);
+    if (NULL == read_file)
+        return PROCMETRIX_ERROR_FILE_READ;
 
     // Read the input file
     char buf[4096];
-    procmetrix_error_t status = procmetrix_impl_linux_proc_pid_read_line("stat", pid, buf, sizeof(buf));
-    if (PROCMETRIX_ERROR_NONE != status)
-        return status;
+    procmetrix_error_t status = procmetrix_impl_linux_proc_pid_read_line(read_file, buf, sizeof(buf));
+    if (PROCMETRIX_ERROR_NONE == status)
+    {
+        // Invoke impl
+        status = procmetrix_impl_linux_proc_pid_stat_read_ppid(buf, ppid);
+    }
 
-    // Invoke impl
-    status = procmetrix_impl_linux_proc_pid_stat_read_ppid(buf, ppid);
+    // Cleanup
+    fclose(read_file);
 
     return status;
 }
 
 procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, size_t len)
 {
-    return procmetrix_impl_linux_proc_pid_read_line("comm", pid, name, len);
+    // Sanity
+    if (NULL == name || 0 == len)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Defensively clear result
+    memset(name, 0, len);
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open file
+    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("comm", pid);
+    if (NULL == read_file)
+        return PROCMETRIX_ERROR_FILE_READ;
+
+    // Read line content
+    procmetrix_error_t result = procmetrix_impl_linux_proc_pid_read_line(read_file, name, len);
+
+    // Cleanup
+    fclose(read_file);
+
+    return result;
 }
 
 procmetrix_error_t procmetrix_get_proc_exe(procmetrix_pid_t pid, char *path, size_t len)
@@ -319,9 +346,28 @@ procmetrix_error_t procmetrix_get_proc_cwd(procmetrix_pid_t pid, char *cwd, size
 
 procmetrix_error_t procmetrix_get_proc_cmdline(procmetrix_pid_t pid, procmetrix_proc_cmdline_t *cmdline)
 {
+    // Sanity (1)
     if (NULL == cmdline)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
-    return procmetrix_impl_linux_proc_pid_read_zero_terminated_tokens(
-        "cmdline", pid, &(cmdline->argv), &(cmdline->argc));
+    // Consistent result even if error
+    memset(cmdline, 0, sizeof(*cmdline));
+
+    // Sanity (2)
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open the file
+    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("cmdline", pid);
+    if (NULL == read_file)
+        return PROCMETRIX_ERROR_FILE_READ;
+
+    // The command line arguments are the split tokens
+    procmetrix_error_t status = procmetrix_impl_linux_read_zero_terminated_tokens(
+        read_file, &(cmdline->argv), &(cmdline->argc));
+
+    // Cleanup
+    fclose(read_file);
+
+    return status;
 }
