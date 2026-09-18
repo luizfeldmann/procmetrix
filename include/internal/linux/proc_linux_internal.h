@@ -16,9 +16,13 @@ extern "C"
     //! @private
     PROCMETRIX_API procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *stat_data, procmetrix_pid_t *ppid);
 
+    //! Reads CPU times from /proc/<pid>/stat
+    //! @private
+    PROCMETRIX_API procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_cpu_times(const char *stat_data, procmetrix_proc_cpu_times_t *cpu_times);
+
     //! Reads the memory information from /proc/<pid>/statm
     //! @private
-    procmetrix_error_t procmetrix_impl_linux_proc_read_statm(const char *statm_data, procmetrix_proc_memory_info_t *memory_info);
+    PROCMETRIX_API procmetrix_error_t procmetrix_impl_linux_proc_read_statm(const char *statm_data, procmetrix_proc_memory_info_t *memory_info);
 
     //! Splits the input buffer by '\0' terminated tokens
     //! @private

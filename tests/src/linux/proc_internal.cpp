@@ -223,3 +223,46 @@ TEST(procmetrix_impl_linux_proc_read_statm, valid)
     EXPECT_EQ(memory_info.data,     4096 * 139);
     EXPECT_EQ(memory_info.dirty,    4096 * 0);
 }
+
+/** CPU times */
+
+TEST(procmetrix_impl_linux_proc_pid_stat_read_cpu_times, null_args)
+{
+    // Null inputs
+    procmetrix_proc_cpu_times_t cpu_times;
+    EXPECT_EQ(
+        procmetrix_impl_linux_proc_pid_stat_read_cpu_times(nullptr, &cpu_times),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Null outputs
+    const char buf[]{"1 (systemd) S"};
+    EXPECT_EQ(
+        procmetrix_impl_linux_proc_pid_stat_read_cpu_times(buf, nullptr),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_impl_linux_proc_pid_stat_read_cpu_times, invalid)
+{
+    // Missing fields
+    const char buf[]{"1 (systemd) S"};
+    procmetrix_proc_cpu_times_t cpu_times;
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_proc_pid_stat_read_cpu_times(buf, &cpu_times),
+        PROCMETRIX_ERROR_MALFORMED);
+}
+
+TEST(procmetrix_impl_linux_proc_pid_stat_read_cpu_times, valid)
+{
+    const char buf[]{"1 (systemd) S 1 2 3 4 5 6 7 8 9 10 1100 1200 1300 1400"};
+    procmetrix_proc_cpu_times_t cpu_times;
+
+    EXPECT_EQ(
+        procmetrix_impl_linux_proc_pid_stat_read_cpu_times(buf, &cpu_times),
+        PROCMETRIX_ERROR_NONE);
+
+    EXPECT_DOUBLE_EQ(cpu_times.user, 11.0);
+    EXPECT_DOUBLE_EQ(cpu_times.system, 12.0);
+    EXPECT_DOUBLE_EQ(cpu_times.children_user, 13.0);
+    EXPECT_DOUBLE_EQ(cpu_times.children_system, 14.0);
+}

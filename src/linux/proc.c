@@ -265,16 +265,72 @@ static procmetrix_error_t procmetrix_impl_linux_proc_pid_follow_symlink(const ch
 procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *stat_data, procmetrix_pid_t *ppid)
 {
     // Sanity
-    if (NULL == stat_data || NULL == ppid)
+    if (NULL == ppid)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
-    // Find delemiter
+    *ppid = 0;
+
+    if (NULL == stat_data)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Find delimiter
     const char *rparen = strrchr(stat_data, ')');
     if (NULL == rparen)
         return PROCMETRIX_ERROR_MALFORMED;
 
     if (sscanf(rparen + 1, " %*c %" SCNu32, ppid) != 1)
         return PROCMETRIX_ERROR_MALFORMED;
+
+    return PROCMETRIX_ERROR_NONE;
+}
+
+procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_cpu_times(const char *stat_data, procmetrix_proc_cpu_times_t *cpu_times)
+{
+    // Sanity
+    if (NULL == cpu_times)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    memset(cpu_times, 0, sizeof(*cpu_times));
+
+    if (NULL == stat_data)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Jiffies conversion
+    long ticks_per_second = sysconf(_SC_CLK_TCK);
+    if (ticks_per_second <= 0)
+        return PROCMETRIX_ERROR_UNKNOWN;
+
+    // Find delimiter
+    const char *rparen = strrchr(stat_data, ')');
+    if (NULL == rparen)
+        return PROCMETRIX_ERROR_MALFORMED;
+
+    uint64_t user = 0, system = 0;
+    int64_t children_user = 0, children_system = 0;
+    if (4 != sscanf(rparen + 1,
+                    " %*c"       // state
+                    " %*d"       // ppid
+                    " %*d"       // pgrp
+                    " %*d"       // session
+                    " %*d"       // tty_nr
+                    " %*d"       // tpgid
+                    " %*u"       // flags
+                    " %*u"       // minflt
+                    " %*u"       // cminflt
+                    " %*u"       // majflt
+                    " %*u"       // cmajflt
+                    " %" SCNu64  // utime
+                    " %" SCNu64  // stime
+                    " %" SCNd64  // cutime
+                    " %" SCNd64, // cstime
+                    &user, &system, &children_user, &children_system))
+        return PROCMETRIX_ERROR_MALFORMED;
+
+    // Convert ticks to seconds
+    cpu_times->user = (double)user / ticks_per_second;
+    cpu_times->system = (double)system / ticks_per_second;
+    cpu_times->children_user = (double)children_user / ticks_per_second;
+    cpu_times->children_system = (double)children_system / ticks_per_second;
 
     return PROCMETRIX_ERROR_NONE;
 }
@@ -536,4 +592,36 @@ procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmet
         result = procmetrix_impl_linux_proc_read_statm(buf, memory_info);
 
     return result;
+}
+
+procmetrix_error_t procmetrix_get_proc_cpu_times(procmetrix_pid_t pid, procmetrix_proc_cpu_times_t *cpu_times)
+{
+    // Sanity
+    if (NULL == cpu_times)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Defensively clear result
+    memset(cpu_times, 0, sizeof(*cpu_times));
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open file
+    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("stat", pid);
+    if (NULL == read_file)
+        return PROCMETRIX_ERROR_FILE_READ;
+
+    // Read the input file
+    char buf[4096];
+    procmetrix_error_t status = procmetrix_impl_linux_proc_pid_read_line(read_file, buf, sizeof(buf));
+    if (PROCMETRIX_ERROR_NONE == status)
+    {
+        // Invoke impl
+        status = procmetrix_impl_linux_proc_pid_stat_read_cpu_times(buf, cpu_times);
+    }
+
+    // Cleanup
+    fclose(read_file);
+
+    return status;
 }

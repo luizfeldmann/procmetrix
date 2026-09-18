@@ -97,6 +97,7 @@ extern "C"
     PROCMETRIX_API procmetrix_error_t procmetrix_cpu_times_delta(const procmetrix_cpu_times_t *before, const procmetrix_cpu_times_t *after, procmetrix_cpu_times_t *delta);
 
     //! Calculates the sum of all CPU times.
+    //! @details This should increase as wall clock time multiplied by the number of logical CPUs
     PROCMETRIX_API double procmetrix_cpu_times_sum(const procmetrix_cpu_times_t *cpu_times);
 
     //! Calculates the utilization ratio of the CPU from the given time difference.

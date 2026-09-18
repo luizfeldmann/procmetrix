@@ -112,7 +112,8 @@ extern "C"
     PROCMETRIX_API void procmetrix_free_proc_environ(procmetrix_proc_environ_t *environ);
 
     //! Memory information about a process
-    typedef struct procmetrix_proc_memory_info {
+    typedef struct procmetrix_proc_memory_info
+    {
         //! Resident Set Size
         //! Non-swapped physical memory a process has used
         //! On UNIX it matches RES column in "top"
@@ -153,7 +154,39 @@ extern "C"
     //! Reads the memory information of a process.
     //! @param[in] pid ID of the process to get the memory info.
     //! @param[out] memory_info Receives the retrieved memory info.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmetrix_proc_memory_info_t* memory_info);
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmetrix_proc_memory_info_t *memory_info);
+
+    //! Accumulated process times, in seconds
+    typedef struct procmetrix_proc_cpu_times
+    {
+        //! Time spent in user mode.
+        double user;
+
+        //! time spent in kernel mode.
+        double system;
+
+        //! User time of all child processes
+        //! (Linux only)
+        double children_user;
+
+        //! system time of all child processes
+        //! (Linux only)
+        double children_system;
+    } procmetrix_proc_cpu_times_t;
+
+    //! Reads the process' usage of CPU time.
+    //! @param[in] pid ID of the process to get the CPU times.
+    //! @param[out] cpu_times Receives the retrieved CPU times.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_cpu_times(procmetrix_pid_t pid, procmetrix_proc_cpu_times_t *cpu_times);
+
+    //! Calculates the difference in CPU times between two measurements.
+    //! @details Negative values are clamped.
+    //! @param[in] before Previous CPU times snapshot.
+    //! @param[in] after Later CPU times snapshot.
+    PROCMETRIX_API procmetrix_error_t procmetrix_proc_cpu_times_delta(const procmetrix_proc_cpu_times_t *before, const procmetrix_proc_cpu_times_t *after, procmetrix_proc_cpu_times_t *delta);
+
+    //! Calculates the total sum of CPU time spent by a process.
+    PROCMETRIX_API double procmetrix_proc_cpu_times_sum(const procmetrix_proc_cpu_times_t *cpu_times);
 
     //! @}
 #ifdef __cplusplus

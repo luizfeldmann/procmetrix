@@ -306,3 +306,93 @@ TEST(procmetrix_get_proc_memory_info, own_pid)
     EXPECT_GT(memory_info.rss, 0);
     EXPECT_GE(memory_info.vms, memory_info.rss);
 }
+
+/** CPU times */
+
+TEST(procmetrix_get_proc_cpu_times, null_args)
+{
+    // Zero PID
+    procmetrix_proc_cpu_times_t cpu_times { 0 };
+    EXPECT_EQ(
+        procmetrix_get_proc_cpu_times(0, &cpu_times),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Null output
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    EXPECT_EQ(
+        procmetrix_get_proc_cpu_times(0, nullptr),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_get_proc_cpu_times, own_pid)
+{
+    // Burn some CPU to ensure non-zero user time
+    // even if the unit test process is short lived
+    volatile uint64_t x = 0;
+    for (uint64_t i = 0; i < 100000000ULL; ++i)
+        x += i;
+
+    // Read own process times
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+    procmetrix_proc_cpu_times_t cpu_times { 0 };
+    EXPECT_EQ(
+        procmetrix_get_proc_cpu_times(own_pid, &cpu_times),
+        PROCMETRIX_ERROR_NONE);
+
+    // CPU user time is positive
+    EXPECT_GT(cpu_times.user, 0.0);
+}
+
+TEST(procmetrix_proc_cpu_times_delta, null_args)
+{
+    procmetrix_proc_cpu_times_t before, after, delta;
+
+    // Null inputs
+    EXPECT_EQ(
+        procmetrix_proc_cpu_times_delta(nullptr, nullptr, &delta),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // No garbate in the output
+    EXPECT_EQ(delta.user, 0.0);
+    EXPECT_EQ(delta.system, 0.0);
+    EXPECT_EQ(delta.children_user, 0.0);
+    EXPECT_EQ(delta.children_system, 0.0);
+
+    // Null output
+    EXPECT_EQ(
+        procmetrix_proc_cpu_times_delta(&before, &after, nullptr),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(procmetrix_proc_cpu_times_delta, delta)
+{
+    procmetrix_proc_cpu_times_t const before {
+        1, 2, 3, 4
+    };
+    procmetrix_proc_cpu_times_t const after {
+        2, 3, 4, 5
+    };
+
+    procmetrix_proc_cpu_times_t delta {0};
+    EXPECT_EQ(
+        procmetrix_proc_cpu_times_delta(&before, &after, &delta),
+        PROCMETRIX_ERROR_NONE);
+
+    EXPECT_DOUBLE_EQ(delta.user, 1.0);
+    EXPECT_DOUBLE_EQ(delta.system, 1.0);
+    EXPECT_DOUBLE_EQ(delta.children_user, 1.0);
+    EXPECT_DOUBLE_EQ(delta.children_system, 1.0);
+}
+
+TEST(procmetrix_proc_cpu_times_sum, null_args)
+{
+    EXPECT_DOUBLE_EQ(procmetrix_proc_cpu_times_sum(nullptr), 0.0);
+}
+
+TEST(procmetrix_proc_cpu_times_sum, sum)
+{
+    procmetrix_proc_cpu_times_t cpu_times {
+        2.0, 4.0, 8.0, 16.0
+    };
+    EXPECT_DOUBLE_EQ(procmetrix_proc_cpu_times_sum(&cpu_times), 6.0);
+}
