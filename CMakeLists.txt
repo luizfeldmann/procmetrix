@@ -56,6 +56,14 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "include/internal/linux/core_topology.h"
     "src/linux/cpu.c"
     "include/internal/linux/cpu_linux_internal.h")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # Process
+    "src/windows/proc.c"
+    # Memory
+    "src/windows/mem.c"
+    # CPU
+    "src/windows/cpu.c")
 endif()
 
 # Only build tests if enabled
