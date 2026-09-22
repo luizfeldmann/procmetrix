@@ -10,26 +10,26 @@
 
 // Util
 
-inline static double large_uint_to_secs(const ULARGE_INTEGER *li)
+inline static double procmetrix_large_uint_to_secs(const ULARGE_INTEGER *li)
 {
     // each unit is 100 nanoseconds
     return (double)li->QuadPart / 1.0E7;
 }
 
-inline static double large_int_to_secs(const LARGE_INTEGER *li)
+inline static double procmetrix_large_int_to_secs(const LARGE_INTEGER *li)
 {
     // each unit is 100 nanoseconds
     return (double)li->QuadPart / 1.0E7;
 }
 
-inline static double filetime_to_secs(const FILETIME *pft)
+inline static double procmetrix_filetime_to_secs(const FILETIME *pft)
 {
     ULARGE_INTEGER v;
     v.LowPart = pft->dwLowDateTime;
     v.HighPart = pft->dwHighDateTime;
 
     // each unit is 100 nanoseconds
-    return large_uint_to_secs(&v);
+    return procmetrix_large_uint_to_secs(&v);
 }
 
 //! This seems to be missing from windows headers
@@ -104,12 +104,12 @@ procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t *cpu_times)
         return PROCMETRIX_ERROR_UNKNOWN;
 
     // Convert to seconds
-    cpu_times->idle = filetime_to_secs(&idle_time);
-    cpu_times->user = filetime_to_secs(&user_time);
+    cpu_times->idle = procmetrix_filetime_to_secs(&idle_time);
+    cpu_times->user = procmetrix_filetime_to_secs(&user_time);
 
     // Kernel time includes idle time.
     // We return only busy kernel time subtracting idle time
-    double kernel = filetime_to_secs(&kernel_time);
+    double kernel = procmetrix_filetime_to_secs(&kernel_time);
     cpu_times->system = kernel - cpu_times->idle;
 
     return PROCMETRIX_ERROR_NONE;
@@ -165,16 +165,16 @@ procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_time
             }
 
             // Convert to seconds
-            cpu_times[i].user = large_int_to_secs(&sppi[i].UserTime);
-            cpu_times[i].idle = large_int_to_secs(&sppi[i].IdleTime);
+            cpu_times[i].user = procmetrix_large_int_to_secs(&sppi[i].UserTime);
+            cpu_times[i].idle = procmetrix_large_int_to_secs(&sppi[i].IdleTime);
 
             // kernel time includes idle time on windows
             // we return only system busy kernel time subtracting the idle time from the kernel total time
-            double kernel_time = large_int_to_secs(&sppi[i].KernelTime);
+            double kernel_time = procmetrix_large_int_to_secs(&sppi[i].KernelTime);
             cpu_times[i].system = kernel_time - cpu_times[i].idle;
 
-            cpu_times[i].dpc = large_int_to_secs(&sppi[i].Reserved1[0]);
-            cpu_times[i].interrupt = large_int_to_secs(&sppi[i].Reserved1[1]);
+            cpu_times[i].dpc = procmetrix_large_int_to_secs(&sppi[i].Reserved1[0]);
+            cpu_times[i].interrupt = procmetrix_large_int_to_secs(&sppi[i].Reserved1[1]);
 
             // Update count of read items
             if (NULL != readCount)

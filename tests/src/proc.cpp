@@ -63,7 +63,8 @@ TEST(procmetrix_list_pids, contains_own_pid)
     auto itend = std::next(list, count);
     auto itfind = std::find(list, itend, own_pid);
 
-    EXPECT_NE(itfind, itend);
+    EXPECT_NE(itfind, itend) 
+        << "own pid: " << own_pid << "; pids list size = " << count;
 
     // Cleanup
     procmetrix_free_pids(&list);
@@ -127,7 +128,11 @@ TEST(procmetrix_get_proc_name, own_name)
         procmetrix_get_proc_name(own_pid, name, sizeof(name)),
         PROCMETRIX_ERROR_NONE);
 
-    EXPECT_STREQ(name, "unitTests");
+    #ifdef _WIN32
+        EXPECT_STREQ(name, "unitTests.exe");
+    #else
+        EXPECT_STREQ(name, "unitTests");
+    #endif
 }
 
 /** Proc exe */
@@ -165,6 +170,16 @@ TEST(procmetrix_get_proc_exe, own_path)
 }
 
 /** Proc working dir */
+
+TEST(procmetrix_get_proc_cwd, null_args)
+{
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+
+    // Null output
+    EXPECT_EQ(
+        procmetrix_get_proc_cwd(own_pid, nullptr, 0),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
 
 TEST(procmetrix_get_proc_cwd, own_cwd)
 {
