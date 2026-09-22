@@ -34,24 +34,24 @@ void procmetrix_free_proc_cmdline(procmetrix_proc_cmdline_t *cmd_line)
     memset(cmd_line, 0, sizeof(*cmd_line));
 }
 
-void procmetrix_free_proc_environ(procmetrix_proc_environ_t *environ)
+void procmetrix_free_proc_environ(procmetrix_proc_environ_t *proc_environ)
 {
     // Sanity
-    if (NULL == environ)
+    if (NULL == proc_environ)
         return;
 
     // Free each item in the array
-    for (size_t i = 0; i < environ->count; ++i)
+    for (size_t i = 0; i < proc_environ->count; ++i)
     {
-        free(environ->vars[i].name);
-        free(environ->vars[i].value);
+        free(proc_environ->vars[i].name);
+        free(proc_environ->vars[i].value);
     }
 
     // Free the array itself
-    free(environ->vars);
+    free(proc_environ->vars);
 
     // No garbage left in the struct
-    memset(environ, 0, sizeof(*environ));
+    memset(proc_environ, 0, sizeof(*proc_environ));
 }
 
 /** Derived metrics */

@@ -105,11 +105,11 @@ extern "C"
     //! Gets the process environment.
     //! @details The list must be free'd by the caller.
     //! @param[in] pid ID of the process to find the environment.
-    //! @param[out] environ Receives number and key-value pairs for the environment.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_proc_environ_t *environ);
+    //! @param[out] proc_environ Receives number and key-value pairs for the environment.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_proc_environ_t *proc_environ);
 
     //! Frees the environment list struct.
-    PROCMETRIX_API void procmetrix_free_proc_environ(procmetrix_proc_environ_t *environ);
+    PROCMETRIX_API void procmetrix_free_proc_environ(procmetrix_proc_environ_t *proc_environ);
 
     //! Memory information about a process
     typedef struct procmetrix_proc_memory_info

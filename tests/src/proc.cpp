@@ -231,15 +231,15 @@ TEST(procmetrix_get_proc_cmdline, own_cmdline)
 TEST(procmetrix_get_proc_environ, null_args)
 {
     procmetrix_pid_t own_pid = procmetrix_get_pid();
-    procmetrix_proc_environ_t environ { 0 };
+    procmetrix_proc_environ_t proc_environ { 0 };
 
     // Zero PID
     EXPECT_EQ(
-        procmetrix_get_proc_environ(0, &environ), 
+        procmetrix_get_proc_environ(0, &proc_environ), 
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
-    EXPECT_EQ(environ.count, 0);
-    EXPECT_EQ(environ.vars, nullptr);
+    EXPECT_EQ(proc_environ.count, 0);
+    EXPECT_EQ(proc_environ.vars, nullptr);
 
     // Null output
     EXPECT_EQ(
@@ -250,30 +250,30 @@ TEST(procmetrix_get_proc_environ, null_args)
 TEST(procmetrix_get_proc_environ, own_env)
 {
     procmetrix_pid_t own_pid = procmetrix_get_pid();
-    procmetrix_proc_environ_t environ { 0 };
+    procmetrix_proc_environ_t proc_environ { 0 };
 
     // Read own environment
     EXPECT_EQ(
-        procmetrix_get_proc_environ(own_pid, &environ), 
+        procmetrix_get_proc_environ(own_pid, &proc_environ), 
         PROCMETRIX_ERROR_NONE);
 
     // Environment is not empty
-    EXPECT_GT(environ.count, 0);
-    EXPECT_NE(environ.vars, nullptr);
+    EXPECT_GT(proc_environ.count, 0);
+    EXPECT_NE(proc_environ.vars, nullptr);
 
     // Check each var
-    if (environ.count != 0 && environ.vars)
+    if (proc_environ.count != 0 && proc_environ.vars)
     {
-        for (size_t i = 0; i < environ.count; ++i)
-            EXPECT_STREQ(environ.vars[i].value, std::getenv(environ.vars[i].name));
+        for (size_t i = 0; i < proc_environ.count; ++i)
+            EXPECT_STREQ(proc_environ.vars[i].value, std::getenv(proc_environ.vars[i].name));
     }
 
     // Cleanup
-    procmetrix_free_proc_environ(&environ);
+    procmetrix_free_proc_environ(&proc_environ);
 
     // No garbage after cleanup
-    EXPECT_EQ(environ.count, 0);
-    EXPECT_EQ(environ.vars, nullptr);
+    EXPECT_EQ(proc_environ.count, 0);
+    EXPECT_EQ(proc_environ.vars, nullptr);
 }
 
 /** Process memory */
