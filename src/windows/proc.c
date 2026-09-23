@@ -112,8 +112,8 @@ static procmetrix_error_t procmetric_read_process_param(HANDLE hProcess, wchar_t
     if (NULL == hProcess || NULL == base_address || 0 == read_len)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
-    // Alloc space for the result
-    *data = malloc(read_len + sizeof(wchar_t));
+    // Alloc space for the result, ensure a final '\0' always
+    *data = calloc(read_len + sizeof(wchar_t), 1);
     if (NULL == *data)
         return PROCMETRIX_ERROR_OUT_OF_MEMORY;
 
@@ -133,8 +133,17 @@ static procmetrix_error_t procmetric_read_process_param(HANDLE hProcess, wchar_t
     return PROCMETRIX_ERROR_NONE;
 }
 
+//! Process parameter output
+typedef struct
+{
+    //! Output buffer data
+    wchar_t *buf;
+    //! Data length
+    size_t nbytes;
+} procmetrix_proc_param_out_t;
+
 //! Reads params from a process's memory
-static procmetrix_error_t procmetric_read_process_params(procmetrix_pid_t pid, wchar_t **cwd, wchar_t **cli, wchar_t **env)
+static procmetrix_error_t procmetric_read_process_params(procmetrix_pid_t pid, procmetrix_proc_param_out_t *cwd, procmetrix_proc_param_out_t *cli, procmetrix_proc_param_out_t *env)
 {
     // Open the process
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
@@ -171,22 +180,25 @@ static procmetrix_error_t procmetric_read_process_params(procmetrix_pid_t pid, w
 
     if (NULL != cwd)
     {
+        cwd->nbytes = proc_parameters.CurrentDirectoryPath.Length;
         status = procmetric_read_process_param(
-            hProcess, cwd,
+            hProcess, &cwd->buf,
             proc_parameters.CurrentDirectoryPath.Buffer,
             proc_parameters.CurrentDirectoryPath.Length);
     }
     else if (NULL != cli)
     {
+        cli->nbytes = proc_parameters.CommandLine.Length;
         status = procmetric_read_process_param(
-            hProcess, cli,
+            hProcess, &cli->buf,
             proc_parameters.CommandLine.Buffer,
             proc_parameters.CommandLine.Length);
     }
     else if (NULL != env)
     {
+        env->nbytes = proc_parameters.EnvironmentSize;
         status = procmetric_read_process_param(
-            hProcess, env,
+            hProcess, &env->buf,
             proc_parameters.Environment,
             proc_parameters.EnvironmentSize);
     }
@@ -202,20 +214,20 @@ static procmetrix_error_t procmetric_read_process_params(procmetrix_pid_t pid, w
 }
 
 //! Converts wide string to narrow string
-static char *procmetrix_wide_to_narrow(const wchar_t *wide, int input_len, int *output_len)
+static char *procmetrix_wide_to_narrow(const wchar_t *wide, int input_num_wchars, int *output_len)
 {
     // Sanity
     if (NULL == wide)
         return NULL;
 
     // Discover required size
-    int result_len = WideCharToMultiByte(CP_UTF8, 0, wide, input_len, NULL, 0, NULL, NULL);
+    int result_len = WideCharToMultiByte(CP_UTF8, 0, wide, input_num_wchars, NULL, 0, NULL, NULL);
     if (result_len <= 0)
         return NULL;
 
     // Perform the conversion
     char *narrow = (char *)malloc(result_len);
-    result_len = WideCharToMultiByte(CP_UTF8, 0, wide, input_len, narrow, result_len, NULL, NULL);
+    result_len = WideCharToMultiByte(CP_UTF8, 0, wide, input_num_wchars, narrow, result_len, NULL, NULL);
     if (result_len <= 0)
     {
         free(narrow);
@@ -230,25 +242,18 @@ static char *procmetrix_wide_to_narrow(const wchar_t *wide, int input_len, int *
 }
 
 //! Parses the environment variables into the output struct
-static procmetrix_error_t procmetrix_read_environment_variables(const wchar_t *wide_env, procmetrix_proc_environ_t *proc_environ)
+static procmetrix_error_t procmetrix_read_environment_variables(const wchar_t *wide_env, size_t wide_env_bytes, procmetrix_proc_environ_t *proc_environ)
 {
     // Sanity
-    if (NULL == wide_env || NULL == proc_environ)
+    if (NULL == wide_env || 0 == wide_env_bytes || NULL == proc_environ)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
-
-    // Discover the length of the env data
-    // This is not a normal string,
-    // Each line ends with a \0
-    // The full block ends with a double \0\0
-    size_t wide_env_len = 0;
-    while (!(wide_env[wide_env_len] == L'\0' && wide_env[wide_env_len + 1] == L'\0'))
-        ++wide_env_len;
-    wide_env_len++; // Include only one of the two terminators in the count
 
     // Convert to a narrow UTF-8 string
     int narrow_env_len = 0;
-    char *narrow_env = procmetrix_wide_to_narrow(wide_env, wide_env_len, &narrow_env_len);
-    if (NULL == narrow_env)
+    char *narrow_env = procmetrix_wide_to_narrow(
+        wide_env, wide_env_bytes / sizeof(wchar_t), &narrow_env_len);
+
+    if (NULL == narrow_env || 0 == narrow_env_len)
         return PROCMETRIX_ERROR_UNKNOWN;
 
     // Tokenize as lines
@@ -476,24 +481,25 @@ procmetrix_error_t procmetrix_get_proc_cwd(procmetrix_pid_t pid, char *dst_cwd, 
     // Sanity
     if (NULL == dst_cwd || 0 == dst_len)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
-    memset(dst_cwd, 0, sizeof(dst_cwd));
+    memset(dst_cwd, 0, dst_len);
 
     if (0 == pid)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Read raw CWD from the process memory
-    wchar_t *wide_cwd = NULL;
-    procmetrix_error_t status = procmetric_read_process_params(pid, &wide_cwd, NULL, NULL);
+    procmetrix_proc_param_out_t read_param = {0};
+    procmetrix_error_t status = procmetric_read_process_params(pid, &read_param, NULL, NULL);
 
     if (PROCMETRIX_ERROR_NONE == status)
     {
-        int copy_len = WideCharToMultiByte(CP_UTF8, 0, wide_cwd, -1, dst_cwd, dst_len, NULL, NULL);
+        int copy_len = WideCharToMultiByte(
+            CP_UTF8, 0, read_param.buf, read_param.nbytes / sizeof(wchar_t), dst_cwd, dst_len - 1, NULL, NULL);
         if (0 == copy_len)
             status = PROCMETRIX_ERROR_MORE_DATA;
         else
         {
-            // This length includes the final '\0'
-            --copy_len;
+            // Ensure a terminating \0
+            dst_cwd[copy_len] = '\0';
 
             // Trim trailing "\"" if it exists
             // Do not trim "C:\" to "C:"
@@ -505,7 +511,7 @@ procmetrix_error_t procmetrix_get_proc_cwd(procmetrix_pid_t pid, char *dst_cwd, 
     }
 
     // Cleanup
-    free(wide_cwd);
+    free(read_param.buf);
 
     return status;
 }
@@ -521,19 +527,23 @@ procmetrix_error_t procmetrix_get_proc_cmdline(procmetrix_pid_t pid, procmetrix_
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Read raw CLI from the process memory
-    wchar_t *cli = NULL;
-    procmetrix_error_t status = procmetric_read_process_params(pid, NULL, &cli, NULL);
+    procmetrix_proc_param_out_t read_param = {0};
+    procmetrix_error_t status = procmetric_read_process_params(pid, NULL, &read_param, NULL);
 
     // Split the full cli into argc and argv
     int argc = 0;
     wchar_t **argv = NULL;
     if (PROCMETRIX_ERROR_NONE == status)
     {
-        argv = CommandLineToArgvW(cli, &argc);
+        argv = CommandLineToArgvW(read_param.buf, &argc);
 
         if (argc == 0 || NULL == argv)
             status = PROCMETRIX_ERROR_UNKNOWN;
     }
+
+    // Cleanup, no longer need raw param
+    free(read_param.buf);
+    memset(&read_param, 0, sizeof(read_param));
 
     // Alloc space for the ansi vector
     if (PROCMETRIX_ERROR_NONE == status)
@@ -560,7 +570,6 @@ procmetrix_error_t procmetrix_get_proc_cmdline(procmetrix_pid_t pid, procmetrix_
 
     // Cleanup
     LocalFree(argv);
-    free(cli);
 
     return status;
 }
@@ -576,17 +585,17 @@ procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Read raw environment from the process memory
-    wchar_t *wide_env = NULL;
-    procmetrix_error_t status = procmetric_read_process_params(pid, NULL, NULL, &wide_env);
+    procmetrix_proc_param_out_t read_param = {0};
+    procmetrix_error_t status = procmetric_read_process_params(pid, NULL, NULL, &read_param);
 
     // Split the lines and key-value
     if (PROCMETRIX_ERROR_NONE == status)
     {
-        status = procmetrix_read_environment_variables(wide_env, proc_environ);
+        status = procmetrix_read_environment_variables(read_param.buf, read_param.nbytes, proc_environ);
     }
 
     // Cleanup
-    free(wide_env);
+    free(read_param.buf);
 
     return status;
 }
