@@ -319,7 +319,10 @@ TEST(procmetrix_get_proc_memory_info, own_pid)
 
     EXPECT_GT(memory_info.vms, 0);
     EXPECT_GT(memory_info.rss, 0);
+
+#ifndef _WIN32
     EXPECT_GE(memory_info.vms, memory_info.rss);
+#endif
 }
 
 /** CPU times */

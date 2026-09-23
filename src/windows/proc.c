@@ -7,9 +7,13 @@
 #include <winternl.h>
 #include <shlwapi.h>
 #include <shellapi.h>
+#include <Psapi.h>
 #pragma comment(lib, "ntdll.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "Shlwapi.lib")
+
+// Lib interals
+#include <internal/windows/common_windows_internal.h>
 
 // Utils
 
@@ -602,12 +606,66 @@ procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_
 
 procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmetrix_proc_memory_info_t *memory_info)
 {
-    // @TODO
-    return PROCMETRIX_NOT_IMPLEMENTED;
+    // Sanity
+    if (NULL == memory_info)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+    memset(memory_info, 0, sizeof(*memory_info));
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open process
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (NULL == hProcess)
+        return PROCMETRIX_ERROR_UNKNOWN;
+
+    // Read process memory counters
+    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
+
+    PROCESS_MEMORY_COUNTERS_EX cnt = {0};
+    if (!GetProcessMemoryInfo(hProcess, (PPROCESS_MEMORY_COUNTERS)&cnt, sizeof(cnt)))
+        status = PROCMETRIX_ERROR_UNKNOWN;
+    else
+    {
+        memory_info->rss = cnt.WorkingSetSize;
+        memory_info->vms = cnt.PrivateUsage;
+    }
+
+    // Cleanup
+    CloseHandle(hProcess);
+
+    return status;
 }
 
 procmetrix_error_t procmetrix_get_proc_cpu_times(procmetrix_pid_t pid, procmetrix_proc_cpu_times_t *cpu_times)
 {
-    // @TODO
-    return PROCMETRIX_NOT_IMPLEMENTED;
+    // Sanity
+    if (NULL == cpu_times)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+    memset(cpu_times, 0, sizeof(*cpu_times));
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open process
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (NULL == hProcess)
+        return PROCMETRIX_ERROR_UNKNOWN;
+
+    // Read process times counters
+    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
+
+    FILETIME ftCreate = {0}, ftExit = {0}, ftKernel = {0}, ftUser = {0};
+    if (!GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser))
+        status = PROCMETRIX_ERROR_UNKNOWN;
+    else
+    {
+        cpu_times->user = procmetrix_impl_windows_filetime_to_secs(&ftUser);
+        cpu_times->system = procmetrix_impl_windows_filetime_to_secs(&ftKernel);
+    }
+
+    // Cleanup
+    CloseHandle(hProcess);
+
+    return status;
 }

@@ -60,6 +60,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "include/internal/linux/cpu_linux_internal.h")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # Common
+    "src/windows/common.c"
+    "include/internal/windows/common_windows_internal.h"
     # Process
     "src/windows/proc.c"
     # Memory
