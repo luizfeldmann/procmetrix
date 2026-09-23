@@ -20,6 +20,7 @@ target_sources(unitTests PRIVATE
     "src/utils.cpp"
     # Tests
     "src/sanity.cpp"
+    "src/algo.cpp"
     "src/proc.cpp"
     "src/mem.cpp"
     "src/cpu.cpp"

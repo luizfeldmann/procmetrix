@@ -16,6 +16,8 @@ target_sources(
     ${CMAKE_PROJECT_NAME}
     # SOURCE FILES
     PRIVATE
+        "include/internal/algo.h"
+        "src/algo.c"
         "src/cpu.c"
         "src/proc.c"
     # GENERATED FILES

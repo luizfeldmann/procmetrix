@@ -1,7 +1,5 @@
-// Lib
-#include <procmetrix/proc.h>
-
 // Internal
+#include <internal/algo.h>
 #include <internal/linux/common_linux_internal.h>
 #include <internal/linux/proc_linux_internal.h>
 
@@ -107,112 +105,6 @@ static procmetrix_error_t procmetrix_impl_linux_read_full_file(FILE *read_file, 
     return status;
 }
 
-procmetrix_error_t procmetrix_impl_linux_split_zero_terminated_tokens(const char *buffer, size_t buffer_size, char ***tokens, size_t *num_tokens)
-{
-    // Sanity
-    if (NULL == tokens || NULL == num_tokens)
-        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
-
-    // Cleanup outputs
-    *tokens = NULL;
-    *num_tokens = 0;
-
-    if (NULL == buffer || 0 == buffer_size)
-        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
-
-    // Count how many null terminations
-    for (size_t i = 0; i < buffer_size; ++i)
-    {
-        if (buffer[i] == '\0' || i == buffer_size - 1)
-            (*num_tokens)++;
-    }
-
-    // Allocate the output list
-    *tokens = (char **)calloc(*num_tokens, sizeof(char *));
-    if (NULL == *tokens)
-    {
-        *num_tokens = 0;
-        return PROCMETRIX_ERROR_OUT_OF_MEMORY;
-    }
-
-    // Fill out the list of tokens
-    for (size_t file_idx = 0, tok_idx = 0, start_idx = 0; file_idx < buffer_size; ++file_idx)
-    {
-        int is_last = 0;
-        if (buffer[file_idx] == '\0' || (is_last = (file_idx == buffer_size - 1)))
-        {
-            (*tokens)[tok_idx++] = strndup(buffer + start_idx, file_idx - start_idx + is_last);
-            start_idx = file_idx + 1;
-        }
-    }
-
-    return PROCMETRIX_ERROR_NONE;
-}
-
-procmetrix_error_t procmetrix_impl_linux_split_environ_vars(const char *const *varlines, size_t numvars, procmetrix_proc_environ_t *environ)
-{
-    // Sanity
-    if (NULL == environ)
-        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
-
-    // Consistent results even if error
-    memset(environ, 0, sizeof(*environ));
-
-    if (NULL == varlines)
-        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
-
-    // If no variables, nothing to do
-    if (0 == numvars)
-        return PROCMETRIX_ERROR_NONE;
-
-    // Allocate for the key-value pairs
-    environ->vars =
-        (procmetrix_proc_environ_var_t *)calloc(numvars, sizeof(procmetrix_proc_environ_var_t));
-
-    if (NULL == environ->vars)
-        return PROCMETRIX_ERROR_OUT_OF_MEMORY;
-
-    // Assign each key-value
-    procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
-
-    for (size_t i = 0; i < numvars; ++i)
-    {
-        const char *line = varlines[i];
-
-        // Split left and right of delimiet
-        const char *delim = strchr(line, '=');
-
-        if (NULL != delim)
-        {
-            environ->vars[i].name = strndup(line, delim - line);
-            environ->vars[i].value = strdup(delim + 1);
-        }
-        else
-        {
-            // No right-side
-            environ->vars[i].name = strdup(line);
-        }
-
-        // Cleanup on strdup failure
-        if ((NULL == environ->vars[i].name) || ((NULL == environ->vars[i].value) && (NULL != delim)))
-        {
-            free(environ->vars[i].name);
-            environ->vars[i].name = NULL;
-
-            free(environ->vars[i].value);
-            environ->vars[i].value = NULL;
-
-            status = PROCMETRIX_ERROR_OUT_OF_MEMORY;
-            break;
-        }
-
-        // Count filled items
-        environ->count = i + 1;
-    }
-
-    return status;
-}
-
 static procmetrix_error_t procmetrix_impl_linux_read_zero_terminated_tokens(FILE *read_file, char ***tokens, size_t *num_tokens)
 {
     // Read the file
@@ -223,7 +115,7 @@ static procmetrix_error_t procmetrix_impl_linux_read_zero_terminated_tokens(FILE
         return status;
 
     // Split the tokens
-    status = procmetrix_impl_linux_split_zero_terminated_tokens(buffer, file_size, tokens, num_tokens);
+    status = procmetrix_split_zero_terminated_tokens(buffer, file_size, tokens, num_tokens);
 
     // Cleanup the buffer
     free(buffer);
@@ -553,7 +445,7 @@ procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_
 
     // Allocate space for key-value pairs
     if (PROCMETRIX_ERROR_NONE == status)
-        status = procmetrix_impl_linux_split_environ_vars((const char *const *)varlines, numvars, environ);
+        status = procmetrix_split_environ_vars((const char *const *)varlines, numvars, environ);
 
     // Cleanup temp env vars line buffers
     for (size_t i = 0; i < numvars; ++i)
