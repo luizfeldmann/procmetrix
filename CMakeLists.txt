@@ -5,6 +5,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.22)
 # Project metadata
 PROJECT(procmetrix LANGUAGES C)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Generated files
 SET(VERSION_FILE "${CMAKE_BINARY_DIR}/generated/version.c")
 configure_file("src/version.c.in" "${VERSION_FILE}" @ONLY)
