@@ -1,0 +1,8 @@
+include(default)
+
+[settings]
+build_type=Debug
+
+[conf]
+user.procmetrix:run_tests=True
+user.procmetrix:profile_name=windows-debug

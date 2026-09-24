@@ -44,6 +44,31 @@ jobs:
       conan-profile: linux-debug-sanitizer
       coverage: false
 
+  # Windows builds
+  windows-release:
+    uses: ./.github/workflows/build-windows.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: windows-release
+      coverage: false
+
+  windows-debug:
+    uses: ./.github/workflows/build-windows.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: windows-debug
+      coverage: false
+
+  windows-clang-cov-san:
+    uses: ./.github/workflows/build-windows.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: windows-clang-cov-san
+      coverage: true
+
   # Publish Doxygen as GitHub Pages
   publish-docs:
     # Only when updating main
@@ -53,6 +78,9 @@ jobs:
       - linux-release
       - linux-debug-coverage
       - linux-debug-sanitizer
+      - windows-release
+      - windows-debug
+      - windows-clang-cov-san
 
     runs-on: ubuntu-latest
 

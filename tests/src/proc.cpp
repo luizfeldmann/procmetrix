@@ -63,7 +63,8 @@ TEST(procmetrix_list_pids, contains_own_pid)
     auto itend = std::next(list, count);
     auto itfind = std::find(list, itend, own_pid);
 
-    EXPECT_NE(itfind, itend);
+    EXPECT_NE(itfind, itend) 
+        << "own pid: " << own_pid << "; pids list size = " << count;
 
     // Cleanup
     procmetrix_free_pids(&list);
@@ -127,7 +128,11 @@ TEST(procmetrix_get_proc_name, own_name)
         procmetrix_get_proc_name(own_pid, name, sizeof(name)),
         PROCMETRIX_ERROR_NONE);
 
-    EXPECT_STREQ(name, "unitTests");
+    #ifdef _WIN32
+        EXPECT_STREQ(name, "unitTests.exe");
+    #else
+        EXPECT_STREQ(name, "unitTests");
+    #endif
 }
 
 /** Proc exe */
@@ -165,6 +170,16 @@ TEST(procmetrix_get_proc_exe, own_path)
 }
 
 /** Proc working dir */
+
+TEST(procmetrix_get_proc_cwd, null_args)
+{
+    procmetrix_pid_t own_pid = procmetrix_get_pid();
+
+    // Null output
+    EXPECT_EQ(
+        procmetrix_get_proc_cwd(own_pid, nullptr, 0),
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+}
 
 TEST(procmetrix_get_proc_cwd, own_cwd)
 {
@@ -231,15 +246,15 @@ TEST(procmetrix_get_proc_cmdline, own_cmdline)
 TEST(procmetrix_get_proc_environ, null_args)
 {
     procmetrix_pid_t own_pid = procmetrix_get_pid();
-    procmetrix_proc_environ_t environ { 0 };
+    procmetrix_proc_environ_t proc_environ { 0 };
 
     // Zero PID
     EXPECT_EQ(
-        procmetrix_get_proc_environ(0, &environ), 
+        procmetrix_get_proc_environ(0, &proc_environ), 
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
-    EXPECT_EQ(environ.count, 0);
-    EXPECT_EQ(environ.vars, nullptr);
+    EXPECT_EQ(proc_environ.count, 0);
+    EXPECT_EQ(proc_environ.vars, nullptr);
 
     // Null output
     EXPECT_EQ(
@@ -250,30 +265,30 @@ TEST(procmetrix_get_proc_environ, null_args)
 TEST(procmetrix_get_proc_environ, own_env)
 {
     procmetrix_pid_t own_pid = procmetrix_get_pid();
-    procmetrix_proc_environ_t environ { 0 };
+    procmetrix_proc_environ_t proc_environ { 0 };
 
     // Read own environment
     EXPECT_EQ(
-        procmetrix_get_proc_environ(own_pid, &environ), 
+        procmetrix_get_proc_environ(own_pid, &proc_environ), 
         PROCMETRIX_ERROR_NONE);
 
     // Environment is not empty
-    EXPECT_GT(environ.count, 0);
-    EXPECT_NE(environ.vars, nullptr);
+    EXPECT_GT(proc_environ.count, 0);
+    EXPECT_NE(proc_environ.vars, nullptr);
 
     // Check each var
-    if (environ.count != 0 && environ.vars)
+    if (proc_environ.count != 0 && proc_environ.vars)
     {
-        for (size_t i = 0; i < environ.count; ++i)
-            EXPECT_STREQ(environ.vars[i].value, std::getenv(environ.vars[i].name));
+        for (size_t i = 0; i < proc_environ.count; ++i)
+            EXPECT_STREQ(proc_environ.vars[i].value, std::getenv(proc_environ.vars[i].name));
     }
 
     // Cleanup
-    procmetrix_free_proc_environ(&environ);
+    procmetrix_free_proc_environ(&proc_environ);
 
     // No garbage after cleanup
-    EXPECT_EQ(environ.count, 0);
-    EXPECT_EQ(environ.vars, nullptr);
+    EXPECT_EQ(proc_environ.count, 0);
+    EXPECT_EQ(proc_environ.vars, nullptr);
 }
 
 /** Process memory */
@@ -304,7 +319,10 @@ TEST(procmetrix_get_proc_memory_info, own_pid)
 
     EXPECT_GT(memory_info.vms, 0);
     EXPECT_GT(memory_info.rss, 0);
+
+#ifndef _WIN32
     EXPECT_GE(memory_info.vms, memory_info.rss);
+#endif
 }
 
 /** CPU times */
@@ -320,7 +338,7 @@ TEST(procmetrix_get_proc_cpu_times, null_args)
     // Null output
     procmetrix_pid_t own_pid = procmetrix_get_pid();
     EXPECT_EQ(
-        procmetrix_get_proc_cpu_times(0, nullptr),
+        procmetrix_get_proc_cpu_times(own_pid, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 

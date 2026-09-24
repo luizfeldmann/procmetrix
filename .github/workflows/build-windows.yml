@@ -9,30 +9,11 @@ on:
         required: true
 
 jobs:
-  linux-build-and-test:
-    runs-on: ubuntu-latest
-    container:
-      image: debian:bookworm
+  windows-build-and-test:
+    runs-on: windows-2022
 
     steps:
       - uses: actions/checkout@v6
-
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y \
-            git \
-            build-essential \
-            gcovr \
-            cmake \
-            python3 \
-            python3-pip \
-            python3-venv
-
-      - name: Setup Python
-        run: |
-          python3 -m venv venv
-          echo "$PWD/venv/bin" >> $GITHUB_PATH
 
       - name: Setup Conan
         run: |
@@ -41,13 +22,18 @@ jobs:
           conan profile detect --force
 
       - name: Build
-        run: conan build . --build=missing --profile=conan/profiles/${{inputs.conan-profile}}
+        run: conan build . --build=missing --profile=conan\profiles\${{inputs.conan-profile}}
 
       - name: Coverage
         if: inputs.coverage
+        shell: cmd
         run: |
-          mkdir -p coverage
-          gcovr --root . --filter "^src/" --cobertura coverage/cobertura.xml --html-details coverage/index.html
+          if not exist coverage mkdir coverage
+          dir /s /b build\*.profraw > coverage\profraws.txt
+          dir /s /b build\unitTests.exe > coverage\unitTests.txt
+          llvm-profdata merge -sparse @coverage\profraws.txt -o coverage\coverage.profdata
+          llvm-cov export -format=lcov -instr-profile=coverage\coverage.profdata @coverage\unitTests.txt src > coverage\coverage.lcov
+          llvm-cov show -format=html -instr-profile=coverage\coverage.profdata --output-dir=coverage @coverage\unitTests.txt src
 
       - name: Upload coverage
         if: inputs.coverage
