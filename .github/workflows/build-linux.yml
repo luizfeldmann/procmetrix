@@ -47,7 +47,7 @@ jobs:
         if: inputs.coverage
         run: |
           mkdir -p coverage
-          gcovr --root . --filter "^src/" --cobertura coverage/cobertura.xml --lcov coverage/coverage.lcov --html-details coverage/index.html
+          gcovr --root . --filter "^src/" --cobertura coverage/cobertura.xml --html-details coverage/index.html
 
       - name: Upload coverage
         if: inputs.coverage

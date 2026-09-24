@@ -10,7 +10,7 @@ on:
 
 jobs:
   windows-build-and-test:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - uses: actions/checkout@v6
@@ -26,6 +26,7 @@ jobs:
 
       - name: Coverage
         if: inputs.coverage
+        shell: cmd
         run: |
           if not exist coverage mkdir coverage
           dir /s /b build\*.profraw > coverage\profraws.txt
