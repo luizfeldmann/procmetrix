@@ -1,0 +1,24 @@
+include(default)
+
+[settings]
+build_type=Release
+compiler=clang
+compiler.version=20
+compiler.runtime=static
+compiler.runtime_type=Release
+compiler.runtime_version=v144
+
+[conf]
+user.procmetrix:run_tests=True
+user.procmetrix:profile_name=windows-clang-cov-san
+
+tools.cmake.cmaketoolchain:generator=Ninja
+tools.build:compiler_executables = {"c": "clang.exe", "cpp": "clang++.exe"}
+
+tools.build:cflags = ["-fno-omit-frame-pointer", "-fsanitize=address", "-fsanitize=undefined", "-fprofile-instr-generate", "-fcoverage-mapping"]
+tools.build:cxxflags=["-fno-omit-frame-pointer", "-fsanitize=address", "-fsanitize=undefined", "-fprofile-instr-generate", "-fcoverage-mapping"]
+tools.build:exelinkflags=["-fsanitize=address", "-fsanitize=undefined", "-fprofile-instr-generate"]
+
+[runenv]
+ASAN_OPTIONS+=halt_on_error=1
+UBSAN_OPTIONS+=print_stacktrace=1:halt_on_error=1
