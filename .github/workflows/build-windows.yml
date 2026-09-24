@@ -1,0 +1,32 @@
+on:
+  workflow_call:
+    inputs:
+      conan-profile:
+        type: string
+        required: true
+      coverage:
+        type: boolean
+        required: true
+
+jobs:
+  windows-build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Conan
+        run: |
+          pip install --upgrade pip
+          pip install conan
+          conan profile detect --force
+
+      - name: Build
+        run: conan build . --build=missing --profile=conan\profiles\${{inputs.conan-profile}}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{inputs.conan-profile}}
+          path: build/**/test-results*.xml
