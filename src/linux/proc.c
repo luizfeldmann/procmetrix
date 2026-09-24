@@ -4,17 +4,17 @@
 #include <internal/linux/proc_linux_internal.h>
 
 // STD
+#include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <inttypes.h>
 
 // Linux
 #include <glob.h>
+#include <linux/limits.h>
 #include <signal.h>
 #include <unistd.h>
-#include <linux/limits.h>
 
 // Util
 
@@ -40,7 +40,7 @@ static procmetrix_error_t procmetrix_impl_linux_proc_pid_read_line(FILE *read_fi
 
     // Read the file line
     procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
-    if (fgets(buf, len, read_file) == NULL)
+    if (fgets(buf, (int)len, read_file) == NULL)
         status = PROCMETRIX_ERROR_MALFORMED;
     else
     {
@@ -58,7 +58,8 @@ static procmetrix_error_t procmetrix_impl_linux_read_full_file(FILE *read_file, 
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Initial buffer allocation
-    size_t chunk = 0, capacity = 128;
+    size_t chunk = 0;
+    size_t capacity = 128;
 
     *file_size = 0;
     *buffer = (char *)malloc(capacity);
@@ -197,8 +198,10 @@ procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_cpu_times(const char
     if (NULL == rparen)
         return PROCMETRIX_ERROR_MALFORMED;
 
-    uint64_t user = 0, system = 0;
-    int64_t children_user = 0, children_system = 0;
+    uint64_t user = 0;
+    uint64_t system = 0;
+    int64_t children_user = 0;
+    int64_t children_system = 0;
     if (4 != sscanf(rparen + 1,
                     " %*c"       // state
                     " %*d"       // ppid
@@ -219,10 +222,10 @@ procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_cpu_times(const char
         return PROCMETRIX_ERROR_MALFORMED;
 
     // Convert ticks to seconds
-    cpu_times->user = (double)user / ticks_per_second;
-    cpu_times->system = (double)system / ticks_per_second;
-    cpu_times->children_user = (double)children_user / ticks_per_second;
-    cpu_times->children_system = (double)children_system / ticks_per_second;
+    cpu_times->user = (double)user / (double)ticks_per_second;
+    cpu_times->system = (double)system / (double)ticks_per_second;
+    cpu_times->children_user = (double)children_user / (double)ticks_per_second;
+    cpu_times->children_system = (double)children_system / (double)ticks_per_second;
 
     return PROCMETRIX_ERROR_NONE;
 }
@@ -239,7 +242,7 @@ procmetrix_error_t procmetrix_impl_linux_proc_read_statm(const char *statm_data,
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Read fields
-    uint64_t vms = 0, rss = 0, shared = 0, text = 0, lib = 0, data = 0, dirty = 0;
+    uint64_t vms = 0, rss = 0, shared = 0, text = 0, lib = 0, data = 0, dirty = 0; // NOLINT(readability-isolate-declaration)
     if (7 != sscanf(statm_data, "%" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64,
                     &vms, &rss, &shared, &text, &lib, &data, &dirty))
         return PROCMETRIX_ERROR_MALFORMED;
@@ -293,28 +296,29 @@ procmetrix_error_t procmetrix_list_pids(procmetrix_pid_t **list, size_t *out_cou
     *out_count = 0;
 
     // Glob the files
-    glob_t g;
-    if (0 != glob("/proc/[0-9]*", 0, NULL, &g))
+    glob_t glb;
+    if (0 != glob("/proc/[0-9]*", 0, NULL, &glb))
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Allocate output list
-    procmetrix_pid_t *pids = (procmetrix_pid_t *)calloc(g.gl_pathc, sizeof(procmetrix_pid_t));
-    if (NULL == (*list = pids))
+    procmetrix_pid_t *pids = (procmetrix_pid_t *)calloc(glb.gl_pathc, sizeof(procmetrix_pid_t));
+    *list = pids;
+    if (NULL == pids)
     {
-        globfree(&g);
+        globfree(&glb);
         return PROCMETRIX_ERROR_OUT_OF_MEMORY;
     }
 
     // Fill the list
     procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
-    for (*out_count = 0; *out_count < g.gl_pathc; ++(*out_count))
+    for (*out_count = 0; *out_count < glb.gl_pathc; ++(*out_count))
     {
-        if (1 != sscanf(g.gl_pathv[*out_count], "/proc/%" SCNu32, &pids[*out_count]))
+        if (1 != sscanf(glb.gl_pathv[*out_count], "/proc/%" SCNu32, &pids[*out_count]))
             status = PROCMETRIX_ERROR_MALFORMED;
     }
 
     // Cleanup
-    globfree(&g);
+    globfree(&glb);
 
     return status;
 }

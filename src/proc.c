@@ -2,9 +2,9 @@
 #include <procmetrix/proc.h>
 
 // STD
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 /** Cleanup functions */
 

@@ -132,9 +132,9 @@ procmetrix_error_t procmetrix_cpu_freqs_average(const procmetrix_cpu_freq_t *cpu
     }
 
     // Get the average
-    average->freq_cur /= count;
-    average->freq_min /= count;
-    average->freq_max /= count;
+    average->freq_cur /= (double)count;
+    average->freq_min /= (double)count;
+    average->freq_max /= (double)count;
 
     return PROCMETRIX_ERROR_NONE;
 }

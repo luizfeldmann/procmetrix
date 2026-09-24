@@ -1,11 +1,11 @@
-#ifndef _MAIN_H_
-#define _MAIN_H_
+#ifndef MAIN_H
+#define MAIN_H
 
 // STD
-#include <vector>
 #include <string>
+#include <vector>
 
 //! Reads the command line arguments passed to main()
-std::vector<std::string> getMainArguments();
+std::vector<std::string> get_main_arguments();
 
-#endif // _MAIN_H_
+#endif // MAIN_H

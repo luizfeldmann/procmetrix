@@ -5,19 +5,19 @@
 #include <gtest/gtest.h>
 
 //! Stores the arguments passed to main
-std::vector<std::string> gMainArgs;
+std::vector<std::string> g_main_args;
 
-std::vector<std::string> getMainArguments()
+std::vector<std::string> get_main_arguments()
 {
-    return gMainArgs;
+    return g_main_args;
 }
 
 //! Entry point
 int main(int argc, char **argv) {
   // Save the input args
-  gMainArgs.reserve(argc);
+  g_main_args.reserve(argc);
   for (size_t i = 0; i < argc; ++i)
-    gMainArgs.emplace_back(argv[i]);
+    g_main_args.emplace_back(argv[i]);
 
   // Initializes & runs GTEST
   testing::InitGoogleTest(&argc, argv);

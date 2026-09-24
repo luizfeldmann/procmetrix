@@ -2,8 +2,8 @@
 //! @ingroup mem
 //! @brief Functions to retrieve memory information.
 
-#ifndef _PROCMETRIX_MEM_H_
-#define _PROCMETRIX_MEM_H_
+#ifndef PROCMETRIX_MEM_H
+#define PROCMETRIX_MEM_H
 
 // Lib
 #include <procmetrix/error.h>
@@ -97,4 +97,4 @@ extern "C"
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_MEM_H_
+#endif // PROCMETRIX_MEM_H

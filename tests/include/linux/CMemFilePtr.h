@@ -1,48 +1,48 @@
-#ifndef _CMEM_FILE_PTR_H_
-#define _CMEM_FILE_PTR_H_
+#ifndef CMEM_FILE_PTR_H
+#define CMEM_FILE_PTR_H
 
 // STD
 #include <cstdio>
 #include <cstring>
 
 //! RAII for a memory file descriptor
-class CMemFilePtr
+class mem_file_ptr
 {
 private:
     //! Internal file pointer
-    FILE* m_fp;
+    FILE* fp_;
 
     //! Non copy-constructible
-    CMemFilePtr(CMemFilePtr const&) = delete;
+    mem_file_ptr(mem_file_ptr const&) = delete;
 
     //! Non copy-assignable
-    CMemFilePtr& operator=(CMemFilePtr const&) = delete;
+    mem_file_ptr& operator=(mem_file_ptr const&) = delete;
 
 public:
     //! Constructor
-    inline CMemFilePtr(const char* szText, size_t uLen)
-        : m_fp(fmemopen((void*)szText, uLen, "r"))
+    mem_file_ptr(const char* text, size_t len)
+        : fp_(fmemopen((void*)text, len, "r"))
     {
     }
 
     //! Constructor
-    inline CMemFilePtr(const char* szText)
-        : CMemFilePtr(szText, strlen(szText))
+    mem_file_ptr(const char* text)
+        : mem_file_ptr(text, strlen(text))
     {
 
     }
 
     //! Destructor
-    inline ~CMemFilePtr()
+    ~mem_file_ptr()
     {
-        fclose(m_fp);
+        fclose(fp_);
     }
 
     //! Gets the native file pointer
     FILE* get() const
     {
-        return m_fp;
+        return fp_;
     }
 };
 
-#endif // _CMEM_FILE_PTR_H_
+#endif // CMEM_FILE_PTR_H

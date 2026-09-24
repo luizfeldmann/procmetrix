@@ -1,5 +1,5 @@
-#ifndef _PROCMETRIX_PROC_LINUX_INTERNAL_H_
-#define _PROCMETRIX_PROC_LINUX_INTERNAL_H_
+#ifndef PROCMETRIX_PROC_LINUX_INTERNAL_H
+#define PROCMETRIX_PROC_LINUX_INTERNAL_H
 
 // Lib
 #include <procmetrix/proc.h>
@@ -36,4 +36,4 @@ extern "C"
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_PROC_LINUX_INTERNAL_H_
+#endif // PROCMETRIX_PROC_LINUX_INTERNAL_H

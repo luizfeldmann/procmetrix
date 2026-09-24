@@ -2,16 +2,16 @@
 //! @ingroup proc
 //! @brief Functions to retrieve process information.
 
-#ifndef _PROCMETRIX_PROC_H_
-#define _PROCMETRIX_PROC_H_
+#ifndef PROCMETRIX_PROC_H
+#define PROCMETRIX_PROC_H
 
 // Lib
 #include <procmetrix/error.h>
 
 // STD
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -27,7 +27,7 @@ extern "C"
     PROCMETRIX_API procmetrix_pid_t procmetrix_get_pid();
 
     //! Checks if a process ID exists.
-    PROCMETRIX_API bool procmetrix_pid_exists(procmetrix_pid_t);
+    PROCMETRIX_API bool procmetrix_pid_exists(procmetrix_pid_t pid);
 
     //! Allocates and fills a list of running PIDs.
     //! @details Caller must later free the list with procmetrix_free_pids.
@@ -183,6 +183,7 @@ extern "C"
     //! @details Negative values are clamped.
     //! @param[in] before Previous CPU times snapshot.
     //! @param[in] after Later CPU times snapshot.
+    //! @param[out] delta Receives the calculate times delta.
     PROCMETRIX_API procmetrix_error_t procmetrix_proc_cpu_times_delta(const procmetrix_proc_cpu_times_t *before, const procmetrix_proc_cpu_times_t *after, procmetrix_proc_cpu_times_t *delta);
 
     //! Calculates the total sum of CPU time spent by a process.
@@ -193,4 +194,4 @@ extern "C"
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_PROC_H_
+#endif // PROCMETRIX_PROC_H

@@ -1,5 +1,5 @@
-#ifndef _PROCMETRIX_ALGORITHM_INTERNAL_H_
-#define _PROCMETRIX_ALGORITHM_INTERNAL_H_
+#ifndef PROCMETRIX_ALGORITHM_INTERNAL_H
+#define PROCMETRIX_ALGORITHM_INTERNAL_H
 
 // Lib
 #include <procmetrix/proc.h>
@@ -24,4 +24,4 @@ extern "C"
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_ALGORITHM_INTERNAL_H_
+#endif // PROCMETRIX_ALGORITHM_INTERNAL_H

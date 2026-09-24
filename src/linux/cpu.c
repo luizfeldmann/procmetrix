@@ -1,18 +1,18 @@
 // Internal
 #include <internal/linux/common_linux_internal.h>
-#include <internal/linux/cpu_linux_internal.h>
 #include <internal/linux/core_topology.h>
+#include <internal/linux/cpu_linux_internal.h>
 
 // STD
-#include <string.h>
-#include <stdint.h>
 #include <inttypes.h>
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 // Linux
-#include <unistd.h>
 #include <linux/limits.h>
+#include <unistd.h>
 
 // Constants
 
@@ -46,30 +46,30 @@ static void jiffies_to_seconds(const proc_stat_t *stat, procmetrix_cpu_times_t *
     if (ticks_per_second <= 0)
         return;
 
-    cpu_times->user = (double)stat->user / ticks_per_second;
-    cpu_times->nice = (double)stat->nice / ticks_per_second;
-    cpu_times->system = (double)stat->system / ticks_per_second;
-    cpu_times->idle = (double)stat->idle / ticks_per_second;
-    cpu_times->iowait = (double)stat->iowait / ticks_per_second;
-    cpu_times->irq = (double)stat->irq / ticks_per_second;
-    cpu_times->softirq = (double)stat->softirq / ticks_per_second;
-    cpu_times->steal = (double)stat->steal / ticks_per_second;
-    cpu_times->guest = (double)stat->guest / ticks_per_second;
-    cpu_times->guest_nice = (double)stat->guest_nice / ticks_per_second;
+    cpu_times->user = (double)stat->user / (double)ticks_per_second;
+    cpu_times->nice = (double)stat->nice / (double)ticks_per_second;
+    cpu_times->system = (double)stat->system / (double)ticks_per_second;
+    cpu_times->idle = (double)stat->idle / (double)ticks_per_second;
+    cpu_times->iowait = (double)stat->iowait / (double)ticks_per_second;
+    cpu_times->irq = (double)stat->irq / (double)ticks_per_second;
+    cpu_times->softirq = (double)stat->softirq / (double)ticks_per_second;
+    cpu_times->steal = (double)stat->steal / (double)ticks_per_second;
+    cpu_times->guest = (double)stat->guest / (double)ticks_per_second;
+    cpu_times->guest_nice = (double)stat->guest_nice / (double)ticks_per_second;
 }
 
 //! Checks if a line is "cpuX" format
 static int scan_procstat_cpux_line(const char *line)
 {
-    unsigned u = 0;
-    return sscanf(line, "cpu%u", &u);
+    unsigned cpu = 0;
+    return sscanf(line, "cpu%u", &cpu);
 }
 
 //! Checks if a lines is "processor : X" format
 static int scan_cpuinfo_processor_line(const char *line)
 {
-    unsigned u = 0;
-    return sscanf(line, "processor : %u", &u);
+    unsigned processor = 0;
+    return sscanf(line, "processor : %u", &processor);
 }
 
 procmetrix_error_t read_sysfs_cpu_scaling_freq_field(const char *base_path, const char *field_name, uint64_t *field_value)
@@ -257,7 +257,7 @@ procmetrix_error_t procmetrix_impl_linux_cpu_times_total(FILE *stat_file, procme
 
     // Read the first line of the file
     proc_stat_t stat = {0};
-    int scanCount = fscanf(stat_file, "cpu %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64,
+    int scan_count = fscanf(stat_file, "cpu %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64,
                            // Always present
                            &stat.user, &stat.nice, &stat.system, &stat.idle,
                            // Linux >= 2.5.41
@@ -272,7 +272,7 @@ procmetrix_error_t procmetrix_impl_linux_cpu_times_total(FILE *stat_file, procme
                            // Linux >= 2.6.33
                            &stat.guest_nice);
 
-    if (scanCount < 4)
+    if (scan_count < 4)
     {
         // Unable to read the minimum fields
         return PROCMETRIX_ERROR_MALFORMED;
@@ -318,14 +318,14 @@ procmetrix_error_t procmetrix_impl_linux_cpu_times_per_cpu(FILE *stat_file, proc
 
         // Read the CPU times from the line
         proc_stat_t stat = {0};
-        int scanCount = sscanf(buf, "cpu%*d %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64,
+        int scan_count = sscanf(buf, "cpu%*d %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64,
                                // Always present
                                &stat.user, &stat.nice, &stat.system, &stat.idle,
                                // Linux kernel version depends
                                &stat.iowait, &stat.irq, &stat.softirq, &stat.steal, &stat.guest, &stat.guest_nice);
 
         // Unable to read the minimum fields, malformed file
-        if (scanCount < 4)
+        if (scan_count < 4)
             return PROCMETRIX_ERROR_MALFORMED;
 
         // Check if there is space in the output array
@@ -376,7 +376,9 @@ procmetrix_error_t procmetrix_impl_linux_cpu_freqs_policies(const glob_t *sysfs_
         // Read the fields
         // Don't produce a global error if we fail to read the fields for some cpus, we'll keep zero there
         // Having incomplete frequency data is common
-        uint64_t scaling_cur_freq = 0, scaling_max_freq = 0, scaling_min_freq = 0;
+        uint64_t scaling_cur_freq = 0;
+        uint64_t scaling_max_freq = 0;
+        uint64_t scaling_min_freq = 0;
         (void)read_sysfs_cpu_scaling_freq_field(sysfs_policies->gl_pathv[i], "scaling_cur_freq", &scaling_cur_freq);
         (void)read_sysfs_cpu_scaling_freq_field(sysfs_policies->gl_pathv[i], "scaling_max_freq", &scaling_max_freq);
         (void)read_sysfs_cpu_scaling_freq_field(sysfs_policies->gl_pathv[i], "scaling_min_freq", &scaling_min_freq);
@@ -458,13 +460,13 @@ procmetrix_error_t procmetrix_impl_linux_cpuinfo_freqs(FILE *cpuinfo_file, procm
 size_t procmetrix_cpu_count_physical(void)
 {
     // Glob cpu topology from sysfs
-    glob_t g;
-    if (0 == glob("/sys/devices/system/cpu/cpu[0-9]*", 0, NULL, &g))
+    glob_t glb;
+    if (0 == glob("/sys/devices/system/cpu/cpu[0-9]*", 0, NULL, &glb))
     {
-        size_t physical_count = procmetrix_impl_linux_cpu_count_physical_topology(&g);
+        size_t physical_count = procmetrix_impl_linux_cpu_count_physical_topology(&glb);
 
         // Cleanup
-        globfree(&g);
+        globfree(&glb);
 
         if (physical_count > 0)
             return physical_count;
@@ -502,7 +504,7 @@ size_t procmetrix_cpu_count_logical(void)
     if (NULL != cpuinfo_file)
     {
         // Parse counting lines
-        nproc = procmetrix_impl_linux_cpuinfo_count_processors(cpuinfo_file);
+        nproc = (long)procmetrix_impl_linux_cpuinfo_count_processors(cpuinfo_file);
 
         // Cleanup
         fclose(cpuinfo_file);
@@ -518,7 +520,7 @@ size_t procmetrix_cpu_count_logical(void)
     if (NULL != procstat_file)
     {
         // Parse counting lines
-        nproc = procmetrix_impl_linux_procstat_count_cpus(cpuinfo_file);
+        nproc = (long)procmetrix_impl_linux_procstat_count_cpus(cpuinfo_file);
 
         // Cleanup
         fclose(procstat_file);
@@ -548,7 +550,7 @@ procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t *cpu_times)
     return result;
 }
 
-procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_times, size_t maxCount, size_t *readCount)
+procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_times, size_t max_count, size_t *read_count)
 {
     // Open proc stat
     FILE *stat_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_procstat_file);
@@ -556,7 +558,7 @@ procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_time
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Call the implementation
-    procmetrix_error_t result = procmetrix_impl_linux_cpu_times_per_cpu(stat_file, cpu_times, maxCount, readCount);
+    procmetrix_error_t result = procmetrix_impl_linux_cpu_times_per_cpu(stat_file, cpu_times, max_count, read_count);
 
     // Close the file
     fclose(stat_file);
@@ -571,13 +573,13 @@ procmetrix_error_t procmetrix_cpu_freqs(procmetrix_cpu_freq_t *cpu_freqs, size_t
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Glob CPU freq policies from sysfs
-    glob_t g;
-    if (0 == glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*", 0, NULL, &g))
+    glob_t glb;
+    if (0 == glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*", 0, NULL, &glb))
     {
-        procmetrix_error_t result = procmetrix_impl_linux_cpu_freqs_policies(&g, cpu_freqs, max_count, read_count);
+        procmetrix_error_t result = procmetrix_impl_linux_cpu_freqs_policies(&glb, cpu_freqs, max_count, read_count);
 
         // Cleanup
-        globfree(&g);
+        globfree(&glb);
 
         return result;
     }

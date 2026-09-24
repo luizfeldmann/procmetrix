@@ -1,8 +1,8 @@
 //! @file
 //! @brief Common error codes for the library.
 
-#ifndef _PROCMETRIX_ERROR_H_
-#define _PROCMETRIX_ERROR_H_
+#ifndef PROCMETRIX_ERROR_H
+#define PROCMETRIX_ERROR_H
 
 // Lib
 #include <procmetrix/api.h>
@@ -45,4 +45,4 @@ extern "C"
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_ERROR_H_
+#endif // PROCMETRIX_ERROR_H

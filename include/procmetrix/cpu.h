@@ -2,8 +2,8 @@
 //! @ingroup cpu
 //! @brief Functions to retrieve CPU metrics and statistics.
 
-#ifndef _PROCMETRIX_CPU_H_
-#define _PROCMETRIX_CPU_H_
+#ifndef PROCMETRIX_CPU_H
+#define PROCMETRIX_CPU_H
 
 // Lib
 #include <procmetrix/error.h>
@@ -142,4 +142,4 @@ extern "C"
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_CPU_H_
+#endif // PROCMETRIX_CPU_H

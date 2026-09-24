@@ -45,7 +45,7 @@ TEST(procmetrix_split_zero_terminated_tokens, empty)
     EXPECT_EQ(num_tokens, 1);
     EXPECT_NE(tokens, nullptr);
 
-    if (tokens && num_tokens)
+    if (nullptr != tokens && 0 != num_tokens)
         EXPECT_STREQ(tokens[0], "");
 
     // Cleanup
@@ -70,10 +70,10 @@ TEST(procmetrix_split_zero_terminated_tokens, trivial)
     EXPECT_NE(tokens, nullptr);
 
     // Check actual values
-    if (tokens && num_tokens > 0)
+    if (nullptr != tokens && num_tokens > 0)
         EXPECT_STREQ(tokens[0], "a");
 
-    if (tokens && num_tokens > 1)
+    if (nullptr != tokens && num_tokens > 1)
         EXPECT_STREQ(tokens[1], "b");
 
     // Cleanup
@@ -129,25 +129,25 @@ TEST(procmetrix_split_environ_vars, trivial)
     EXPECT_NE(proc_environ.vars, nullptr);
 
     // Check the actual values
-    if (proc_environ.vars && proc_environ.count > 0)
+    if (nullptr != proc_environ.vars && proc_environ.count > 0)
     {
         EXPECT_STREQ(proc_environ.vars[0].name, "hello");
         EXPECT_STREQ(proc_environ.vars[0].value, "world");
     }
 
-    if (proc_environ.vars && proc_environ.count > 1)
+    if (nullptr != proc_environ.vars && proc_environ.count > 1)
     {
         EXPECT_STREQ(proc_environ.vars[1].name, "foo");
         EXPECT_STREQ(proc_environ.vars[1].value, "bar");
     }
 
-    if (proc_environ.vars && proc_environ.count > 2)
+    if (nullptr != proc_environ.vars && proc_environ.count > 2)
     {
         EXPECT_STREQ(proc_environ.vars[2].name, "empty");
         EXPECT_STREQ(proc_environ.vars[2].value, "");
     }
 
-    if (proc_environ.vars && proc_environ.count > 3)
+    if (nullptr != proc_environ.vars && proc_environ.count > 3)
     {
         EXPECT_STREQ(proc_environ.vars[3].name, "flag");
         EXPECT_EQ(proc_environ.vars[3].value, nullptr);

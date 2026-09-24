@@ -3,9 +3,9 @@
 #include <internal/linux/mem_linux_internal.h>
 
 // STD
-#include <string.h>
-#include <stdbool.h>
 #include <inttypes.h>
+#include <stdbool.h>
+#include <string.h>
 
 // Linux
 #include <unistd.h>
@@ -22,9 +22,9 @@ static const char *g_proc_zoneinfo_file = "/proc/zoneinfo";
 // Helpers
 
 //! Least of two numbers
-static inline uint64_t min_u64(uint64_t a, uint64_t b)
+static inline uint64_t min_u64(uint64_t first, uint64_t second)
 {
-    return a < b ? a : b;
+    return first < second ? first : second;
 }
 
 // Private impl
@@ -73,13 +73,13 @@ procmetrix_error_t procmetrix_impl_linux_system_virtual_memory(FILE *meminfo_fil
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Helper variables
-    uint64_t cached = 0,
-             reclaimable = 0,
-             active_file = 0,
-             inactive_file = 0;
-    bool has_reclaimable = false,
-         has_active_file = false,
-         has_inactive_file = false;
+    uint64_t cached = 0;
+    uint64_t reclaimable = 0;
+    uint64_t active_file = 0;
+    uint64_t inactive_file = 0;
+    bool has_reclaimable = false;
+    bool has_active_file = false;
+    bool has_inactive_file = false;
 
     // Iterate the file lines
     char line[1024];
@@ -89,62 +89,62 @@ procmetrix_error_t procmetrix_impl_linux_system_virtual_memory(FILE *meminfo_fil
 
         if (1 == sscanf(line, "MemTotal: %" SCNu64, &temp_value))
         {
-            virtual_memory->total = 1024ull * temp_value;
+            virtual_memory->total = 1024ULL * temp_value;
         }
         else if (1 == sscanf(line, "MemFree: %" SCNu64, &temp_value))
         {
-            virtual_memory->free = 1024ull * temp_value;
+            virtual_memory->free = 1024ULL * temp_value;
         }
         else if (1 == sscanf(line, "Buffers: %" SCNu64, &temp_value))
         {
-            virtual_memory->buffers = 1024ull * temp_value;
+            virtual_memory->buffers = 1024ULL * temp_value;
         }
         else if (1 == sscanf(line, "Cached: %" SCNu64, &temp_value))
         {
-            cached = 1024ull * temp_value;
+            cached = 1024ULL * temp_value;
         }
         else if (1 == sscanf(line, "SReclaimable: %" SCNu64, &temp_value))
         {
-            reclaimable = 1024ull * temp_value;
+            reclaimable = 1024ULL * temp_value;
             has_reclaimable = true;
         }
         else if (1 == sscanf(line, "Shmem: %" SCNu64, &temp_value) ||
                  1 == sscanf(line, "MemShared: %" SCNu64, &temp_value))
         {
-            virtual_memory->shared = 1024ull * temp_value;
+            virtual_memory->shared = 1024ULL * temp_value;
         }
         else if (1 == sscanf(line, "Active: %" SCNu64, &temp_value))
         {
-            virtual_memory->active = 1024ull * temp_value;
+            virtual_memory->active = 1024ULL * temp_value;
         }
         else if (1 == sscanf(line, "Active(file): %" SCNu64, &temp_value))
         {
-            active_file = 1024ull * temp_value;
+            active_file = 1024ULL * temp_value;
             has_active_file = true;
         }
         else if (1 == sscanf(line, "Inactive(file): %" SCNu64, &temp_value))
         {
-            inactive_file = 1024ull * temp_value;
+            inactive_file = 1024ULL * temp_value;
             has_inactive_file = true;
         }
         else if (1 == sscanf(line, "Inactive: %" SCNu64, &temp_value))
         {
-            virtual_memory->inactive = 1024ull * temp_value;
+            virtual_memory->inactive = 1024ULL * temp_value;
         }
         else if (1 == sscanf(line, "Inact_dirty: %" SCNu64, &temp_value) ||
                  1 == sscanf(line, "Inact_clean: %" SCNu64, &temp_value) ||
                  1 == sscanf(line, "Inact_laundry: %" SCNu64, &temp_value))
         {
             // Inactive can be expressed as the sum of subfields
-            virtual_memory->inactive += 1024ull * temp_value;
+            virtual_memory->inactive += 1024ULL * temp_value;
         }
         else if (1 == sscanf(line, "Slab: %" SCNu64, &temp_value))
         {
-            virtual_memory->slab = 1024ull * temp_value;
+            virtual_memory->slab = 1024ULL * temp_value;
         }
         else if (1 == sscanf(line, "MemAvailable: %" SCNu64, &temp_value))
         {
-            virtual_memory->available = 1024ull * temp_value;
+            virtual_memory->available = 1024ULL * temp_value;
         }
     }
 
@@ -223,12 +223,12 @@ procmetrix_error_t procmetrix_impl_linux_system_swap_memory(FILE *meminfo_file, 
 
         if (1 == sscanf(line, "SwapTotal: %" SCNu64, &temp_value))
         {
-            swap_memory->total = 1024ull * temp_value;
+            swap_memory->total = 1024ULL * temp_value;
             has_total = true;
         }
         else if (1 == sscanf(line, "SwapFree: %" SCNu64, &temp_value))
         {
-            swap_memory->free = 1024ull * temp_value;
+            swap_memory->free = 1024ULL * temp_value;
             has_free = true;
         }
 

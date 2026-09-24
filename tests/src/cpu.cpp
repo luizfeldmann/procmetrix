@@ -2,8 +2,8 @@
 #include <procmetrix/cpu.h>
 
 // Testing
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 using namespace ::testing;
 
 // STD
@@ -94,7 +94,8 @@ TEST(procmetrix_cpu_times_per_cpu, sanity)
 
 TEST(procmetrix_cpu_times_delta, null_args)
 {
-    procmetrix_cpu_times_t cpu_times, delta;
+    procmetrix_cpu_times_t cpu_times { 0 };
+    procmetrix_cpu_times_t delta { 0 };
 
     // 1st arg null
     EXPECT_EQ(
@@ -270,7 +271,10 @@ TEST(procmetrix_cpu_utilization_ratio, div_by_zero)
 TEST(procmetrix_cpu_utilization_ratio, delay)
 {
     // Get utilization between a time difference
-    procmetrix_cpu_times before, after, delta;
+    procmetrix_cpu_times before { 0 };
+    procmetrix_cpu_times after { 0 };
+    procmetrix_cpu_times delta { 0 };
+
     procmetrix_cpu_times_total(&before);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     procmetrix_cpu_times_total(&after);
@@ -286,7 +290,7 @@ TEST(procmetrix_cpu_utilization_ratio, delay)
 
 TEST(procmetrix_cpu_freqs_average, null_args)
 {
-    procmetrix_cpu_freq_t freq;
+    procmetrix_cpu_freq_t freq { 0 };
 
     // Null input
     EXPECT_EQ(

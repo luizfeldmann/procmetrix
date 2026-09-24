@@ -2,13 +2,13 @@
 #include <procmetrix/proc.h>
 
 // Testing
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 using namespace ::testing;
 
 // Utils
-#include "utils.h"
 #include "main.h"
+#include "utils.h"
 
 // STD
 #include <algorithm>
@@ -60,8 +60,8 @@ TEST(procmetrix_list_pids, contains_own_pid)
     // My own PID is contained in the list
     procmetrix_pid_t own_pid = procmetrix_get_pid();
 
-    auto itend = std::next(list, count);
-    auto itfind = std::find(list, itend, own_pid);
+    auto *itend = std::next(list, (std::ptrdiff_t)count);
+    auto *itfind = std::find(list, itend, own_pid);
 
     EXPECT_NE(itfind, itend) 
         << "own pid: " << own_pid << "; pids list size = " << count;
@@ -226,11 +226,11 @@ TEST(procmetrix_get_proc_cmdline, own_cmdline)
         PROCMETRIX_ERROR_NONE);
 
     // Compare to what was received in main()
-    const auto mainArgs = getMainArguments();
-    EXPECT_EQ(cmdline.argc, mainArgs.size());
-    if (cmdline.argc == mainArgs.size()) {
+    const auto main_args = get_main_arguments();
+    EXPECT_EQ(cmdline.argc, main_args.size());
+    if (cmdline.argc == main_args.size()) {
         for (size_t i = 0; i < cmdline.argc; ++i)
-            EXPECT_EQ(cmdline.argv[i], mainArgs[i]);
+            EXPECT_EQ(cmdline.argv[i], main_args[i]);
     }
     
     // Cleanup
@@ -277,7 +277,7 @@ TEST(procmetrix_get_proc_environ, own_env)
     EXPECT_NE(proc_environ.vars, nullptr);
 
     // Check each var
-    if (proc_environ.count != 0 && proc_environ.vars)
+    if (proc_environ.count != 0 && proc_environ.vars != nullptr)
     {
         for (size_t i = 0; i < proc_environ.count; ++i)
             EXPECT_STREQ(proc_environ.vars[i].value, std::getenv(proc_environ.vars[i].name));
@@ -346,9 +346,9 @@ TEST(procmetrix_get_proc_cpu_times, own_pid)
 {
     // Burn some CPU to ensure non-zero user time
     // even if the unit test process is short lived
-    volatile uint64_t x = 0;
+    volatile uint64_t side_effect = 0;
     for (uint64_t i = 0; i < 100000000ULL; ++i)
-        x += i;
+        side_effect += i;
 
     // Read own process times
     procmetrix_pid_t own_pid = procmetrix_get_pid();
@@ -363,7 +363,9 @@ TEST(procmetrix_get_proc_cpu_times, own_pid)
 
 TEST(procmetrix_proc_cpu_times_delta, null_args)
 {
-    procmetrix_proc_cpu_times_t before, after, delta;
+    procmetrix_proc_cpu_times_t before { 0 };
+    procmetrix_proc_cpu_times_t after { 0 };
+    procmetrix_proc_cpu_times_t delta { 0 };
 
     // Null inputs
     EXPECT_EQ(

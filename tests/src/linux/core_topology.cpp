@@ -79,20 +79,20 @@ TEST(procmetrix_core_topo_list_add, grow)
 
 TEST(procmetrix_core_topo_key_compare, order)
 {
-    procmetrix_core_topo_key_t a { 0, 0 };
-    procmetrix_core_topo_key_t b { 0, 1 };
-    procmetrix_core_topo_key_t c { 1, 0 };
+    procmetrix_core_topo_key_t keya { 0, 0 };
+    procmetrix_core_topo_key_t keyb { 0, 1 };
+    procmetrix_core_topo_key_t keyc { 1, 0 };
 
     // Same items compare equal
-    EXPECT_EQ(procmetrix_core_topo_key_compare(&a, &a), 0);
+    EXPECT_EQ(procmetrix_core_topo_key_compare(&keya, &keya), 0);
 
     // Order by core_id
-    EXPECT_EQ(procmetrix_core_topo_key_compare(&a, &b), -1);
-    EXPECT_EQ(procmetrix_core_topo_key_compare(&b, &a),  1);
+    EXPECT_EQ(procmetrix_core_topo_key_compare(&keya, &keyb), -1);
+    EXPECT_EQ(procmetrix_core_topo_key_compare(&keyb, &keya),  1);
 
     // Order by package_id
-    EXPECT_EQ(procmetrix_core_topo_key_compare(&a, &c), -1);
-    EXPECT_EQ(procmetrix_core_topo_key_compare(&b, &c), -1);
+    EXPECT_EQ(procmetrix_core_topo_key_compare(&keya, &keyc), -1);
+    EXPECT_EQ(procmetrix_core_topo_key_compare(&keyb, &keyc), -1);
 }
 
 TEST(procmetrix_core_topo_list_sort, null_args)

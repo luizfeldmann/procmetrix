@@ -2,6 +2,8 @@
 #include "internal/linux/core_topology.h"
 
 // STD
+#include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,10 +18,10 @@ void procmetrix_core_topo_list_init(procmetrix_core_topo_list_t *list)
     // Reserve initial capacity
     enum
     {
-        kInitialCapacity = 128
+        K_INITIAL_CAPACITY = 128
     };
 
-    list->items_reserved = kInitialCapacity;
+    list->items_reserved = K_INITIAL_CAPACITY;
     list->data = (procmetrix_core_topo_key_t *)malloc(list->items_reserved * sizeof(procmetrix_core_topo_key_t));
 
     // No actual items yet
@@ -35,52 +37,65 @@ void procmetrix_core_topo_list_free(procmetrix_core_topo_list_t *list)
     memset(list, 0, sizeof(procmetrix_core_topo_list_t));
 }
 
-void procmetrix_core_topo_list_add(procmetrix_core_topo_list_t *list, size_t package_id, size_t core_id)
+procmetrix_error_t procmetrix_core_topo_list_add(procmetrix_core_topo_list_t *list, size_t package_id, size_t core_id)
 {
-    if (NULL == list)
-        return;
+    if (NULL == list || NULL == list->data || 0 == list->items_reserved)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Check if list needs growing
     if (list->items_present >= list->items_reserved)
     {
-        list->items_reserved *= 2; // Increase capacity geometrically
-        list->data = (procmetrix_core_topo_key_t *)realloc(
-            list->data, list->items_reserved * sizeof(procmetrix_core_topo_key_t));
+        if (list->items_reserved > SIZE_MAX / sizeof(procmetrix_core_topo_key_t) / 2)
+            return PROCMETRIX_ERROR_OUT_OF_MEMORY;
+
+        // Increase capacity geometrically
+        size_t new_capacity = list->items_reserved * 2;
+
+        procmetrix_core_topo_key_t* new_data = (procmetrix_core_topo_key_t *)realloc(
+            list->data, new_capacity * sizeof(procmetrix_core_topo_key_t));
+
+        if (NULL == new_data)
+            return PROCMETRIX_ERROR_OUT_OF_MEMORY;
+
+        list->items_reserved = new_capacity;
+        list->data = new_data;
     }
 
     // Add item
     list->data[list->items_present].package_id = package_id;
     list->data[list->items_present].core_id = core_id;
     ++list->items_present;
+
+    return PROCMETRIX_ERROR_NONE;
 }
 
-int procmetrix_core_topo_key_compare(const procmetrix_core_topo_key_t *a, const procmetrix_core_topo_key_t *b)
+int procmetrix_core_topo_key_compare(const procmetrix_core_topo_key_t *lhs, const procmetrix_core_topo_key_t *rhs)
 {
     // Trivial case
-    if (a == b)
+    if (lhs == rhs)
         return 0;
 
     // First order by package id
-    if (a->package_id < b->package_id)
+    if (lhs->package_id < rhs->package_id)
         return -1;
-    if (a->package_id > b->package_id)
+    if (lhs->package_id > rhs->package_id)
         return 1;
 
     // Then order by core id
-    if (a->core_id < b->core_id)
+    if (lhs->core_id < rhs->core_id)
         return -1;
-    if (a->core_id > b->core_id)
+    if (lhs->core_id > rhs->core_id)
         return 1;
 
     // Equal
     return 0;
 }
 
-static int procmetrix_core_topo_key_compare_qsort(const void *a, const void *b)
+static int procmetrix_core_topo_key_compare_qsort(const void *lhs, const void *rhs)
 {
     return procmetrix_core_topo_key_compare(
-        (const procmetrix_core_topo_key_t *)a,
-        (const procmetrix_core_topo_key_t *)b);
+        (const procmetrix_core_topo_key_t *)lhs,
+        (const procmetrix_core_topo_key_t *)rhs);
 }
 
 void procmetrix_core_topo_list_sort(procmetrix_core_topo_list_t *list)

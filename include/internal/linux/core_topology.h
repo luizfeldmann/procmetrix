@@ -1,8 +1,8 @@
-#ifndef _PROCMETRIX_LINUX_INTERNAL_CORE_TOPOLOGY_H_
-#define _PROCMETRIX_LINUX_INTERNAL_CORE_TOPOLOGY_H_
+#ifndef PROCMETRIX_LINUX_INTERNAL_CORE_TOPOLOGY_H
+#define PROCMETRIX_LINUX_INTERNAL_CORE_TOPOLOGY_H
 
 // Lib
-#include <procmetrix/api.h>
+#include <procmetrix/error.h>
 
 // STD
 #include <stddef.h>
@@ -39,11 +39,11 @@ extern "C"
 
     //! Adds an item to the topology list
     //! @private
-    PROCMETRIX_API void procmetrix_core_topo_list_add(procmetrix_core_topo_list_t *list, size_t package_id, size_t core_id);
+    PROCMETRIX_API procmetrix_error_t procmetrix_core_topo_list_add(procmetrix_core_topo_list_t *list, size_t package_id, size_t core_id);
 
     //! Compares the order of 2 topo keys
     //! @private
-    PROCMETRIX_API int procmetrix_core_topo_key_compare(const procmetrix_core_topo_key_t *a, const procmetrix_core_topo_key_t *b);
+    PROCMETRIX_API int procmetrix_core_topo_key_compare(const procmetrix_core_topo_key_t *lhs, const procmetrix_core_topo_key_t *rhs);
 
     //! Sorts the list of core topo keys
     //! @private
@@ -57,4 +57,4 @@ extern "C"
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_LINUX_INTERNAL_CORE_TOPOLOGY_H_
+#endif // PROCMETRIX_LINUX_INTERNAL_CORE_TOPOLOGY_H
