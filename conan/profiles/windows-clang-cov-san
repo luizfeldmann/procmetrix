@@ -1,7 +1,7 @@
 include(default)
 
 [settings]
-build_type=Release
+build_type=Debug
 compiler=clang
 compiler.version=20
 compiler.runtime=static
