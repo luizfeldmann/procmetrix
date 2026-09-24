@@ -338,7 +338,7 @@ TEST(procmetrix_get_proc_cpu_times, null_args)
     // Null output
     procmetrix_pid_t own_pid = procmetrix_get_pid();
     EXPECT_EQ(
-        procmetrix_get_proc_cpu_times(0, nullptr),
+        procmetrix_get_proc_cpu_times(own_pid, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 

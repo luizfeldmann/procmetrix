@@ -6,11 +6,10 @@
 #include <stdlib.h>
 
 // OS macros
-#ifdef _WIN32
-//! Duplicates a string up to n chars
-//! Available on POSIX, needs this impl on Windows
-static inline char *strndup(const char *s, size_t n)
+
+static char *procmetrix_strndup(const char *s, size_t n)
 {
+#ifdef _WIN32
     size_t len = strnlen_s(s, n);
     char *new_str = (char *)malloc(len + 1);
     if (new_str)
@@ -19,8 +18,19 @@ static inline char *strndup(const char *s, size_t n)
         new_str[len] = '\0';
     }
     return new_str;
-}
+#else
+    return strndup(s, n);
 #endif
+}
+
+static char *procmetrix_strdup(const char *str)
+{
+#ifdef _MSC_VER
+    return _strdup(str);
+#else
+    return strdup(str);
+#endif
+}
 
 // Impl
 
@@ -58,7 +68,7 @@ procmetrix_error_t procmetrix_split_zero_terminated_tokens(const char *buffer, s
         int is_last = 0;
         if (buffer[file_idx] == '\0' || (is_last = (file_idx == buffer_size - 1)))
         {
-            (*tokens)[tok_idx++] = strndup(buffer + start_idx, file_idx - start_idx + is_last);
+            (*tokens)[tok_idx++] = procmetrix_strndup(buffer + start_idx, file_idx - start_idx + is_last);
             start_idx = file_idx + 1;
         }
     }
@@ -101,13 +111,13 @@ procmetrix_error_t procmetrix_split_environ_vars(const char *const *varlines, si
 
         if (NULL != delim)
         {
-            environment->vars[i].name = strndup(line, delim - line);
-            environment->vars[i].value = strdup(delim + 1);
+            environment->vars[i].name = procmetrix_strndup(line, delim - line);
+            environment->vars[i].value = procmetrix_strdup(delim + 1);
         }
         else
         {
             // No right-side
-            environment->vars[i].name = strdup(line);
+            environment->vars[i].name = procmetrix_strdup(line);
         }
 
         // Cleanup on strdup failure

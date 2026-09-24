@@ -279,7 +279,7 @@ static procmetrix_error_t procmetrix_read_environment_variables(const wchar_t *w
             ++var_valid, --num_valid;
 
         // Split the name and value by =
-        status = procmetrix_split_environ_vars(var_valid, num_valid, proc_environ);
+        status = procmetrix_split_environ_vars((const char *const *)var_valid, num_valid, proc_environ);
     }
 
     // Cleanup
@@ -445,8 +445,12 @@ procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, si
     procmetrix_error_t status = procmetrix_get_proc_exe(pid, path, sizeof(path));
 
     // Extract only the base name
-    strncpy(name, PathFindFileName(path), len);
-    name[len - 1] = '\0';
+    if (PROCMETRIX_ERROR_NONE == status)
+    {
+        errno_t err = strncpy_s(name, len, PathFindFileName(path), _TRUNCATE);
+        if (0 != err)
+            status = PROCMETRIX_ERROR_MORE_DATA;
+    }
 
     return status;
 }
