@@ -33,16 +33,14 @@ TEST(procmetrix_cpu_times_total, null_args)
 {
     // Null output pointer
     EXPECT_EQ(
-        procmetrix_cpu_times_total(nullptr), 
-        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+        procmetrix_cpu_times_total(nullptr), PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
 TEST(procmetrix_cpu_times_total, sanity)
 {
     // Read succeeds
     procmetrix_cpu_times_t cpu_times;
-    EXPECT_EQ(procmetrix_cpu_times_total(&cpu_times), 
-        PROCMETRIX_ERROR_NONE);
+    EXPECT_EQ(procmetrix_cpu_times_total(&cpu_times), PROCMETRIX_ERROR_NONE);
 
     // Main times are positive
     EXPECT_GT(cpu_times.user, 0.0);
@@ -56,7 +54,7 @@ TEST(procmetrix_cpu_times_per_cpu, null_args)
 {
     // Null output array
     EXPECT_EQ(
-        procmetrix_cpu_times_per_cpu(nullptr, 1, nullptr), 
+        procmetrix_cpu_times_per_cpu(nullptr, 1, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // Valid output array, but zero count
@@ -73,16 +71,15 @@ TEST(procmetrix_cpu_times_per_cpu, sanity)
     procmetrix_cpu_times_t cpu_times[4] {};
 
     EXPECT_THAT(
-        procmetrix_cpu_times_per_cpu(cpu_times, std::size(cpu_times), &read_count),
-        AnyOf(
-            Eq(PROCMETRIX_ERROR_NONE),
-            Eq(PROCMETRIX_ERROR_MORE_DATA)));
-    
+        procmetrix_cpu_times_per_cpu(
+            cpu_times, std::size(cpu_times), &read_count),
+        AnyOf(Eq(PROCMETRIX_ERROR_NONE), Eq(PROCMETRIX_ERROR_MORE_DATA)));
+
     // At least one was read
     EXPECT_GT(read_count, 0);
 
     // All main counters are positive
-    for (size_t i = 0; i < read_count; ++ i)
+    for (size_t i = 0; i < read_count; ++i)
     {
         EXPECT_GT(cpu_times[i].user, 0.0);
         EXPECT_GT(cpu_times[i].idle, 0.0);
@@ -104,60 +101,29 @@ TEST(procmetrix_cpu_times_delta, null_args)
 
     // 2nd arg null
     EXPECT_EQ(
-        procmetrix_cpu_times_delta(&cpu_times, nullptr, &delta), 
+        procmetrix_cpu_times_delta(&cpu_times, nullptr, &delta),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // 3rd arg null
     EXPECT_EQ(
-        procmetrix_cpu_times_delta(&cpu_times, &cpu_times, nullptr), 
+        procmetrix_cpu_times_delta(&cpu_times, &cpu_times, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
 TEST(procmetrix_cpu_times_delta, compute)
 {
     const procmetrix_cpu_times_t before {
-        100.5,
-        150.6,
-        125.9,
-        200.8,
-        312.1,
-        712.4,
-        812.5,
-        499.9,
-        647.5,
-        578.7,
-        831.0,
-        946.2,
+        100.5, 150.6, 125.9, 200.8, 312.1, 712.4,
+        812.5, 499.9, 647.5, 578.7, 831.0, 946.2,
     };
 
     const procmetrix_cpu_times_t after {
-        119.6,
-        178.5,
-        146.8,
-        241.9,
-        363.2,
-        784.1,
-        906.9,
-        508.5,
-        659.6,
-        593.0,
-        862.1,
-        981.4,
+        119.6, 178.5, 146.8, 241.9, 363.2, 784.1,
+        906.9, 508.5, 659.6, 593.0, 862.1, 981.4,
     };
 
     const procmetrix_cpu_times expected_diff {
-        19.1,
-        27.9,
-        20.9,
-        41.1,
-        51.1,
-        71.7,
-        94.4,
-         8.6,
-        12.1,
-        14.3,
-        31.1,
-        35.2,
+        19.1, 27.9, 20.9, 41.1, 51.1, 71.7, 94.4, 8.6, 12.1, 14.3, 31.1, 35.2,
     };
 
     // Calculate deltas
@@ -182,7 +148,7 @@ TEST(procmetrix_cpu_times_delta, compute)
 
     // Sum must increase
     double sum_before = procmetrix_cpu_times_sum(&before);
-    double sum_after  = procmetrix_cpu_times_sum(&after);
+    double sum_after = procmetrix_cpu_times_sum(&after);
 
     EXPECT_LT(sum_before, sum_after);
 
@@ -214,24 +180,21 @@ TEST(procmetrix_cpu_times_delta, compute)
 
 TEST(procmetrix_cpu_times_sum, null_args)
 {
-    EXPECT_DOUBLE_EQ(
-        procmetrix_cpu_times_sum(nullptr),
-        0.0);
+    EXPECT_DOUBLE_EQ(procmetrix_cpu_times_sum(nullptr), 0.0);
 }
 
 TEST(procmetrix_cpu_times_sum, delay)
 {
     // Note:
     // Must use the time difference of a single cpu
-    // Using all would cause the summation to be multiplied by the number of cpus
+    // Using all would cause the summation to be multiplied by Ncpus
 
     // First snapshot
     procmetrix_cpu_times before[1];
     procmetrix_cpu_times_per_cpu(before, 1, nullptr);
 
     // Wait a bit
-    std::this_thread::sleep_for(
-        std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     // Second snapshot
     procmetrix_cpu_times after[1];
@@ -261,7 +224,7 @@ TEST(procmetrix_cpu_utilization_ratio, null_args)
 
 TEST(procmetrix_cpu_utilization_ratio, div_by_zero)
 {
-    procmetrix_cpu_times delta {0};
+    procmetrix_cpu_times delta { 0 };
 
     // Zero utilization without crashing
     double cpu_ratio = procmetrix_cpu_utilization_ratio(&delta);
@@ -283,7 +246,7 @@ TEST(procmetrix_cpu_utilization_ratio, delay)
     // CPU utilization is not zero
     double cpu_ratio = procmetrix_cpu_utilization_ratio(&delta);
     EXPECT_GT(cpu_ratio, 0.0);
-    GTEST_LOG_(INFO) << "CPU percentage: " << std::round(cpu_ratio * 100.0); 
+    GTEST_LOG_(INFO) << "CPU percentage: " << std::round(cpu_ratio * 100.0);
 }
 
 /* Frequency */
@@ -296,12 +259,12 @@ TEST(procmetrix_cpu_freqs_average, null_args)
     EXPECT_EQ(
         procmetrix_cpu_freqs_average(nullptr, 1, &freq),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
-    
+
     // Null output
     EXPECT_EQ(
         procmetrix_cpu_freqs_average(&freq, 1, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
-    
+
     // Empty count
     EXPECT_EQ(
         procmetrix_cpu_freqs_average(&freq, 0, &freq),
@@ -330,11 +293,9 @@ TEST(procmetrix_cpu_freqs_average, single)
 
 TEST(procmetrix_cpu_freqs_average, average)
 {
-    procmetrix_cpu_freq_t freqs[] { 
-        { 3000.0, 1000.0, 4000.0 },
-        { 4000.0, 2000.0, 5000.0 },
-        { 5000.0, 3000.0, 6000.0 }
-    };
+    procmetrix_cpu_freq_t freqs[] { { 3000.0, 1000.0, 4000.0 },
+                                    { 4000.0, 2000.0, 5000.0 },
+                                    { 5000.0, 3000.0, 6000.0 } };
 
     procmetrix_cpu_freq_t average;
 
@@ -368,17 +329,14 @@ TEST(procmetrix_cpu_freq_system, null_args)
 {
     // Null output array
     EXPECT_EQ(
-        procmetrix_cpu_freq_system(nullptr),
-        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+        procmetrix_cpu_freq_system(nullptr), PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
 TEST(procmetrix_cpu_freq_system, non_zero)
 {
     procmetrix_cpu_freq_t system_freqs;
 
-    EXPECT_EQ(
-        procmetrix_cpu_freq_system(&system_freqs),
-        PROCMETRIX_ERROR_NONE);
+    EXPECT_EQ(procmetrix_cpu_freq_system(&system_freqs), PROCMETRIX_ERROR_NONE);
 
     // Min and Max values are probably not present in a virtualized CI runner
     // Check only for current frequency being non-zero

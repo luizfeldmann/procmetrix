@@ -26,32 +26,41 @@ extern "C"
     {
         size_t items_reserved;
         size_t items_present;
-        procmetrix_core_topo_key_t *data;
+        procmetrix_core_topo_key_t* data;
     } procmetrix_core_topo_list_t;
 
     //! Initializes the list of core topology entries
     //! @private
-    PROCMETRIX_API void procmetrix_core_topo_list_init(procmetrix_core_topo_list_t *list);
+    PROCMETRIX_API void
+    procmetrix_core_topo_list_init(procmetrix_core_topo_list_t* list);
 
     //! Frees the data in the list
     //! @private
-    PROCMETRIX_API void procmetrix_core_topo_list_free(procmetrix_core_topo_list_t *list);
+    PROCMETRIX_API void
+    procmetrix_core_topo_list_free(procmetrix_core_topo_list_t* list);
 
     //! Adds an item to the topology list
     //! @private
-    PROCMETRIX_API procmetrix_error_t procmetrix_core_topo_list_add(procmetrix_core_topo_list_t *list, size_t package_id, size_t core_id);
+    PROCMETRIX_API procmetrix_error_t procmetrix_core_topo_list_add(
+        procmetrix_core_topo_list_t* list, size_t package_id, size_t core_id);
 
     //! Compares the order of 2 topo keys
     //! @private
-    PROCMETRIX_API int procmetrix_core_topo_key_compare(const procmetrix_core_topo_key_t *lhs, const procmetrix_core_topo_key_t *rhs);
+    PROCMETRIX_API int procmetrix_core_topo_key_compare(
+        const procmetrix_core_topo_key_t* lhs,
+        const procmetrix_core_topo_key_t* rhs);
 
     //! Sorts the list of core topo keys
     //! @private
-    PROCMETRIX_API void procmetrix_core_topo_list_sort(procmetrix_core_topo_list_t *list);
+    PROCMETRIX_API void
+    procmetrix_core_topo_list_sort(procmetrix_core_topo_list_t* list);
 
     //! Counts the number of unique entries in the list
-    //! @details Expects the list to be previously sorted by #procmetrix_core_topo_list_sort
-    PROCMETRIX_API size_t procmetrix_core_topo_list_count_unique(const procmetrix_core_topo_list_t *list);
+    //! @details Expects the list to be previously sorted
+    //! @see procmetrix_core_topo_list_sort
+    //! @private
+    PROCMETRIX_API size_t procmetrix_core_topo_list_count_unique(
+        const procmetrix_core_topo_list_t* list);
 
 #ifdef __cplusplus
 }

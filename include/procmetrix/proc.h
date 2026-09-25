@@ -31,37 +31,42 @@ extern "C"
 
     //! Allocates and fills a list of running PIDs.
     //! @details Caller must later free the list with procmetrix_free_pids.
-    //! @param[out] list Pointer to the memory location where the output array will be allocated.
-    //                   The address of the variable pointed by list must be initialized to NULL before the call.
-    //! @param[out] out_count Pointer to the variable which will receive the number of returned items
-    PROCMETRIX_API procmetrix_error_t procmetrix_list_pids(procmetrix_pid_t **list, size_t *out_count);
+    //! @param[out] list Pointer where the output array will be allocated.
+    //!                  Must be initialized to NULL before the call.
+    //! @param[out] out_count Pointer to receive the number of returned items.
+    PROCMETRIX_API procmetrix_error_t
+    procmetrix_list_pids(procmetrix_pid_t** list, size_t* out_count);
 
     //! Frees the list allocated with procmetrix_list_pids.
     //! @details Safe to call with NULL.
-    PROCMETRIX_API void procmetrix_free_pids(procmetrix_pid_t **list);
+    PROCMETRIX_API void procmetrix_free_pids(procmetrix_pid_t** list);
 
     //! Gets the PID of the parent process.
     //! @param[in] pid ID of the process to inspect.
     //! @param[out] ppid Receives the parent process ID.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetrix_pid_t *ppid);
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_parent_pid(
+        procmetrix_pid_t pid, procmetrix_pid_t* ppid);
 
     //! Gets the process' name.
     //! @param[in] pid ID of the process to find the name.
     //! @param[out] name Receives the name of the process.
     //! @param[in] len Capacity of the name buffer.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, size_t len);
+    PROCMETRIX_API procmetrix_error_t
+    procmetrix_get_proc_name(procmetrix_pid_t pid, char* name, size_t len);
 
     //! Gets the process' executable's full path.
     //! @param[in] pid ID of the process to find the executable.
     //! @param[out] path Receives the executable path.
     //! @param[in] len Capacity of the path buffer.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_exe(procmetrix_pid_t pid, char *path, size_t len);
+    PROCMETRIX_API procmetrix_error_t
+    procmetrix_get_proc_exe(procmetrix_pid_t pid, char* path, size_t len);
 
     //! Gets the process' current working directory.
     //! @param[in] pid ID of the process to find the working dir.
     //! @param[out] cwd Receives the working dir.
     //! @param[in] len Capacity of the path buffer.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_cwd(procmetrix_pid_t pid, char *cwd, size_t len);
+    PROCMETRIX_API procmetrix_error_t
+    procmetrix_get_proc_cwd(procmetrix_pid_t pid, char* cwd, size_t len);
 
     //! List of command line argluments for a process
     typedef struct procmetrix_proc_cmdline
@@ -70,26 +75,29 @@ extern "C"
         size_t argc;
 
         //! Values of the arguments
-        char **argv;
+        char** argv;
     } procmetrix_proc_cmdline_t;
 
     //! Gets the process command line.
     //! @details The list must be free'd by the caller.
     //! @param[in] pid ID of the process to find the command line.
-    //! @param[out] cmdline Receives number and value of the command line arguments.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_cmdline(procmetrix_pid_t pid, procmetrix_proc_cmdline_t *cmdline);
+    //! @param[out] cmdline Receives number and value of
+    //!                     the command line arguments.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_cmdline(
+        procmetrix_pid_t pid, procmetrix_proc_cmdline_t* cmdline);
 
     //! Frees the command line arguments list struct.
-    PROCMETRIX_API void procmetrix_free_proc_cmdline(procmetrix_proc_cmdline_t *cmd_line);
+    PROCMETRIX_API void
+    procmetrix_free_proc_cmdline(procmetrix_proc_cmdline_t* cmd_line);
 
     //! Key-value pair for one environment variable in a process
     typedef struct procmetrix_proc_environ_var
     {
         //! Key/name of the environment variable
-        char *name;
+        char* name;
 
         //! Value of the environment variable
-        char *value;
+        char* value;
     } procmetrix_proc_environ_var_t;
 
     //! List of environment variables for a process
@@ -99,17 +107,20 @@ extern "C"
         size_t count;
 
         //! Array of the environment variables
-        procmetrix_proc_environ_var_t *vars;
+        procmetrix_proc_environ_var_t* vars;
     } procmetrix_proc_environ_t;
 
     //! Gets the process environment.
     //! @details The list must be free'd by the caller.
     //! @param[in] pid ID of the process to find the environment.
-    //! @param[out] proc_environ Receives number and key-value pairs for the environment.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_proc_environ_t *proc_environ);
+    //! @param[out] proc_environ Receives number and key-value pairs
+    //!                          for the environment variables.
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_environ(
+        procmetrix_pid_t pid, procmetrix_proc_environ_t* proc_environ);
 
     //! Frees the environment list struct.
-    PROCMETRIX_API void procmetrix_free_proc_environ(procmetrix_proc_environ_t *proc_environ);
+    PROCMETRIX_API void
+    procmetrix_free_proc_environ(procmetrix_proc_environ_t* proc_environ);
 
     //! Memory information about a process
     typedef struct procmetrix_proc_memory_info
@@ -117,7 +128,8 @@ extern "C"
         //! Resident Set Size
         //! Non-swapped physical memory a process has used
         //! On UNIX it matches RES column in "top"
-        //! On Windows this is an alias for wset field and it matches "Mem Usage" of task manager
+        //! On Windows this is an alias for wset field
+        //! and it matches "Mem Usage" of task manager
         uint64_t rss;
 
         //! Virtual Memory Size
@@ -154,7 +166,8 @@ extern "C"
     //! Reads the memory information of a process.
     //! @param[in] pid ID of the process to get the memory info.
     //! @param[out] memory_info Receives the retrieved memory info.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmetrix_proc_memory_info_t *memory_info);
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_memory_info(
+        procmetrix_pid_t pid, procmetrix_proc_memory_info_t* memory_info);
 
     //! Accumulated process times, in seconds
     typedef struct procmetrix_proc_cpu_times
@@ -177,19 +190,26 @@ extern "C"
     //! Reads the process' usage of CPU time.
     //! @param[in] pid ID of the process to get the CPU times.
     //! @param[out] cpu_times Receives the retrieved CPU times.
-    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_cpu_times(procmetrix_pid_t pid, procmetrix_proc_cpu_times_t *cpu_times);
+    PROCMETRIX_API procmetrix_error_t procmetrix_get_proc_cpu_times(
+        procmetrix_pid_t pid, procmetrix_proc_cpu_times_t* cpu_times);
 
     //! Calculates the difference in CPU times between two measurements.
     //! @details Negative values are clamped.
     //! @param[in] before Previous CPU times snapshot.
     //! @param[in] after Later CPU times snapshot.
     //! @param[out] delta Receives the calculate times delta.
-    PROCMETRIX_API procmetrix_error_t procmetrix_proc_cpu_times_delta(const procmetrix_proc_cpu_times_t *before, const procmetrix_proc_cpu_times_t *after, procmetrix_proc_cpu_times_t *delta);
+    PROCMETRIX_API procmetrix_error_t procmetrix_proc_cpu_times_delta(
+        const procmetrix_proc_cpu_times_t* before,
+        const procmetrix_proc_cpu_times_t* after,
+        procmetrix_proc_cpu_times_t* delta);
 
     //! Calculates the total sum of CPU time spent by a process.
-    PROCMETRIX_API double procmetrix_proc_cpu_times_sum(const procmetrix_proc_cpu_times_t *cpu_times);
+    PROCMETRIX_API double
+    procmetrix_proc_cpu_times_sum(const procmetrix_proc_cpu_times_t* cpu_times);
 
+    // clang-format off
     //! @}
+    // clang-format on
 #ifdef __cplusplus
 }
 #endif // __cplusplus

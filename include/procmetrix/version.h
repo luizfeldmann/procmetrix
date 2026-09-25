@@ -24,7 +24,9 @@ extern "C"
     //! Reads the patch version number
     PROCMETRIX_API unsigned int procmetrix_version_patch(void);
 
+    // clang-format off
     //! @}
+    // clang-format on
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -1,5 +1,5 @@
 //! @file
-//! @brief Main public header for the library. 
+//! @brief Main public header for the library.
 
 #ifndef PROCMETRIX_H
 #define PROCMETRIX_H

@@ -88,7 +88,7 @@ TEST(procmetrix_core_topo_key_compare, order)
 
     // Order by core_id
     EXPECT_EQ(procmetrix_core_topo_key_compare(&keya, &keyb), -1);
-    EXPECT_EQ(procmetrix_core_topo_key_compare(&keyb, &keya),  1);
+    EXPECT_EQ(procmetrix_core_topo_key_compare(&keyb, &keya), 1);
 
     // Order by package_id
     EXPECT_EQ(procmetrix_core_topo_key_compare(&keya, &keyc), -1);

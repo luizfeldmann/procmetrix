@@ -11,13 +11,13 @@
 #include <unistd.h>
 
 //! Path to the meminfo file
-static const char *g_proc_meminfo_file = "/proc/meminfo";
+static const char* g_proc_meminfo_file = "/proc/meminfo";
 
 //! Path to the vmstat file
-static const char *g_proc_vmstat_file = "/proc/vmstat";
+static const char* g_proc_vmstat_file = "/proc/vmstat";
 
 //! Path to the zoneinfo file
-static const char *g_proc_zoneinfo_file = "/proc/zoneinfo";
+static const char* g_proc_zoneinfo_file = "/proc/zoneinfo";
 
 // Helpers
 
@@ -29,7 +29,8 @@ static inline uint64_t min_u64(uint64_t first, uint64_t second)
 
 // Private impl
 
-procmetrix_error_t procmetrix_impl_linux_zoneinfo_low_watermark(FILE *zoneinfo_file, uint64_t *low_wmark)
+procmetrix_error_t procmetrix_impl_linux_zoneinfo_low_watermark(
+    FILE* zoneinfo_file, uint64_t* low_wmark)
 {
     // Sanity
     if (NULL == low_wmark)
@@ -60,7 +61,10 @@ procmetrix_error_t procmetrix_impl_linux_zoneinfo_low_watermark(FILE *zoneinfo_f
     return PROCMETRIX_ERROR_NONE;
 }
 
-procmetrix_error_t procmetrix_impl_linux_system_virtual_memory(FILE *meminfo_file, FILE *zoneinfo_file, procmetrix_virtual_memory_t *virtual_memory)
+procmetrix_error_t procmetrix_impl_linux_system_virtual_memory(
+    FILE* meminfo_file,
+    FILE* zoneinfo_file,
+    procmetrix_virtual_memory_t* virtual_memory)
 {
     // Sanity
     if (NULL == virtual_memory)
@@ -108,8 +112,9 @@ procmetrix_error_t procmetrix_impl_linux_system_virtual_memory(FILE *meminfo_fil
             reclaimable = 1024ULL * temp_value;
             has_reclaimable = true;
         }
-        else if (1 == sscanf(line, "Shmem: %" SCNu64, &temp_value) ||
-                 1 == sscanf(line, "MemShared: %" SCNu64, &temp_value))
+        else if (
+            1 == sscanf(line, "Shmem: %" SCNu64, &temp_value) ||
+            1 == sscanf(line, "MemShared: %" SCNu64, &temp_value))
         {
             virtual_memory->shared = 1024ULL * temp_value;
         }
@@ -131,9 +136,10 @@ procmetrix_error_t procmetrix_impl_linux_system_virtual_memory(FILE *meminfo_fil
         {
             virtual_memory->inactive = 1024ULL * temp_value;
         }
-        else if (1 == sscanf(line, "Inact_dirty: %" SCNu64, &temp_value) ||
-                 1 == sscanf(line, "Inact_clean: %" SCNu64, &temp_value) ||
-                 1 == sscanf(line, "Inact_laundry: %" SCNu64, &temp_value))
+        else if (
+            1 == sscanf(line, "Inact_dirty: %" SCNu64, &temp_value) ||
+            1 == sscanf(line, "Inact_clean: %" SCNu64, &temp_value) ||
+            1 == sscanf(line, "Inact_laundry: %" SCNu64, &temp_value))
         {
             // Inactive can be expressed as the sum of subfields
             virtual_memory->inactive += 1024ULL * temp_value;
@@ -164,13 +170,16 @@ procmetrix_error_t procmetrix_impl_linux_system_virtual_memory(FILE *meminfo_fil
         // A better approximation is possible when these fields exist
         uint64_t low_wmark = 0;
         if (has_reclaimable && has_active_file && has_inactive_file &&
-            (PROCMETRIX_ERROR_NONE == procmetrix_impl_linux_zoneinfo_low_watermark(zoneinfo_file, &low_wmark)))
+            (PROCMETRIX_ERROR_NONE ==
+             procmetrix_impl_linux_zoneinfo_low_watermark(
+                 zoneinfo_file, &low_wmark)))
         {
             uint64_t pagecache = active_file + inactive_file;
             pagecache -= min_u64(pagecache / 2, low_wmark);
 
-            virtual_memory->available =
-                virtual_memory->free + pagecache + reclaimable - min_u64(reclaimable / 2, low_wmark);
+            virtual_memory->available = virtual_memory->free + pagecache +
+                                        reclaimable -
+                                        min_u64(reclaimable / 2, low_wmark);
 
             if (virtual_memory->available > low_wmark)
                 virtual_memory->available -= low_wmark;
@@ -191,13 +200,17 @@ procmetrix_error_t procmetrix_impl_linux_system_virtual_memory(FILE *meminfo_fil
 
     // Calculate usage ration
     virtual_memory->used = virtual_memory->total - virtual_memory->available;
-    virtual_memory->ratio = (double)virtual_memory->used / (double)virtual_memory->total;
+    virtual_memory->ratio =
+        (double)virtual_memory->used / (double)virtual_memory->total;
 
     // Success
     return PROCMETRIX_ERROR_NONE;
 }
 
-procmetrix_error_t procmetrix_impl_linux_system_swap_memory(FILE *meminfo_file, FILE *vmstat_file, procmetrix_swap_memory_t *swap_memory)
+procmetrix_error_t procmetrix_impl_linux_system_swap_memory(
+    FILE* meminfo_file,
+    FILE* vmstat_file,
+    procmetrix_swap_memory_t* swap_memory)
 {
     // Sanity
     if (NULL == swap_memory)
@@ -210,10 +223,10 @@ procmetrix_error_t procmetrix_impl_linux_system_swap_memory(FILE *meminfo_file, 
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Help to stop early
-    bool has_total = false,
-         has_free = false,
-         has_sin = false,
-         has_sout = false;
+    bool has_total = false;
+    bool has_free = false;
+    bool has_sin = false;
+    bool has_sout = false;
 
     // Read the meminfo
     char line[1024];
@@ -279,7 +292,8 @@ procmetrix_error_t procmetrix_impl_linux_system_swap_memory(FILE *meminfo_file, 
 
 // Public impl
 
-procmetrix_error_t procmetrix_system_virtual_memory(procmetrix_virtual_memory_t *virtual_memory)
+procmetrix_error_t
+procmetrix_system_virtual_memory(procmetrix_virtual_memory_t* virtual_memory)
 {
     // Sanity
     if (NULL == virtual_memory)
@@ -289,14 +303,17 @@ procmetrix_error_t procmetrix_system_virtual_memory(procmetrix_virtual_memory_t 
     memset(virtual_memory, 0, sizeof(procmetrix_virtual_memory_t));
 
     // Open meminfo file
-    FILE *meminfo_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_meminfo_file);
+    FILE* meminfo_file =
+        procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_meminfo_file);
     if (NULL == meminfo_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Open zoneinfo file (optional)
-    FILE *zoneinfo_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_zoneinfo_file);
+    FILE* zoneinfo_file =
+        procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_zoneinfo_file);
 
-    procmetrix_error_t status = procmetrix_impl_linux_system_virtual_memory(meminfo_file, zoneinfo_file, virtual_memory);
+    procmetrix_error_t status = procmetrix_impl_linux_system_virtual_memory(
+        meminfo_file, zoneinfo_file, virtual_memory);
 
     // Cleanup
     fclose(meminfo_file);
@@ -306,7 +323,8 @@ procmetrix_error_t procmetrix_system_virtual_memory(procmetrix_virtual_memory_t 
     return status;
 }
 
-procmetrix_error_t procmetrix_system_swap_memory(procmetrix_swap_memory_t *swap_memory)
+procmetrix_error_t
+procmetrix_system_swap_memory(procmetrix_swap_memory_t* swap_memory)
 {
     // Sanity
     if (NULL == swap_memory)
@@ -316,14 +334,17 @@ procmetrix_error_t procmetrix_system_swap_memory(procmetrix_swap_memory_t *swap_
     memset(swap_memory, 0, sizeof(procmetrix_swap_memory_t));
 
     // Open meminfo file
-    FILE *meminfo_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_meminfo_file);
+    FILE* meminfo_file =
+        procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_meminfo_file);
     if (NULL == meminfo_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
     // vmstat file is only needes for sin and pswpin/pswpout
-    FILE *vmstat_file = procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_vmstat_file);
+    FILE* vmstat_file =
+        procmetrix_impl_linux_open_file_rdonly_cloexec(g_proc_vmstat_file);
 
-    procmetrix_error_t status = procmetrix_impl_linux_system_swap_memory(meminfo_file, vmstat_file, swap_memory);
+    procmetrix_error_t status = procmetrix_impl_linux_system_swap_memory(
+        meminfo_file, vmstat_file, swap_memory);
 
     // Cleanup
     fclose(meminfo_file);

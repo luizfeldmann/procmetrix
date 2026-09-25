@@ -18,7 +18,8 @@
 
 // Util
 
-static FILE *procmetrix_impl_linux_proc_pid_open_file(const char *filename, procmetrix_pid_t pid)
+static FILE* procmetrix_impl_linux_proc_pid_open_file(
+    const char* filename, procmetrix_pid_t pid)
 {
     // Sanity
     if (NULL == filename)
@@ -26,13 +27,15 @@ static FILE *procmetrix_impl_linux_proc_pid_open_file(const char *filename, proc
 
     // Path to the file
     char read_path[PATH_MAX];
-    snprintf(read_path, sizeof(read_path), "/proc/%" PRIu32 "/%s", pid, filename);
+    snprintf(
+        read_path, sizeof(read_path), "/proc/%" PRIu32 "/%s", pid, filename);
 
     // Open the file
     return procmetrix_impl_linux_open_file_rdonly_cloexec(read_path);
 }
 
-static procmetrix_error_t procmetrix_impl_linux_proc_pid_read_line(FILE *read_file, char *buf, size_t len)
+static procmetrix_error_t
+procmetrix_impl_linux_proc_pid_read_line(FILE* read_file, char* buf, size_t len)
 {
     // Sanity
     if (NULL == read_file || NULL == buf || 0 == len)
@@ -51,7 +54,8 @@ static procmetrix_error_t procmetrix_impl_linux_proc_pid_read_line(FILE *read_fi
     return status;
 }
 
-static procmetrix_error_t procmetrix_impl_linux_read_full_file(FILE *read_file, char **buffer, size_t *file_size)
+static procmetrix_error_t procmetrix_impl_linux_read_full_file(
+    FILE* read_file, char** buffer, size_t* file_size)
 {
     // Sanity
     if (NULL == read_file || NULL == buffer || NULL == file_size)
@@ -62,14 +66,15 @@ static procmetrix_error_t procmetrix_impl_linux_read_full_file(FILE *read_file, 
     size_t capacity = 128;
 
     *file_size = 0;
-    *buffer = (char *)malloc(capacity);
+    *buffer = (char*)malloc(capacity);
 
     if (NULL == *buffer)
         return PROCMETRIX_ERROR_OUT_OF_MEMORY;
 
     // Read file chunks
     procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
-    while ((chunk = fread(*buffer + *file_size, 1, capacity - *file_size, read_file)) > 0)
+    while ((chunk = fread(
+                *buffer + *file_size, 1, capacity - *file_size, read_file)) > 0)
     {
         *file_size += chunk;
 
@@ -79,7 +84,7 @@ static procmetrix_error_t procmetrix_impl_linux_read_full_file(FILE *read_file, 
             capacity *= 2;
 
             // Check rellocation success
-            char *new_buffer = (char *)realloc(*buffer, capacity);
+            char* new_buffer = (char*)realloc(*buffer, capacity);
             if (NULL == new_buffer)
             {
                 status = PROCMETRIX_ERROR_OUT_OF_MEMORY;
@@ -106,17 +111,20 @@ static procmetrix_error_t procmetrix_impl_linux_read_full_file(FILE *read_file, 
     return status;
 }
 
-static procmetrix_error_t procmetrix_impl_linux_read_zero_terminated_tokens(FILE *read_file, char ***tokens, size_t *num_tokens)
+static procmetrix_error_t procmetrix_impl_linux_read_zero_terminated_tokens(
+    FILE* read_file, char*** tokens, size_t* num_tokens)
 {
     // Read the file
     size_t file_size = 0;
-    char *buffer = NULL;
-    procmetrix_error_t status = procmetrix_impl_linux_read_full_file(read_file, &buffer, &file_size);
+    char* buffer = NULL;
+    procmetrix_error_t status =
+        procmetrix_impl_linux_read_full_file(read_file, &buffer, &file_size);
     if (status != PROCMETRIX_ERROR_NONE)
         return status;
 
     // Split the tokens
-    status = procmetrix_split_zero_terminated_tokens(buffer, file_size, tokens, num_tokens);
+    status = procmetrix_split_zero_terminated_tokens(
+        buffer, file_size, tokens, num_tokens);
 
     // Cleanup the buffer
     free(buffer);
@@ -124,7 +132,8 @@ static procmetrix_error_t procmetrix_impl_linux_read_zero_terminated_tokens(FILE
     return status;
 }
 
-static procmetrix_error_t procmetrix_impl_linux_proc_pid_follow_symlink(const char *filename, procmetrix_pid_t pid, char *buf, size_t len)
+static procmetrix_error_t procmetrix_impl_linux_proc_pid_follow_symlink(
+    const char* filename, procmetrix_pid_t pid, char* buf, size_t len)
 {
     // Sanity
     if (NULL == buf || 0 == len)
@@ -139,8 +148,8 @@ static procmetrix_error_t procmetrix_impl_linux_proc_pid_follow_symlink(const ch
 
     // Path to the symlink
     char link_path[PATH_MAX];
-    snprintf(link_path, sizeof(link_path),
-             "/proc/%" PRIu32 "/%s", pid, filename);
+    snprintf(
+        link_path, sizeof(link_path), "/proc/%" PRIu32 "/%s", pid, filename);
 
     // Read the symlink
     size_t read_count = readlink(link_path, buf, len - 1);
@@ -155,7 +164,8 @@ static procmetrix_error_t procmetrix_impl_linux_proc_pid_follow_symlink(const ch
 
 // Private Impl
 
-procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *stat_data, procmetrix_pid_t *ppid)
+procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(
+    const char* stat_data, procmetrix_pid_t* ppid)
 {
     // Sanity
     if (NULL == ppid)
@@ -167,7 +177,7 @@ procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *sta
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Find delimiter
-    const char *rparen = strrchr(stat_data, ')');
+    const char* rparen = strrchr(stat_data, ')');
     if (NULL == rparen)
         return PROCMETRIX_ERROR_MALFORMED;
 
@@ -177,7 +187,8 @@ procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_ppid(const char *sta
     return PROCMETRIX_ERROR_NONE;
 }
 
-procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_cpu_times(const char *stat_data, procmetrix_proc_cpu_times_t *cpu_times)
+procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_cpu_times(
+    const char* stat_data, procmetrix_proc_cpu_times_t* cpu_times)
 {
     // Sanity
     if (NULL == cpu_times)
@@ -194,7 +205,7 @@ procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_cpu_times(const char
         return PROCMETRIX_ERROR_UNKNOWN;
 
     // Find delimiter
-    const char *rparen = strrchr(stat_data, ')');
+    const char* rparen = strrchr(stat_data, ')');
     if (NULL == rparen)
         return PROCMETRIX_ERROR_MALFORMED;
 
@@ -202,35 +213,41 @@ procmetrix_error_t procmetrix_impl_linux_proc_pid_stat_read_cpu_times(const char
     uint64_t system = 0;
     int64_t children_user = 0;
     int64_t children_system = 0;
-    if (4 != sscanf(rparen + 1,
-                    " %*c"       // state
-                    " %*d"       // ppid
-                    " %*d"       // pgrp
-                    " %*d"       // session
-                    " %*d"       // tty_nr
-                    " %*d"       // tpgid
-                    " %*u"       // flags
-                    " %*u"       // minflt
-                    " %*u"       // cminflt
-                    " %*u"       // majflt
-                    " %*u"       // cmajflt
-                    " %" SCNu64  // utime
-                    " %" SCNu64  // stime
-                    " %" SCNd64  // cutime
-                    " %" SCNd64, // cstime
-                    &user, &system, &children_user, &children_system))
+    if (4 != sscanf(
+                 rparen + 1,
+                 " %*c"       // state
+                 " %*d"       // ppid
+                 " %*d"       // pgrp
+                 " %*d"       // session
+                 " %*d"       // tty_nr
+                 " %*d"       // tpgid
+                 " %*u"       // flags
+                 " %*u"       // minflt
+                 " %*u"       // cminflt
+                 " %*u"       // majflt
+                 " %*u"       // cmajflt
+                 " %" SCNu64  // utime
+                 " %" SCNu64  // stime
+                 " %" SCNd64  // cutime
+                 " %" SCNd64, // cstime
+                 &user,
+                 &system,
+                 &children_user,
+                 &children_system))
         return PROCMETRIX_ERROR_MALFORMED;
 
     // Convert ticks to seconds
     cpu_times->user = (double)user / (double)ticks_per_second;
     cpu_times->system = (double)system / (double)ticks_per_second;
     cpu_times->children_user = (double)children_user / (double)ticks_per_second;
-    cpu_times->children_system = (double)children_system / (double)ticks_per_second;
+    cpu_times->children_system =
+        (double)children_system / (double)ticks_per_second;
 
     return PROCMETRIX_ERROR_NONE;
 }
 
-procmetrix_error_t procmetrix_impl_linux_proc_read_statm(const char *statm_data, procmetrix_proc_memory_info_t *memory_info)
+procmetrix_error_t procmetrix_impl_linux_proc_read_statm(
+    const char* statm_data, procmetrix_proc_memory_info_t* memory_info)
 {
     // Sanity
     if (NULL == memory_info)
@@ -242,9 +259,24 @@ procmetrix_error_t procmetrix_impl_linux_proc_read_statm(const char *statm_data,
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Read fields
-    uint64_t vms = 0, rss = 0, shared = 0, text = 0, lib = 0, data = 0, dirty = 0; // NOLINT(readability-isolate-declaration)
-    if (7 != sscanf(statm_data, "%" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64,
-                    &vms, &rss, &shared, &text, &lib, &data, &dirty))
+    uint64_t vms = 0;
+    uint64_t rss = 0;
+    uint64_t shared = 0;
+    uint64_t text = 0;
+    uint64_t lib = 0;
+    uint64_t data = 0;
+    uint64_t dirty = 0; // NOLINT(readability-isolate-declaration)
+    if (7 != sscanf(
+                 statm_data,
+                 "%" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64
+                 " %" SCNu64 " %" SCNu64,
+                 &vms,
+                 &rss,
+                 &shared,
+                 &text,
+                 &lib,
+                 &data,
+                 &dirty))
         return PROCMETRIX_ERROR_MALFORMED;
 
     // Convert pages to bytes
@@ -286,7 +318,8 @@ bool procmetrix_pid_exists(procmetrix_pid_t pid)
     return false;
 }
 
-procmetrix_error_t procmetrix_list_pids(procmetrix_pid_t **list, size_t *out_count)
+procmetrix_error_t
+procmetrix_list_pids(procmetrix_pid_t** list, size_t* out_count)
 {
     // Sanity
     if (list == NULL || *list != NULL || out_count == NULL)
@@ -301,7 +334,8 @@ procmetrix_error_t procmetrix_list_pids(procmetrix_pid_t **list, size_t *out_cou
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Allocate output list
-    procmetrix_pid_t *pids = (procmetrix_pid_t *)calloc(glb.gl_pathc, sizeof(procmetrix_pid_t));
+    procmetrix_pid_t* pids =
+        (procmetrix_pid_t*)calloc(glb.gl_pathc, sizeof(procmetrix_pid_t));
     *list = pids;
     if (NULL == pids)
     {
@@ -313,7 +347,9 @@ procmetrix_error_t procmetrix_list_pids(procmetrix_pid_t **list, size_t *out_cou
     procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
     for (*out_count = 0; *out_count < glb.gl_pathc; ++(*out_count))
     {
-        if (1 != sscanf(glb.gl_pathv[*out_count], "/proc/%" SCNu32, &pids[*out_count]))
+        if (1 !=
+            sscanf(
+                glb.gl_pathv[*out_count], "/proc/%" SCNu32, &pids[*out_count]))
             status = PROCMETRIX_ERROR_MALFORMED;
     }
 
@@ -323,7 +359,8 @@ procmetrix_error_t procmetrix_list_pids(procmetrix_pid_t **list, size_t *out_cou
     return status;
 }
 
-procmetrix_error_t procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetrix_pid_t *ppid)
+procmetrix_error_t
+procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetrix_pid_t* ppid)
 {
     // Sanity
     if (NULL == ppid)
@@ -336,13 +373,14 @@ procmetrix_error_t procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetr
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Open file
-    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("stat", pid);
+    FILE* read_file = procmetrix_impl_linux_proc_pid_open_file("stat", pid);
     if (NULL == read_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Read the input file
     char buf[4096];
-    procmetrix_error_t status = procmetrix_impl_linux_proc_pid_read_line(read_file, buf, sizeof(buf));
+    procmetrix_error_t status =
+        procmetrix_impl_linux_proc_pid_read_line(read_file, buf, sizeof(buf));
     if (PROCMETRIX_ERROR_NONE == status)
     {
         // Invoke impl
@@ -355,7 +393,8 @@ procmetrix_error_t procmetrix_get_proc_parent_pid(procmetrix_pid_t pid, procmetr
     return status;
 }
 
-procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, size_t len)
+procmetrix_error_t
+procmetrix_get_proc_name(procmetrix_pid_t pid, char* name, size_t len)
 {
     // Sanity
     if (NULL == name || 0 == len)
@@ -368,12 +407,13 @@ procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, si
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Open file
-    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("comm", pid);
+    FILE* read_file = procmetrix_impl_linux_proc_pid_open_file("comm", pid);
     if (NULL == read_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Read line content
-    procmetrix_error_t result = procmetrix_impl_linux_proc_pid_read_line(read_file, name, len);
+    procmetrix_error_t result =
+        procmetrix_impl_linux_proc_pid_read_line(read_file, name, len);
 
     // Cleanup
     fclose(read_file);
@@ -381,17 +421,20 @@ procmetrix_error_t procmetrix_get_proc_name(procmetrix_pid_t pid, char *name, si
     return result;
 }
 
-procmetrix_error_t procmetrix_get_proc_exe(procmetrix_pid_t pid, char *path, size_t len)
+procmetrix_error_t
+procmetrix_get_proc_exe(procmetrix_pid_t pid, char* path, size_t len)
 {
     return procmetrix_impl_linux_proc_pid_follow_symlink("exe", pid, path, len);
 }
 
-procmetrix_error_t procmetrix_get_proc_cwd(procmetrix_pid_t pid, char *cwd, size_t len)
+procmetrix_error_t
+procmetrix_get_proc_cwd(procmetrix_pid_t pid, char* cwd, size_t len)
 {
     return procmetrix_impl_linux_proc_pid_follow_symlink("cwd", pid, cwd, len);
 }
 
-procmetrix_error_t procmetrix_get_proc_cmdline(procmetrix_pid_t pid, procmetrix_proc_cmdline_t *cmdline)
+procmetrix_error_t procmetrix_get_proc_cmdline(
+    procmetrix_pid_t pid, procmetrix_proc_cmdline_t* cmdline)
 {
     // Sanity (1)
     if (NULL == cmdline)
@@ -405,13 +448,14 @@ procmetrix_error_t procmetrix_get_proc_cmdline(procmetrix_pid_t pid, procmetrix_
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Open the file
-    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("cmdline", pid);
+    FILE* read_file = procmetrix_impl_linux_proc_pid_open_file("cmdline", pid);
     if (NULL == read_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
     // The command line arguments are the split tokens
-    procmetrix_error_t status = procmetrix_impl_linux_read_zero_terminated_tokens(
-        read_file, &(cmdline->argv), &(cmdline->argc));
+    procmetrix_error_t status =
+        procmetrix_impl_linux_read_zero_terminated_tokens(
+            read_file, &(cmdline->argv), &(cmdline->argc));
 
     // Cleanup
     fclose(read_file);
@@ -419,7 +463,8 @@ procmetrix_error_t procmetrix_get_proc_cmdline(procmetrix_pid_t pid, procmetrix_
     return status;
 }
 
-procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_proc_environ_t *environ)
+procmetrix_error_t procmetrix_get_proc_environ(
+    procmetrix_pid_t pid, procmetrix_proc_environ_t* environ)
 {
     // Sanity (1)
     if (NULL == environ)
@@ -433,23 +478,25 @@ procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Open the file
-    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("environ", pid);
+    FILE* read_file = procmetrix_impl_linux_proc_pid_open_file("environ", pid);
     if (NULL == read_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Tokenize the environment variables key=value pairs
     size_t numvars = 0;
-    char **varlines = NULL;
+    char** varlines = NULL;
 
-    procmetrix_error_t status = procmetrix_impl_linux_read_zero_terminated_tokens(
-        read_file, &varlines, &numvars);
+    procmetrix_error_t status =
+        procmetrix_impl_linux_read_zero_terminated_tokens(
+            read_file, &varlines, &numvars);
 
     // Cleanup file
     fclose(read_file);
 
     // Allocate space for key-value pairs
     if (PROCMETRIX_ERROR_NONE == status)
-        status = procmetrix_split_environ_vars((const char *const *)varlines, numvars, environ);
+        status = procmetrix_split_environ_vars(
+            (const char* const*)varlines, numvars, environ);
 
     // Cleanup temp env vars line buffers
     for (size_t i = 0; i < numvars; ++i)
@@ -459,7 +506,8 @@ procmetrix_error_t procmetrix_get_proc_environ(procmetrix_pid_t pid, procmetrix_
     return status;
 }
 
-procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmetrix_proc_memory_info_t *memory_info)
+procmetrix_error_t procmetrix_get_proc_memory_info(
+    procmetrix_pid_t pid, procmetrix_proc_memory_info_t* memory_info)
 {
     // Sanity
     if (NULL == memory_info)
@@ -472,13 +520,14 @@ procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmet
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Open file
-    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("statm", pid);
+    FILE* read_file = procmetrix_impl_linux_proc_pid_open_file("statm", pid);
     if (NULL == read_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Read line content
     char buf[128];
-    procmetrix_error_t result = procmetrix_impl_linux_proc_pid_read_line(read_file, buf, sizeof(buf));
+    procmetrix_error_t result =
+        procmetrix_impl_linux_proc_pid_read_line(read_file, buf, sizeof(buf));
 
     // Cleanup
     fclose(read_file);
@@ -490,7 +539,8 @@ procmetrix_error_t procmetrix_get_proc_memory_info(procmetrix_pid_t pid, procmet
     return result;
 }
 
-procmetrix_error_t procmetrix_get_proc_cpu_times(procmetrix_pid_t pid, procmetrix_proc_cpu_times_t *cpu_times)
+procmetrix_error_t procmetrix_get_proc_cpu_times(
+    procmetrix_pid_t pid, procmetrix_proc_cpu_times_t* cpu_times)
 {
     // Sanity
     if (NULL == cpu_times)
@@ -503,17 +553,19 @@ procmetrix_error_t procmetrix_get_proc_cpu_times(procmetrix_pid_t pid, procmetri
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Open file
-    FILE *read_file = procmetrix_impl_linux_proc_pid_open_file("stat", pid);
+    FILE* read_file = procmetrix_impl_linux_proc_pid_open_file("stat", pid);
     if (NULL == read_file)
         return PROCMETRIX_ERROR_FILE_READ;
 
     // Read the input file
     char buf[4096];
-    procmetrix_error_t status = procmetrix_impl_linux_proc_pid_read_line(read_file, buf, sizeof(buf));
+    procmetrix_error_t status =
+        procmetrix_impl_linux_proc_pid_read_line(read_file, buf, sizeof(buf));
     if (PROCMETRIX_ERROR_NONE == status)
     {
         // Invoke impl
-        status = procmetrix_impl_linux_proc_pid_stat_read_cpu_times(buf, cpu_times);
+        status =
+            procmetrix_impl_linux_proc_pid_stat_read_cpu_times(buf, cpu_times);
     }
 
     // Cleanup

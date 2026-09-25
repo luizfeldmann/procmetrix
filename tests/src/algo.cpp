@@ -13,33 +13,36 @@ TEST(procmetrix_split_zero_terminated_tokens, null_args)
     // Null inputs
     size_t num_tokens = 0;
     char** tokens = nullptr;
- 
+
     EXPECT_EQ(
-        procmetrix_split_zero_terminated_tokens(nullptr, 0, &tokens, &num_tokens),
+        procmetrix_split_zero_terminated_tokens(
+            nullptr, 0, &tokens, &num_tokens),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
-        
+
     EXPECT_EQ(tokens, nullptr);
     EXPECT_EQ(num_tokens, 0);
-        
+
     // Null outputs
-    const char buffer[]{"hello world"};
- 
+    const char buffer[] { "hello world" };
+
     EXPECT_EQ(
-        procmetrix_split_zero_terminated_tokens(buffer, std::size(buffer), nullptr, nullptr),
+        procmetrix_split_zero_terminated_tokens(
+            buffer, std::size(buffer), nullptr, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
 TEST(procmetrix_split_zero_terminated_tokens, empty)
 {
     // Empty input
-    const char buffer[]{""};
+    const char buffer[] { "" };
 
     // Finds a single token o zero size
     size_t num_tokens = 0;
     char** tokens = nullptr;
 
     EXPECT_EQ(
-        procmetrix_split_zero_terminated_tokens(buffer, std::size(buffer), &tokens, &num_tokens),
+        procmetrix_split_zero_terminated_tokens(
+            buffer, std::size(buffer), &tokens, &num_tokens),
         PROCMETRIX_ERROR_NONE);
 
     EXPECT_EQ(num_tokens, 1);
@@ -56,13 +59,14 @@ TEST(procmetrix_split_zero_terminated_tokens, empty)
 
 TEST(procmetrix_split_zero_terminated_tokens, trivial)
 {
-    const char buffer[]{"a\0b"};
+    const char buffer[] { "a\0b" };
 
     size_t num_tokens = 0;
     char** tokens = nullptr;
 
     EXPECT_EQ(
-        procmetrix_split_zero_terminated_tokens(buffer, std::size(buffer), &tokens, &num_tokens),
+        procmetrix_split_zero_terminated_tokens(
+            buffer, std::size(buffer), &tokens, &num_tokens),
         PROCMETRIX_ERROR_NONE);
 
     // Expect result ["a", "b"]
@@ -97,10 +101,7 @@ TEST(procmetrix_split_environ_vars, null_args)
     EXPECT_EQ(proc_environ.vars, nullptr);
 
     // Null output
-    const char* const vars[] {
-        "hello=world",
-        "foo=bar"
-    };
+    const char* const vars[] { "hello=world", "foo=bar" };
 
     EXPECT_EQ(
         procmetrix_split_environ_vars(vars, std::size(vars), nullptr),

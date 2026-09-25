@@ -14,7 +14,8 @@ extern "C"
 
     //! Opens a file as readonly and close-on-exec
     //! @private
-    PROCMETRIX_API FILE *procmetrix_impl_linux_open_file_rdonly_cloexec(const char *path);
+    PROCMETRIX_API FILE*
+    procmetrix_impl_linux_open_file_rdonly_cloexec(const char* path);
 
 #ifdef __cplusplus
 }

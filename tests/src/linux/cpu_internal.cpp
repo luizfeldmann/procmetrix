@@ -14,8 +14,7 @@
 
 TEST(procmetrix_impl_linux_cpu_count_physical_topology, null_args)
 {
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_topology(nullptr), 0);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_topology(nullptr), 0);
 }
 
 TEST(procmetrix_impl_linux_cpu_count_physical_topology, single_core_no_smt)
@@ -34,8 +33,7 @@ TEST(procmetrix_impl_linux_cpu_count_physical_topology, single_core_no_smt)
     EXPECT_TRUE(temp.glob(&glob));
 
     // Count the physical CPUs
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_topology(&glob), 1);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_topology(&glob), 1);
 
     // Cleanup
     globfree(&glob);
@@ -63,14 +61,14 @@ TEST(procmetrix_impl_linux_cpu_count_physical_topology, dual_core_no_smt)
     EXPECT_TRUE(temp.glob(&glob));
 
     // Count the physical CPUs
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_topology(&glob), 2);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_topology(&glob), 2);
 
     // Cleanup
     globfree(&glob);
 }
 
-TEST(procmetrix_impl_linux_cpu_count_physical_topology, dual_core_hyperthreading)
+TEST(
+    procmetrix_impl_linux_cpu_count_physical_topology, dual_core_hyperthreading)
 {
     // Create temp sysfs
     temp_dir_glob temp;
@@ -104,8 +102,7 @@ TEST(procmetrix_impl_linux_cpu_count_physical_topology, dual_core_hyperthreading
     EXPECT_TRUE(temp.glob(&glob));
 
     // Count the physical CPUs
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_topology(&glob), 2);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_topology(&glob), 2);
 
     // Cleanup
     globfree(&glob);
@@ -145,8 +142,7 @@ TEST(procmetrix_impl_linux_cpu_count_physical_topology, quad_core_dual_socket)
     EXPECT_TRUE(temp.glob(&glob));
 
     // Count the physical CPUs
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_topology(&glob), 4);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_topology(&glob), 4);
 
     // Cleanup
     globfree(&glob);
@@ -154,8 +150,7 @@ TEST(procmetrix_impl_linux_cpu_count_physical_topology, quad_core_dual_socket)
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, null_args)
 {
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_cpuinfo(nullptr), 0);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(nullptr), 0);
 }
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, empty)
@@ -163,8 +158,7 @@ TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, empty)
     // Empty file
     mem_file_ptr memfp("");
 
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 0);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 0);
 }
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, single_core)
@@ -172,11 +166,9 @@ TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, single_core)
     mem_file_ptr memfp(
         "processor   : 0\n"
         "physical id : 0\n"
-        "core id     : 0\n"
-    );
+        "core id     : 0\n");
 
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 1);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 1);
 }
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_no_smt)
@@ -187,11 +179,9 @@ TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_no_smt)
         "core id     : 0\n"
         "processor   : 1\n"
         "physical id : 0\n"
-        "core id     : 1\n"
-    );
+        "core id     : 1\n");
 
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 2);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 2);
 }
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_hyperthreading)
@@ -208,11 +198,9 @@ TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_hyperthreading)
         "core id        :1 \n"
         "processor      :3 \n"
         "physical id    :0 \n"
-        "core id        :1 \n"
-    );
+        "core id        :1 \n");
 
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 2);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 2);
 }
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, quad_core_dual_socket)
@@ -232,19 +220,16 @@ TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, quad_core_dual_socket)
 
         "processor      : 3 \n"
         "physical id    : 1 \n"
-        "core id        : 1 \n"
-    );
+        "core id        : 1 \n");
 
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 4);
+    EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 4);
 }
 
 /* COUNT CPUS (LOGICAL) */
 
 TEST(procmetrix_impl_linux_procstat_count_cpus, null_args)
 {
-    EXPECT_EQ(
-        procmetrix_impl_linux_procstat_count_cpus(nullptr), 0);
+    EXPECT_EQ(procmetrix_impl_linux_procstat_count_cpus(nullptr), 0);
 }
 
 TEST(procmetrix_impl_linux_procstat_count_cpus, empty)
@@ -252,8 +237,7 @@ TEST(procmetrix_impl_linux_procstat_count_cpus, empty)
     // Empty file
     mem_file_ptr memfp("");
 
-    EXPECT_EQ(
-        procmetrix_impl_linux_procstat_count_cpus(memfp.get()), 0);
+    EXPECT_EQ(procmetrix_impl_linux_procstat_count_cpus(memfp.get()), 0);
 }
 
 TEST(procmetrix_impl_linux_procstat_count_cpus, count)
@@ -263,17 +247,14 @@ TEST(procmetrix_impl_linux_procstat_count_cpus, count)
         "cpu0\n"
         "cpu1\n"
         "cpu2\n"
-        "whatver"
-    );
+        "whatver");
 
-    EXPECT_EQ(
-        procmetrix_impl_linux_procstat_count_cpus(memfp.get()), 3);
+    EXPECT_EQ(procmetrix_impl_linux_procstat_count_cpus(memfp.get()), 3);
 }
 
 TEST(procmetrix_impl_linux_cpuinfo_count_processors, null_args)
 {
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpuinfo_count_processors(nullptr), 0);
+    EXPECT_EQ(procmetrix_impl_linux_cpuinfo_count_processors(nullptr), 0);
 }
 
 TEST(procmetrix_impl_linux_cpuinfo_count_processors, empty)
@@ -281,8 +262,7 @@ TEST(procmetrix_impl_linux_cpuinfo_count_processors, empty)
     // Empty file
     mem_file_ptr memfp("");
 
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpuinfo_count_processors(memfp.get()), 0);
+    EXPECT_EQ(procmetrix_impl_linux_cpuinfo_count_processors(memfp.get()), 0);
 }
 
 TEST(procmetrix_impl_linux_cpuinfo_count_processors, count)
@@ -295,11 +275,9 @@ TEST(procmetrix_impl_linux_cpuinfo_count_processors, count)
         "processor      : 1\n"
         "physical id    : 0\n"
         "siblings       : 8\n"
-        "core id        : 0\n"
-    );
+        "core id        : 0\n");
 
-    EXPECT_EQ(
-        procmetrix_impl_linux_cpuinfo_count_processors(memfp.get()), 2);
+    EXPECT_EQ(procmetrix_impl_linux_cpuinfo_count_processors(memfp.get()), 2);
 }
 
 /* TOTAL TIMES */
@@ -307,7 +285,7 @@ TEST(procmetrix_impl_linux_cpuinfo_count_processors, count)
 TEST(procmetrix_impl_linux_cpu_times_total, null_args)
 {
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_times_total(nullptr, nullptr), 
+        procmetrix_impl_linux_cpu_times_total(nullptr, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
@@ -316,9 +294,9 @@ TEST(procmetrix_impl_linux_cpu_times_total, empty_file)
     // Empty file
     mem_file_ptr memfp("");
 
-    procmetrix_cpu_times_t cpu_times {0};
+    procmetrix_cpu_times_t cpu_times { 0 };
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_times_total(memfp.get(), &cpu_times), 
+        procmetrix_impl_linux_cpu_times_total(memfp.get(), &cpu_times),
         PROCMETRIX_ERROR_MALFORMED);
 }
 
@@ -327,7 +305,7 @@ TEST(procmetrix_impl_linux_cpu_times_total, minimal)
     // Only the minimal metrics are given
     mem_file_ptr memfp("cpu 100 200 300 400");
 
-    procmetrix_cpu_times_t cpu_times {0};
+    procmetrix_cpu_times_t cpu_times { 0 };
     EXPECT_EQ(
         procmetrix_impl_linux_cpu_times_total(memfp.get(), &cpu_times),
         PROCMETRIX_ERROR_NONE);
@@ -345,9 +323,9 @@ TEST(procmetrix_impl_linux_cpu_times_total, full)
     // All the metrics are given
     mem_file_ptr memfp("cpu 0 0 0 0 100 200 300 400 500 600");
 
-    procmetrix_cpu_times_t cpu_times {0};
+    procmetrix_cpu_times_t cpu_times { 0 };
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_times_total(memfp.get(), &cpu_times), 
+        procmetrix_impl_linux_cpu_times_total(memfp.get(), &cpu_times),
         PROCMETRIX_ERROR_NONE);
 
     // Check in seconds
@@ -369,7 +347,8 @@ TEST(procmetrix_impl_linux_cpu_times_per_cpu, empty_file)
     size_t read_count = 0;
     procmetrix_cpu_times_t cpu_times[1];
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_times_per_cpu(memfp.get(), cpu_times, std::size(cpu_times), &read_count),
+        procmetrix_impl_linux_cpu_times_per_cpu(
+            memfp.get(), cpu_times, std::size(cpu_times), &read_count),
         PROCMETRIX_ERROR_MALFORMED);
 }
 
@@ -378,14 +357,14 @@ TEST(procmetrix_impl_linux_cpu_times_per_cpu, single_line)
     // One total and one cpu
     mem_file_ptr memfp(
         "cpu\n"
-        "cpu0 1000 2000 3000 4000"
-    );
+        "cpu0 1000 2000 3000 4000");
 
     // Read into one line
     size_t read_count = 0;
     procmetrix_cpu_times_t cpu_times[1];
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_times_per_cpu(memfp.get(), cpu_times, std::size(cpu_times), &read_count),
+        procmetrix_impl_linux_cpu_times_per_cpu(
+            memfp.get(), cpu_times, std::size(cpu_times), &read_count),
         PROCMETRIX_ERROR_NONE);
 
     // Read exactly one item
@@ -410,13 +389,13 @@ TEST(procmetrix_impl_linux_cpu_times_per_cpu, multi_line)
         "intr 100000\n"
         "ctxt 100000\n"
         "btime 100000\n"
-        "processes 100000\n"
-    );
+        "processes 100000\n");
 
     size_t read_count = 0;
     procmetrix_cpu_times_t cpu_times[2];
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_times_per_cpu(memfp.get(), cpu_times, std::size(cpu_times), &read_count),
+        procmetrix_impl_linux_cpu_times_per_cpu(
+            memfp.get(), cpu_times, std::size(cpu_times), &read_count),
         PROCMETRIX_ERROR_NONE);
 
     // Read exactly one item
@@ -456,14 +435,14 @@ TEST(procmetrix_impl_linux_cpu_times_per_cpu, array_too_small)
         "cpu0 1000 2000 3000 4000\n"
         "cpu1 1250 2250 3250 4250\n"
         "cpu2 1500 2500 3500 4500\n"
-        "cpu3 1750 2750 3750 4750\n"
-    );
+        "cpu3 1750 2750 3750 4750\n");
 
     // The provided array is smaller than the actual count
     size_t read_count = 0;
     procmetrix_cpu_times_t cpu_times[2];
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_times_per_cpu(memfp.get(), cpu_times, std::size(cpu_times), &read_count),
+        procmetrix_impl_linux_cpu_times_per_cpu(
+            memfp.get(), cpu_times, std::size(cpu_times), &read_count),
         PROCMETRIX_ERROR_MORE_DATA); // Request more buffer
 
     // Only read the first two lines
@@ -480,17 +459,20 @@ TEST(procmetrix_impl_linux_cpu_freqs_policies, null_args)
 
     //! Null glob
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_freqs_policies(nullptr, &cpu_freq, 1, &read_count),
+        procmetrix_impl_linux_cpu_freqs_policies(
+            nullptr, &cpu_freq, 1, &read_count),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
-    
+
     // Null output array
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_freqs_policies(&glob, nullptr, 1, &read_count),
+        procmetrix_impl_linux_cpu_freqs_policies(
+            &glob, nullptr, 1, &read_count),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // Zero output size
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_freqs_policies(&glob, &cpu_freq, 0, &read_count),
+        procmetrix_impl_linux_cpu_freqs_policies(
+            &glob, &cpu_freq, 0, &read_count),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
@@ -510,7 +492,8 @@ TEST(procmetrix_impl_linux_cpu_freqs_policies, missing_files)
     // Enable to read the desired files from the FS
     procmetrix_cpu_freq_t cpu_freq[2] { 0 };
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_freqs_policies(&glob, cpu_freq, std::size(cpu_freq), nullptr),
+        procmetrix_impl_linux_cpu_freqs_policies(
+            &glob, cpu_freq, std::size(cpu_freq), nullptr),
         PROCMETRIX_ERROR_FILE_READ);
 
     // Cleanup
@@ -526,7 +509,8 @@ TEST(procmetrix_impl_linux_cpu_freqs_policies, all_files)
     // Affects cpus 0, 2
     ASSERT_TRUE(temp.create_dir("policy0"));
     ASSERT_TRUE(temp.write_file("policy0/affected_cpus", "0 2"));
-    ASSERT_TRUE(temp.write_file("policy0/scaling_cur_freq", "2000000")); // Values are in kHz
+    ASSERT_TRUE(temp.write_file(
+        "policy0/scaling_cur_freq", "2000000")); // Values are in kHz
     ASSERT_TRUE(temp.write_file("policy0/scaling_min_freq", "1000000"));
     ASSERT_TRUE(temp.write_file("policy0/scaling_max_freq", "3000000"));
 
@@ -547,7 +531,8 @@ TEST(procmetrix_impl_linux_cpu_freqs_policies, all_files)
     procmetrix_cpu_freq_t cpu_freq[4] { 0 };
 
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_freqs_policies(&glob, cpu_freq, std::size(cpu_freq), &read_count),
+        procmetrix_impl_linux_cpu_freqs_policies(
+            &glob, cpu_freq, std::size(cpu_freq), &read_count),
         PROCMETRIX_ERROR_NONE);
 
     // Cleanup
@@ -567,7 +552,7 @@ TEST(procmetrix_impl_linux_cpu_freqs_policies, all_files)
     EXPECT_DOUBLE_EQ(cpu_freq[1].freq_cur, 3000.0);
     EXPECT_DOUBLE_EQ(cpu_freq[1].freq_min, 2000.0);
     EXPECT_DOUBLE_EQ(cpu_freq[1].freq_max, 4000.0);
-    
+
     EXPECT_DOUBLE_EQ(cpu_freq[3].freq_cur, 3000.0);
     EXPECT_DOUBLE_EQ(cpu_freq[3].freq_min, 2000.0);
     EXPECT_DOUBLE_EQ(cpu_freq[3].freq_max, 4000.0);
@@ -596,7 +581,8 @@ TEST(procmetrix_impl_linux_cpu_freqs_policies, overflow)
     procmetrix_cpu_freq_t cpu_freq[4] { 0 };
 
     EXPECT_EQ(
-        procmetrix_impl_linux_cpu_freqs_policies(&glob, cpu_freq, std::size(cpu_freq), &read_count),
+        procmetrix_impl_linux_cpu_freqs_policies(
+            &glob, cpu_freq, std::size(cpu_freq), &read_count),
         PROCMETRIX_ERROR_MORE_DATA);
 
     // Cleanup
@@ -623,12 +609,14 @@ TEST(procmetrix_impl_linux_cpuinfo_freqs, null_args)
 
     // Null output
     EXPECT_EQ(
-        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), nullptr, 1, &read_count),
+        procmetrix_impl_linux_cpuinfo_freqs(
+            memfp.get(), nullptr, 1, &read_count),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // Zero size output
     EXPECT_EQ(
-        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), &cpu_freq, 0, &read_count),
+        procmetrix_impl_linux_cpuinfo_freqs(
+            memfp.get(), &cpu_freq, 0, &read_count),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
@@ -642,7 +630,8 @@ TEST(procmetrix_impl_linux_cpuinfo_freqs, empty)
 
     // Succeeds reading zero items
     EXPECT_EQ(
-        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), &cpu_freq, 1, &read_count),
+        procmetrix_impl_linux_cpuinfo_freqs(
+            memfp.get(), &cpu_freq, 1, &read_count),
         PROCMETRIX_ERROR_NONE);
 
     EXPECT_EQ(read_count, 0);
@@ -667,12 +656,12 @@ TEST(procmetrix_impl_linux_cpuinfo_freqs, mix_items)
 
         // s390x
         "processor      :3\n"
-        "cpu MHz dynamic:1234.5\n"
-    );
+        "cpu MHz dynamic:1234.5\n");
 
     // Succeeds reading all items
     EXPECT_EQ(
-        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), cpu_freq, std::size(cpu_freq), &read_count),
+        procmetrix_impl_linux_cpuinfo_freqs(
+            memfp.get(), cpu_freq, std::size(cpu_freq), &read_count),
         PROCMETRIX_ERROR_NONE);
 
     EXPECT_EQ(read_count, 4);
@@ -692,14 +681,14 @@ TEST(procmetrix_impl_linux_cpuinfo_freqs, overflow)
         "cpu MHz   : 1000\n"
         "cpu MHz   : 2000\n"
         "cpu MHz   : 3000\n"
-        "cpu MHz   : 4000\n"
-    );
+        "cpu MHz   : 4000\n");
 
     // Returns "more data was available"
     EXPECT_EQ(
-        procmetrix_impl_linux_cpuinfo_freqs(memfp.get(), cpu_freq, std::size(cpu_freq), &read_count),
+        procmetrix_impl_linux_cpuinfo_freqs(
+            memfp.get(), cpu_freq, std::size(cpu_freq), &read_count),
         PROCMETRIX_ERROR_MORE_DATA);
-    
+
     // The first 2 items were read correctly
     EXPECT_EQ(read_count, 2);
     EXPECT_DOUBLE_EQ(cpu_freq[0].freq_cur, 1000.0);

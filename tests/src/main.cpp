@@ -13,13 +13,14 @@ std::vector<std::string> get_main_arguments()
 }
 
 //! Entry point
-int main(int argc, char **argv) {
-  // Save the input args
-  g_main_args.reserve(argc);
-  for (size_t i = 0; i < argc; ++i)
-    g_main_args.emplace_back(argv[i]);
+int main(int argc, char** argv)
+{
+    // Save the input args
+    g_main_args.reserve(argc);
+    for (size_t i = 0; i < argc; ++i)
+        g_main_args.emplace_back(argv[i]);
 
-  // Initializes & runs GTEST
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+    // Initializes & runs GTEST
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

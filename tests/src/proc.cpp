@@ -35,12 +35,12 @@ TEST(procmetrix_list_pids, null_args)
     // Null list
     EXPECT_EQ(
         procmetrix_list_pids(nullptr, &count),
-            PROCMETRIX_ERROR_INVALID_ARGUMENT);
-    
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
     // Null count
     EXPECT_EQ(
         procmetrix_list_pids(&list, nullptr),
-            PROCMETRIX_ERROR_INVALID_ARGUMENT);
+        PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
 TEST(procmetrix_list_pids, contains_own_pid)
@@ -49,10 +49,8 @@ TEST(procmetrix_list_pids, contains_own_pid)
     procmetrix_pid_t* list = nullptr;
 
     // Get the list of all PIDs
-    EXPECT_EQ(
-        procmetrix_list_pids(&list, &count),
-            PROCMETRIX_ERROR_NONE);
-    
+    EXPECT_EQ(procmetrix_list_pids(&list, &count), PROCMETRIX_ERROR_NONE);
+
     // Has a valid, non-empty list
     EXPECT_NE(list, nullptr);
     EXPECT_NE(count, 0);
@@ -60,10 +58,10 @@ TEST(procmetrix_list_pids, contains_own_pid)
     // My own PID is contained in the list
     procmetrix_pid_t own_pid = procmetrix_get_pid();
 
-    auto *itend = std::next(list, (std::ptrdiff_t)count);
-    auto *itfind = std::find(list, itend, own_pid);
+    auto* itend = std::next(list, (std::ptrdiff_t)count);
+    auto* itfind = std::find(list, itend, own_pid);
 
-    EXPECT_NE(itfind, itend) 
+    EXPECT_NE(itfind, itend)
         << "own pid: " << own_pid << "; pids list size = " << count;
 
     // Cleanup
@@ -79,7 +77,7 @@ TEST(procmetrix_get_proc_parent_pid, null_args)
     EXPECT_EQ(
         procmetrix_get_proc_parent_pid(0, &parent_pid),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
-    
+
     // Null output
     procmetrix_pid_t own_pid = procmetrix_get_pid();
     EXPECT_EQ(
@@ -128,11 +126,11 @@ TEST(procmetrix_get_proc_name, own_name)
         procmetrix_get_proc_name(own_pid, name, sizeof(name)),
         PROCMETRIX_ERROR_NONE);
 
-    #ifdef _WIN32
-        EXPECT_STREQ(name, "unitTests.exe");
-    #else
-        EXPECT_STREQ(name, "unitTests");
-    #endif
+#ifdef _WIN32
+    EXPECT_STREQ(name, "unitTests.exe");
+#else
+    EXPECT_STREQ(name, "unitTests");
+#endif
 }
 
 /** Proc exe */
@@ -162,11 +160,11 @@ TEST(procmetrix_get_proc_exe, own_path)
         procmetrix_get_proc_exe(own_pid, exe_path, sizeof(exe_path)),
         PROCMETRIX_ERROR_NONE);
 
-    #ifdef _WIN32
-        EXPECT_THAT(exe_path, EndsWith("unitTests.exe"));
-    #else
-        EXPECT_THAT(exe_path, EndsWith("unitTests"));
-    #endif
+#ifdef _WIN32
+    EXPECT_THAT(exe_path, EndsWith("unitTests.exe"));
+#else
+    EXPECT_THAT(exe_path, EndsWith("unitTests"));
+#endif
 }
 
 /** Proc working dir */
@@ -184,7 +182,7 @@ TEST(procmetrix_get_proc_cwd, null_args)
 TEST(procmetrix_get_proc_cwd, own_cwd)
 {
     procmetrix_pid_t own_pid = procmetrix_get_pid();
-    
+
     // Read own working directory
     char cwd_path[1024];
     EXPECT_EQ(
@@ -203,7 +201,7 @@ TEST(procmetrix_get_proc_cmdline, null_args)
 
     // Zero PID
     EXPECT_EQ(
-        procmetrix_get_proc_cmdline(0, &cmdline), 
+        procmetrix_get_proc_cmdline(0, &cmdline),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     EXPECT_EQ(cmdline.argc, 0);
@@ -222,17 +220,17 @@ TEST(procmetrix_get_proc_cmdline, own_cmdline)
 
     // Read own command line
     EXPECT_EQ(
-        procmetrix_get_proc_cmdline(own_pid, &cmdline),
-        PROCMETRIX_ERROR_NONE);
+        procmetrix_get_proc_cmdline(own_pid, &cmdline), PROCMETRIX_ERROR_NONE);
 
     // Compare to what was received in main()
     const auto main_args = get_main_arguments();
     EXPECT_EQ(cmdline.argc, main_args.size());
-    if (cmdline.argc == main_args.size()) {
+    if (cmdline.argc == main_args.size())
+    {
         for (size_t i = 0; i < cmdline.argc; ++i)
             EXPECT_EQ(cmdline.argv[i], main_args[i]);
     }
-    
+
     // Cleanup
     procmetrix_free_proc_cmdline(&cmdline);
 
@@ -250,7 +248,7 @@ TEST(procmetrix_get_proc_environ, null_args)
 
     // Zero PID
     EXPECT_EQ(
-        procmetrix_get_proc_environ(0, &proc_environ), 
+        procmetrix_get_proc_environ(0, &proc_environ),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     EXPECT_EQ(proc_environ.count, 0);
@@ -258,7 +256,7 @@ TEST(procmetrix_get_proc_environ, null_args)
 
     // Null output
     EXPECT_EQ(
-        procmetrix_get_proc_environ(own_pid, nullptr), 
+        procmetrix_get_proc_environ(own_pid, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
@@ -269,7 +267,7 @@ TEST(procmetrix_get_proc_environ, own_env)
 
     // Read own environment
     EXPECT_EQ(
-        procmetrix_get_proc_environ(own_pid, &proc_environ), 
+        procmetrix_get_proc_environ(own_pid, &proc_environ),
         PROCMETRIX_ERROR_NONE);
 
     // Environment is not empty
@@ -280,7 +278,9 @@ TEST(procmetrix_get_proc_environ, own_env)
     if (proc_environ.count != 0 && proc_environ.vars != nullptr)
     {
         for (size_t i = 0; i < proc_environ.count; ++i)
-            EXPECT_STREQ(proc_environ.vars[i].value, std::getenv(proc_environ.vars[i].name));
+            EXPECT_STREQ(
+                proc_environ.vars[i].value,
+                std::getenv(proc_environ.vars[i].name));
     }
 
     // Cleanup
@@ -298,13 +298,13 @@ TEST(procmetrix_get_proc_memory_info, null_args)
     // Zero PID
     procmetrix_proc_memory_info_t memory_info { 0 };
     EXPECT_EQ(
-        procmetrix_get_proc_memory_info(0, &memory_info), 
+        procmetrix_get_proc_memory_info(0, &memory_info),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // Null output
     procmetrix_pid_t own_pid = procmetrix_get_pid();
     EXPECT_EQ(
-        procmetrix_get_proc_memory_info(own_pid, nullptr), 
+        procmetrix_get_proc_memory_info(own_pid, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
@@ -314,7 +314,7 @@ TEST(procmetrix_get_proc_memory_info, own_pid)
     procmetrix_proc_memory_info_t memory_info { 0 };
 
     EXPECT_EQ(
-        procmetrix_get_proc_memory_info(own_pid, &memory_info), 
+        procmetrix_get_proc_memory_info(own_pid, &memory_info),
         PROCMETRIX_ERROR_NONE);
 
     EXPECT_GT(memory_info.vms, 0);
@@ -386,14 +386,10 @@ TEST(procmetrix_proc_cpu_times_delta, null_args)
 
 TEST(procmetrix_proc_cpu_times_delta, delta)
 {
-    procmetrix_proc_cpu_times_t const before {
-        1, 2, 3, 4
-    };
-    procmetrix_proc_cpu_times_t const after {
-        2, 3, 4, 5
-    };
+    procmetrix_proc_cpu_times_t const before { 1, 2, 3, 4 };
+    procmetrix_proc_cpu_times_t const after { 2, 3, 4, 5 };
 
-    procmetrix_proc_cpu_times_t delta {0};
+    procmetrix_proc_cpu_times_t delta { 0 };
     EXPECT_EQ(
         procmetrix_proc_cpu_times_delta(&before, &after, &delta),
         PROCMETRIX_ERROR_NONE);
@@ -411,8 +407,6 @@ TEST(procmetrix_proc_cpu_times_sum, null_args)
 
 TEST(procmetrix_proc_cpu_times_sum, sum)
 {
-    procmetrix_proc_cpu_times_t cpu_times {
-        2.0, 4.0, 8.0, 16.0
-    };
+    procmetrix_proc_cpu_times_t cpu_times { 2.0, 4.0, 8.0, 16.0 };
     EXPECT_DOUBLE_EQ(procmetrix_proc_cpu_times_sum(&cpu_times), 6.0);
 }

@@ -8,7 +8,7 @@
 
 /** Cleanup functions */
 
-void procmetrix_free_pids(procmetrix_pid_t **list)
+void procmetrix_free_pids(procmetrix_pid_t** list)
 {
     if (NULL == list || NULL == *list)
         return;
@@ -17,7 +17,7 @@ void procmetrix_free_pids(procmetrix_pid_t **list)
     *list = NULL;
 }
 
-void procmetrix_free_proc_cmdline(procmetrix_proc_cmdline_t *cmd_line)
+void procmetrix_free_proc_cmdline(procmetrix_proc_cmdline_t* cmd_line)
 {
     // Sanity
     if (NULL == cmd_line)
@@ -34,7 +34,7 @@ void procmetrix_free_proc_cmdline(procmetrix_proc_cmdline_t *cmd_line)
     memset(cmd_line, 0, sizeof(*cmd_line));
 }
 
-void procmetrix_free_proc_environ(procmetrix_proc_environ_t *proc_environ)
+void procmetrix_free_proc_environ(procmetrix_proc_environ_t* proc_environ)
 {
     // Sanity
     if (NULL == proc_environ)
@@ -56,7 +56,10 @@ void procmetrix_free_proc_environ(procmetrix_proc_environ_t *proc_environ)
 
 /** Derived metrics */
 
-procmetrix_error_t procmetrix_proc_cpu_times_delta(const procmetrix_proc_cpu_times_t *before, const procmetrix_proc_cpu_times_t *after, procmetrix_proc_cpu_times_t *delta)
+procmetrix_error_t procmetrix_proc_cpu_times_delta(
+    const procmetrix_proc_cpu_times_t* before,
+    const procmetrix_proc_cpu_times_t* after,
+    procmetrix_proc_cpu_times_t* delta)
 {
     // Sanity
     if (NULL == delta)
@@ -71,13 +74,16 @@ procmetrix_error_t procmetrix_proc_cpu_times_delta(const procmetrix_proc_cpu_tim
     // Just diff before and after of every field
     delta->user = fmax(0.0, after->user - before->user);
     delta->system = fmax(0.0, after->system - before->system);
-    delta->children_user = fmax(0.0, after->children_user - before->children_user);
-    delta->children_system = fmax(0.0, after->children_system - before->children_system);
+    delta->children_user =
+        fmax(0.0, after->children_user - before->children_user);
+    delta->children_system =
+        fmax(0.0, after->children_system - before->children_system);
 
     return PROCMETRIX_ERROR_NONE;
 }
 
-double procmetrix_proc_cpu_times_sum(const procmetrix_proc_cpu_times_t *cpu_times)
+double
+procmetrix_proc_cpu_times_sum(const procmetrix_proc_cpu_times_t* cpu_times)
 {
     // Sanity
     if (NULL == cpu_times)

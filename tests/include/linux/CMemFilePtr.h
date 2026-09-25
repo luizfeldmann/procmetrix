@@ -29,7 +29,6 @@ public:
     mem_file_ptr(const char* text)
         : mem_file_ptr(text, strlen(text))
     {
-
     }
 
     //! Destructor

@@ -18,13 +18,18 @@ private:
     std::string tempdir_;
 
     //! Iterator callback to remove the temp files
-    static int remove_cb(const char* path, const struct stat* /*statbuf*/, int  /*typeflag*/, struct FTW* /*ftwbuf*/)
+    static int remove_cb(
+        const char* path,
+        const struct stat* /*statbuf*/,
+        int /*typeflag*/,
+        struct FTW* /*ftwbuf*/)
     {
         return remove(path);
     }
 
     //! Returns the full path of a file in the temp directory
-    std::string make_path(std::string const& subpath) {
+    std::string make_path(std::string const& subpath)
+    {
         return tempdir_ + "/" + subpath;
     }
 
@@ -32,26 +37,32 @@ public:
     //! Constructor
     temp_dir_glob()
     {
-        char temp_template[] {"/tmp/procmetrix-test-XXXXXX"};
+        char temp_template[] { "/tmp/procmetrix-test-XXXXXX" };
         tempdir_ = mkdtemp(temp_template);
     }
 
     //! Destructor
     ~temp_dir_glob()
     {
-        nftw(tempdir_.c_str(), &temp_dir_glob::remove_cb, 64, FTW_DEPTH | FTW_PHYS);
+        nftw(
+            tempdir_.c_str(),
+            &temp_dir_glob::remove_cb,
+            64,
+            FTW_DEPTH | FTW_PHYS);
     }
 
     //! Creates a subdirectory inside the temp directory
     //! @return True on success
-    bool create_dir(std::string const& subpath) {
+    bool create_dir(std::string const& subpath)
+    {
         std::string path = make_path(subpath);
         return 0 == mkdir(path.c_str(), 0755);
     }
 
     //! Writes data in the temp files
     //! True on success
-    bool write_file(std::string const& subpath, std::string const& data) {
+    bool write_file(std::string const& subpath, std::string const& data)
+    {
         std::ofstream ofs(make_path(subpath));
         if (!ofs.is_open())
             return false;

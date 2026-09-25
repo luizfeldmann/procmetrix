@@ -31,7 +31,8 @@ extern "C"
         //! Unable to open the file for reading
         PROCMETRIX_ERROR_FILE_READ,
 
-        //! Unable to parse the contents of some data returned by the operating system.
+        //! Unable to parse the contents of some data
+        //! returned by the operating system.
         PROCMETRIX_ERROR_MALFORMED,
 
         //! Failed allocation.
