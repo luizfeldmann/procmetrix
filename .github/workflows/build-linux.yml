@@ -6,7 +6,12 @@ on:
         required: true
       coverage:
         type: boolean
-        required: true
+        required: false
+        default: false
+      clang-tidy:
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   linux-build-and-test:
@@ -25,6 +30,8 @@ jobs:
             build-essential \
             gcovr \
             cmake \
+            clang \
+            clang-tidy \
             python3 \
             python3-pip \
             python3-venv
@@ -42,6 +49,10 @@ jobs:
 
       - name: Build
         run: conan build . --build=missing --profile=conan/profiles/${{inputs.conan-profile}}
+
+      - name: clang-tidy
+        if: inputs.clang-tidy
+        run: run-clang-tidy -quiet -p "$(find build -name compile_commands.json -printf '%h\n' | head -n1)"
 
       - name: Coverage
         if: inputs.coverage

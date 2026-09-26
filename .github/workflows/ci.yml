@@ -26,7 +26,14 @@ jobs:
       contents: read
     with:
       conan-profile: linux-release
-      coverage: false
+
+  linux-debug-clang:
+    uses: ./.github/workflows/build-linux.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: linux-debug-clang
+      clang-tidy: true
 
   linux-debug-coverage:
     uses: ./.github/workflows/build-linux.yml
@@ -76,6 +83,7 @@ jobs:
     # Requires all builds to pass
     needs:
       - linux-release
+      - linux-debug-clang
       - linux-debug-coverage
       - linux-debug-sanitizer
       - windows-release
