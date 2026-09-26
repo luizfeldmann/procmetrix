@@ -65,6 +65,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Common
     "src/windows/common.c"
     "include/internal/windows/common_windows_internal.h"
+    "include/internal/windows/winnt_extended_api.h"
     # Process
     "src/windows/proc.c"
     # Memory

@@ -280,6 +280,9 @@ TEST(procmetrix_get_proc_environ, own_env)
         for (size_t i = 0; i < proc_environ.count; ++i)
             EXPECT_STREQ(
                 proc_environ.vars[i].value,
+                //! getenv is deprecated in favor of _dupenv_s in Windows
+                //! accept it here bacause we lack a multiplaform alternative
+                //! NOLINTNEXTLINE(clang-diagnostic-deprecated-declarations)
                 std::getenv(proc_environ.vars[i].name));
     }
 

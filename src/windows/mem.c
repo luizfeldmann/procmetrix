@@ -1,9 +1,10 @@
 // Lib
 #include <procmetrix/mem.h>
 
-// Windows
-#include <Psapi.h>
+// Windows primary
 #include <Windows.h>
+// Windows extra
+#include <Psapi.h>
 #include <pdh.h>
 #pragma comment(lib, "pdh.lib")
 
@@ -23,11 +24,9 @@ static procmetrix_error_t swap_used_ratio(double* percent_swap_usage)
         {
             PDH_FMT_COUNTERVALUE counter_value;
             if (ERROR_SUCCESS == PdhCollectQueryData(query) &&
-                ERROR_SUCCESS == PdhGetFormattedCounterValue(
-                                     (PDH_HCOUNTER)counter,
-                                     PDH_FMT_DOUBLE,
-                                     0,
-                                     &counter_value))
+                ERROR_SUCCESS ==
+                    PdhGetFormattedCounterValue(
+                        counter, PDH_FMT_DOUBLE, 0, &counter_value))
             {
                 // Convert from percent to ratio
                 *percent_swap_usage = counter_value.doubleValue / 100.0;
@@ -97,7 +96,8 @@ procmetrix_system_swap_memory(procmetrix_swap_memory_t* swap_memory)
     {
         size_t pagesize = info.PageSize;
         swap_memory->total = pagesize * (info.CommitLimit - info.PhysicalTotal);
-        swap_memory->used = percent_swap_usage * swap_memory->total;
+        swap_memory->used =
+            (uint64_t)(percent_swap_usage * (double)swap_memory->total);
         swap_memory->free = swap_memory->total - swap_memory->used;
 
         swap_memory->ratio =

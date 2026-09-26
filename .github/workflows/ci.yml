@@ -90,7 +90,6 @@ jobs:
       contents: read
     with:
       conan-profile: windows-release
-      coverage: false
 
   windows-debug:
     uses: ./.github/workflows/build-windows.yml
@@ -98,7 +97,6 @@ jobs:
       contents: read
     with:
       conan-profile: windows-debug
-      coverage: false
 
   windows-clang-cov-san:
     uses: ./.github/workflows/build-windows.yml
@@ -107,6 +105,7 @@ jobs:
     with:
       conan-profile: windows-clang-cov-san
       coverage: true
+      clang-tidy: true
 
   # Publish Doxygen as GitHub Pages
   publish-docs:

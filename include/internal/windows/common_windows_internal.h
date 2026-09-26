@@ -15,12 +15,12 @@ extern "C"
     //! Converts a large unsigned integer of ticks to seconds
     //! @private
     PROCMETRIX_API double
-    procmetrix_impl_windows_large_uint_to_secs(const ULARGE_INTEGER* li);
+    procmetrix_impl_windows_large_uint_to_secs(const ULARGE_INTEGER* uli);
 
     //! Converts a large integer of ticks to seconds
     //! @private
     PROCMETRIX_API double
-    procmetrix_impl_windows_large_int_to_secs(const LARGE_INTEGER* li);
+    procmetrix_impl_windows_large_int_to_secs(const LARGE_INTEGER* sli);
 
     //! Converts a file time to seconds
     //! @private

@@ -6,7 +6,12 @@ on:
         required: true
       coverage:
         type: boolean
-        required: true
+        required: false
+        default: false
+      clang-tidy:
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   windows-build-and-test:
@@ -23,6 +28,14 @@ jobs:
 
       - name: Build
         run: conan build . --build=missing --profile=conan\profiles\${{inputs.conan-profile}}
+
+      - name: clang-tidy
+        if: inputs.clang-tidy
+        shell: pwsh
+        run: |
+          $runClangTidy = (Get-Command run-clang-tidy).Source
+          $compileDbDir = (Get-ChildItem build -Recurse -Filter compile_commands.json | Select-Object -First 1).Directory.FullName
+          python $runClangTidy -quiet -j $env:NUMBER_OF_PROCESSORS -p $compileDbDir
 
       - name: Coverage
         if: inputs.coverage

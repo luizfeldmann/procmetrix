@@ -12,8 +12,8 @@ std::vector<std::string> get_main_arguments()
     return g_main_args;
 }
 
-//! Entry point
-int main(int argc, char** argv)
+//! Unsafe main
+static int main_unsafe(int argc, char** argv)
 {
     // Save the input args
     g_main_args.reserve(argc);
@@ -23,4 +23,17 @@ int main(int argc, char** argv)
     // Initializes & runs GTEST
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
+}
+
+//! Entry point
+int main(int argc, char** argv)
+{
+    try
+    {
+        return main_unsafe(argc, argv);
+    }
+    catch (...)
+    {
+        return -1;
+    }
 }
