@@ -2,28 +2,31 @@
 #include <internal/algo.h>
 
 // STD
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 // OS macros
 
-static char *procmetrix_strndup(const char *s, size_t n)
+static char* procmetrix_strndup(const char* str, size_t len)
 {
 #ifdef _WIN32
-    size_t len = strnlen_s(s, n);
-    char *new_str = (char *)malloc(len + 1);
+    if (str == NULL)
+        return NULL;
+
+    size_t new_len = strnlen_s(str, len);
+    char* new_str = (char*)malloc(new_len + 1);
     if (new_str)
     {
-        memcpy(new_str, s, len);
-        new_str[len] = '\0';
+        memcpy(new_str, str, new_len);
+        new_str[new_len] = '\0';
     }
     return new_str;
 #else
-    return strndup(s, n);
+    return strndup(str, len);
 #endif
 }
 
-static char *procmetrix_strdup(const char *str)
+static char* procmetrix_strdup(const char* str)
 {
 #ifdef _MSC_VER
     return _strdup(str);
@@ -34,7 +37,8 @@ static char *procmetrix_strdup(const char *str)
 
 // Impl
 
-procmetrix_error_t procmetrix_split_zero_terminated_tokens(const char *buffer, size_t buffer_size, char ***tokens, size_t *num_tokens)
+procmetrix_error_t procmetrix_split_zero_terminated_tokens(
+    const char* buffer, size_t buffer_size, char*** tokens, size_t* num_tokens)
 {
     // Sanity
     if (NULL == tokens || NULL == num_tokens)
@@ -55,7 +59,7 @@ procmetrix_error_t procmetrix_split_zero_terminated_tokens(const char *buffer, s
     }
 
     // Allocate the output list
-    *tokens = (char **)calloc(*num_tokens, sizeof(char *));
+    *tokens = (char**)calloc(*num_tokens, sizeof(char*));
     if (NULL == *tokens)
     {
         *num_tokens = 0;
@@ -63,12 +67,15 @@ procmetrix_error_t procmetrix_split_zero_terminated_tokens(const char *buffer, s
     }
 
     // Fill out the list of tokens
-    for (size_t file_idx = 0, tok_idx = 0, start_idx = 0; file_idx < buffer_size; ++file_idx)
+    for (size_t file_idx = 0, tok_idx = 0, start_idx = 0;
+         file_idx < buffer_size;
+         ++file_idx)
     {
-        int is_last = 0;
-        if (buffer[file_idx] == '\0' || (is_last = (file_idx == buffer_size - 1)))
+        int is_last = (int)(file_idx == buffer_size - 1);
+        if (buffer[file_idx] == '\0' || is_last)
         {
-            (*tokens)[tok_idx++] = procmetrix_strndup(buffer + start_idx, file_idx - start_idx + is_last);
+            (*tokens)[tok_idx++] = procmetrix_strndup(
+                buffer + start_idx, file_idx - start_idx + is_last);
             start_idx = file_idx + 1;
         }
     }
@@ -76,7 +83,10 @@ procmetrix_error_t procmetrix_split_zero_terminated_tokens(const char *buffer, s
     return PROCMETRIX_ERROR_NONE;
 }
 
-procmetrix_error_t procmetrix_split_environ_vars(const char *const *varlines, size_t numvars, procmetrix_proc_environ_t *environment)
+procmetrix_error_t procmetrix_split_environ_vars(
+    const char* const* varlines,
+    size_t numvars,
+    procmetrix_proc_environ_t* environment)
 {
     // Sanity
     if (NULL == environment)
@@ -93,8 +103,8 @@ procmetrix_error_t procmetrix_split_environ_vars(const char *const *varlines, si
         return PROCMETRIX_ERROR_NONE;
 
     // Allocate for the key-value pairs
-    environment->vars =
-        (procmetrix_proc_environ_var_t *)calloc(numvars, sizeof(procmetrix_proc_environ_var_t));
+    environment->vars = (procmetrix_proc_environ_var_t*)calloc(
+        numvars, sizeof(procmetrix_proc_environ_var_t));
 
     if (NULL == environment->vars)
         return PROCMETRIX_ERROR_OUT_OF_MEMORY;
@@ -104,10 +114,10 @@ procmetrix_error_t procmetrix_split_environ_vars(const char *const *varlines, si
 
     for (size_t i = 0; i < numvars; ++i)
     {
-        const char *line = varlines[i];
+        const char* line = varlines[i];
 
         // Split left and right of delimiet
-        const char *delim = strchr(line, '=');
+        const char* delim = strchr(line, '=');
 
         if (NULL != delim)
         {
@@ -121,7 +131,8 @@ procmetrix_error_t procmetrix_split_environ_vars(const char *const *varlines, si
         }
 
         // Cleanup on strdup failure
-        if ((NULL == environment->vars[i].name) || ((NULL == environment->vars[i].value) && (NULL != delim)))
+        if ((NULL == environment->vars[i].name) ||
+            ((NULL == environment->vars[i].value) && (NULL != delim)))
         {
             free(environment->vars[i].name);
             environment->vars[i].name = NULL;

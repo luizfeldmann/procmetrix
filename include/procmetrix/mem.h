@@ -2,8 +2,8 @@
 //! @ingroup mem
 //! @brief Functions to retrieve memory information.
 
-#ifndef _PROCMETRIX_MEM_H_
-#define _PROCMETRIX_MEM_H_
+#ifndef PROCMETRIX_MEM_H
+#define PROCMETRIX_MEM_H
 
 // Lib
 #include <procmetrix/error.h>
@@ -24,8 +24,10 @@ extern "C"
         //! Total physical memory, excluding swap.
         uint64_t total;
 
-        //! The memory that can be given instantly to processes without the system going into swap.
-        //! This is calculated by summing different memory metrics that vary depending on the platform.
+        //! The memory that can be given instantly to processes
+        //! without the system going into swap.
+        //! This is calculated by summing different memory metrics
+        //! that vary depending on the platform.
         uint64_t available;
 
         //! Memory used, calculated differently depending on the platform.
@@ -63,8 +65,9 @@ extern "C"
     } procmetrix_virtual_memory_t;
 
     //! Return statistics about system memory usage in bytes.
-    //! @param[out] virtual_memory Pointer to struct where the retrieved metrics will be stored.
-    PROCMETRIX_API procmetrix_error_t procmetrix_system_virtual_memory(procmetrix_virtual_memory_t *virtual_memory);
+    //! @param[out] virtual_memory Pointer where to store the  read metrics.
+    PROCMETRIX_API procmetrix_error_t procmetrix_system_virtual_memory(
+        procmetrix_virtual_memory_t* virtual_memory);
 
     //! System swap memory statistics
     typedef struct procmetrix_swap_memory
@@ -89,12 +92,15 @@ extern "C"
     } procmetrix_swap_memory_t;
 
     //! Return statistics about system swap memory in bytes.
-    //! @param[out] swap_memory Pointer to struct where the retrieved metrics will be stored.
-    PROCMETRIX_API procmetrix_error_t procmetrix_system_swap_memory(procmetrix_swap_memory_t *swap_memory);
+    //! @param[out] swap_memory Pointer where to store the  retrieved metrics.
+    PROCMETRIX_API procmetrix_error_t
+    procmetrix_system_swap_memory(procmetrix_swap_memory_t* swap_memory);
 
+    // clang-format off
     //! @}
+    // clang-format on
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_MEM_H_
+#endif // PROCMETRIX_MEM_H

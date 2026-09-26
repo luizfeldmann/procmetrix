@@ -2,8 +2,8 @@
 //! @ingroup version
 //! @brief Library version information.
 
-#ifndef _PROCMETRIX_VERSION_H_
-#define _PROCMETRIX_VERSION_H_
+#ifndef PROCMETRIX_VERSION_H
+#define PROCMETRIX_VERSION_H
 
 // Lib
 #include <procmetrix/api.h>
@@ -24,9 +24,11 @@ extern "C"
     //! Reads the patch version number
     PROCMETRIX_API unsigned int procmetrix_version_patch(void);
 
+    // clang-format off
     //! @}
+    // clang-format on
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_VERSION_H_
+#endif // PROCMETRIX_VERSION_H

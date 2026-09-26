@@ -1,5 +1,5 @@
-#ifndef _PROCMETRIX_COMMON_WINDOWS_INTERNAL_H_
-#define _PROCMETRIX_COMMON_WINDOWS_INTERNAL_H_
+#ifndef PROCMETRIX_COMMON_WINDOWS_INTERNAL_H
+#define PROCMETRIX_COMMON_WINDOWS_INTERNAL_H
 
 // Lib
 #include <procmetrix/api.h>
@@ -12,16 +12,23 @@ extern "C"
 {
 #endif // __cplusplus
 
-    //! Opens a file as readonly and close-on-exec
+    //! Converts a large unsigned integer of ticks to seconds
     //! @private
-    PROCMETRIX_API double procmetrix_impl_windows_large_uint_to_secs(const ULARGE_INTEGER *li);
+    PROCMETRIX_API double
+    procmetrix_impl_windows_large_uint_to_secs(const ULARGE_INTEGER* uli);
 
-    PROCMETRIX_API double procmetrix_impl_windows_large_int_to_secs(const LARGE_INTEGER *li);
+    //! Converts a large integer of ticks to seconds
+    //! @private
+    PROCMETRIX_API double
+    procmetrix_impl_windows_large_int_to_secs(const LARGE_INTEGER* sli);
 
-    PROCMETRIX_API double procmetrix_impl_windows_filetime_to_secs(const FILETIME *pft);
+    //! Converts a file time to seconds
+    //! @private
+    PROCMETRIX_API double
+    procmetrix_impl_windows_filetime_to_secs(const FILETIME* pft);
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_COMMON_WINDOWS_INTERNAL_H_
+#endif // PROCMETRIX_COMMON_WINDOWS_INTERNAL_H

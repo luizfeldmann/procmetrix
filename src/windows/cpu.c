@@ -1,26 +1,17 @@
 // Lib
 #include <procmetrix/cpu.h>
 
-// Windows
+// Windows primary
 #include <Windows.h>
-#include <winternl.h>
+// Windows extra
 #include <powrprof.h>
+#include <winternl.h>
 #pragma comment(lib, "ntdll.lib")
 #pragma comment(lib, "PowrProf.lib")
 
 // Internal
 #include <internal/windows/common_windows_internal.h>
-
-//! This seems to be missing from windows headers
-typedef struct _PROCESSOR_POWER_INFORMATION
-{
-    ULONG Number;
-    ULONG MaxMhz;
-    ULONG CurrentMhz;
-    ULONG MhzLimit;
-    ULONG MaxIdleState;
-    ULONG CurrentIdleState;
-} PROCESSOR_POWER_INFORMATION;
+#include <internal/windows/winnt_extended_api.h>
 
 // Impl
 
@@ -44,16 +35,16 @@ size_t procmetrix_cpu_count_physical(void)
     }
 
     // Iterate the collection
-    size_t physicalCores = 0;
-    BYTE *ptr = (BYTE *)buf;
-    BYTE *end = ptr + len;
+    size_t physical_cores = 0;
+    BYTE* ptr = (BYTE*)buf;
+    BYTE* end = ptr + len;
     while (ptr < end)
     {
         PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX info =
             (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)ptr;
 
         if (info->Relationship == RelationProcessorCore)
-            physicalCores++;
+            physical_cores++;
 
         // Iteration step is a variable length
         ptr += info->Size;
@@ -62,7 +53,7 @@ size_t procmetrix_cpu_count_physical(void)
     // Cleanup
     free(buf);
 
-    return physicalCores;
+    return physical_cores;
 }
 
 size_t procmetrix_cpu_count_logical(void)
@@ -70,7 +61,7 @@ size_t procmetrix_cpu_count_logical(void)
     return GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
 }
 
-procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t *cpu_times)
+procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t* cpu_times)
 {
     // Sanity
     if (NULL == cpu_times)
@@ -78,7 +69,9 @@ procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t *cpu_times)
     memset(cpu_times, 0, sizeof(*cpu_times));
 
     // Query from OS
-    FILETIME idle_time, kernel_time, user_time;
+    FILETIME idle_time = { 0 };
+    FILETIME kernel_time = { 0 };
+    FILETIME user_time = { 0 };
     if (!GetSystemTimes(&idle_time, &kernel_time, &user_time))
         return PROCMETRIX_ERROR_UNKNOWN;
 
@@ -94,18 +87,19 @@ procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t *cpu_times)
     return PROCMETRIX_ERROR_NONE;
 }
 
-procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_times, size_t maxCount, size_t *readCount)
+procmetrix_error_t procmetrix_cpu_times_per_cpu(
+    procmetrix_cpu_times_t* cpu_times, size_t max_count, size_t* read_count)
 {
     // Defensive cleaning
-    if (NULL != readCount)
-        *readCount = 0;
+    if (NULL != read_count)
+        *read_count = 0;
 
     // Sanity
     if (NULL == cpu_times)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
-    memset(cpu_times, 0, maxCount * sizeof(*cpu_times));
+    memset(cpu_times, 0, max_count * sizeof(*cpu_times));
 
-    if (0 == maxCount)
+    if (0 == max_count)
         return PROCMETRIX_ERROR_MORE_DATA;
 
     // Allocate one item per CPU
@@ -113,8 +107,9 @@ procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_time
     if (0 == ncpus)
         return PROCMETRIX_ERROR_UNKNOWN;
 
-    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi =
-        (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)calloc(ncpus, sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* sppi =
+        (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION*)calloc(
+            ncpus, sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
 
     if (NULL == sppi)
         return PROCMETRIX_ERROR_OUT_OF_MEMORY;
@@ -124,40 +119,50 @@ procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_time
 
     ULONG retlen = 0;
     if (!NT_SUCCESS(NtQuerySystemInformation(
-            SystemProcessorPerformanceInformation, sppi, ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION), &retlen)))
+            SystemProcessorPerformanceInformation,
+            sppi,
+            ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+            &retlen)))
     {
         status = PROCMETRIX_ERROR_UNKNOWN;
     }
     else
     {
         // The kernel may return entries for less CPUs
-        // on systems with more than 64 CPUs it only covers the calling thread's processor group
+        // on systems with more than 64 CPUs it only covers the calling thread's
+        // processor group
         ncpus = retlen / sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
 
         for (size_t i = 0; i < ncpus; i++)
         {
             // Limit by the user output buffer size
-            if (i >= maxCount)
+            if (i >= max_count)
             {
                 status = PROCMETRIX_ERROR_MORE_DATA;
                 break;
             }
 
             // Convert to seconds
-            cpu_times[i].user = procmetrix_impl_windows_large_int_to_secs(&sppi[i].UserTime);
-            cpu_times[i].idle = procmetrix_impl_windows_large_int_to_secs(&sppi[i].IdleTime);
+            cpu_times[i].user =
+                procmetrix_impl_windows_large_int_to_secs(&sppi[i].UserTime);
+            cpu_times[i].idle =
+                procmetrix_impl_windows_large_int_to_secs(&sppi[i].IdleTime);
 
             // kernel time includes idle time on windows
-            // we return only system busy kernel time subtracting the idle time from the kernel total time
-            double kernel_time = procmetrix_impl_windows_large_int_to_secs(&sppi[i].KernelTime);
+            // we return only system busy kernel time subtracting the idle time
+            // from the kernel total time
+            double kernel_time =
+                procmetrix_impl_windows_large_int_to_secs(&sppi[i].KernelTime);
             cpu_times[i].system = kernel_time - cpu_times[i].idle;
 
-            cpu_times[i].dpc = procmetrix_impl_windows_large_int_to_secs(&sppi[i].Reserved1[0]);
-            cpu_times[i].interrupt = procmetrix_impl_windows_large_int_to_secs(&sppi[i].Reserved1[1]);
+            cpu_times[i].dpc = procmetrix_impl_windows_large_int_to_secs(
+                &sppi[i].Reserved1[0]);
+            cpu_times[i].interrupt = procmetrix_impl_windows_large_int_to_secs(
+                &sppi[i].Reserved1[1]);
 
             // Update count of read items
-            if (NULL != readCount)
-                *readCount = i + 1;
+            if (NULL != read_count)
+                *read_count = i + 1;
         }
     }
 
@@ -167,7 +172,8 @@ procmetrix_error_t procmetrix_cpu_times_per_cpu(procmetrix_cpu_times_t *cpu_time
     return status;
 }
 
-procmetrix_error_t procmetrix_cpu_freqs(procmetrix_cpu_freq_t *cpu_freqs, size_t max_count, size_t *read_count)
+procmetrix_error_t procmetrix_cpu_freqs(
+    procmetrix_cpu_freq_t* cpu_freqs, size_t max_count, size_t* read_count)
 {
     // Defensive cleaning
     if (NULL != read_count)
@@ -186,15 +192,18 @@ procmetrix_error_t procmetrix_cpu_freqs(procmetrix_cpu_freq_t *cpu_freqs, size_t
     if (0 == ncpus)
         return PROCMETRIX_ERROR_UNKNOWN;
 
-    PROCESSOR_POWER_INFORMATION *ppi = (PROCESSOR_POWER_INFORMATION *)calloc(ncpus, sizeof(PROCESSOR_POWER_INFORMATION));
+    PROCMETRIX_PROCESSOR_POWER_INFORMATION* ppi =
+        (PROCMETRIX_PROCESSOR_POWER_INFORMATION*)calloc(
+            ncpus, sizeof(PROCMETRIX_PROCESSOR_POWER_INFORMATION));
     if (NULL == ppi)
         return PROCMETRIX_ERROR_OUT_OF_MEMORY;
 
     // Get processor power informatioon
     procmetrix_error_t status = PROCMETRIX_ERROR_NONE;
 
-    if (ERROR_SUCCESS != CallNtPowerInformation(
-                             ProcessorInformation, NULL, 0, ppi, ncpus * sizeof(*ppi)))
+    if (ERROR_SUCCESS !=
+        CallNtPowerInformation(
+            ProcessorInformation, NULL, 0, ppi, ncpus * sizeof(*ppi)))
     {
         status = PROCMETRIX_ERROR_INVALID_ARGUMENT;
     }
