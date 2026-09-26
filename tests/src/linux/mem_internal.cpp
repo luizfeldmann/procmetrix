@@ -36,11 +36,13 @@ TEST(procmetrix_impl_linux_zoneinfo_low_watermark, null_args_empty)
 
 TEST(procmetrix_impl_linux_zoneinfo_low_watermark, parse)
 {
+    // clang-format off
     mem_file_ptr memfp(
         "low      8000\n"
         "low      7000\n"
         "low      32\n"
         "low      0\n");
+    // clang-format on
 
     uint64_t low_wmark = 0;
 
@@ -88,9 +90,11 @@ TEST(procmetrix_impl_linux_system_virtual_memory, null_args_empty)
 TEST(procmetrix_impl_linux_system_virtual_memory, minimal)
 {
     // Only the mandatory fields have been provided
+    // clang-format off
     mem_file_ptr memfp(
         "MemTotal:  16777216 kB\n"
         "MemFree:   8388608  kB\n");
+    // clang-format on
 
     procmetrix_virtual_memory_t virtual_memory;
     EXPECT_EQ(
@@ -108,6 +112,7 @@ TEST(procmetrix_impl_linux_system_virtual_memory, minimal)
 TEST(procmetrix_impl_linux_system_virtual_memory, all)
 {
     // Only the mandatory fields have been provided
+    // clang-format off
     mem_file_ptr memfp(
         "MemTotal:      8192000 kB\n"
         "MemFree:       1024000 kB\n"
@@ -119,6 +124,7 @@ TEST(procmetrix_impl_linux_system_virtual_memory, all)
         "Inactive:      1536000 kB\n" // Alternative
         "Slab:           384000 kB\n"
         "MemAvailable:  3584000 kB\n");
+    // clang-format on
 
     procmetrix_virtual_memory_t virtual_memory;
     EXPECT_EQ(
@@ -146,6 +152,7 @@ TEST(procmetrix_impl_linux_system_virtual_memory, all)
 
 TEST(procmetrix_impl_linux_system_virtual_memory, estimate)
 {
+    // clang-format off
     mem_file_ptr zoneinfo(
         "low      6922\n"
         "low      7156\n"
@@ -166,6 +173,7 @@ TEST(procmetrix_impl_linux_system_virtual_memory, estimate)
         "Inact_clean:	1085377\n"
         "Inact_laundry:	1085377\n"
         "Slab:	        152516\n");
+    // clang-format on
 
     procmetrix_virtual_memory_t virtual_memory;
     EXPECT_EQ(
@@ -225,9 +233,11 @@ TEST(procmetrix_impl_linux_system_swap_memory, null_args_empty)
 TEST(procmetrix_impl_linux_system_swap_memory, minimal)
 {
     // Only the mandatory fields have been provided
+    // clang-format off
     mem_file_ptr memfp(
         "SwapTotal:  5678 kB\n"
         "SwapFree:   1234 kB\n");
+    // clang-format on
 
     procmetrix_swap_memory_t swap_memory;
     EXPECT_EQ(
@@ -242,6 +252,7 @@ TEST(procmetrix_impl_linux_system_swap_memory, minimal)
 
 TEST(procmetrix_impl_linux_system_swap_memory, all)
 {
+    // clang-format off
     mem_file_ptr memstat(
         "SwapTotal:  2000 kB\n"
         "SwapFree:   1000 kB\n");
@@ -249,6 +260,7 @@ TEST(procmetrix_impl_linux_system_swap_memory, all)
     mem_file_ptr vmstat(
         "pswpin  100 kB\n"
         "pswpout 200 kB\n");
+    // clang-format on
 
     procmetrix_swap_memory_t swap_memory;
     EXPECT_EQ(

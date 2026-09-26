@@ -163,16 +163,19 @@ TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, empty)
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, single_core)
 {
+    // clang-format off
     mem_file_ptr memfp(
         "processor   : 0\n"
         "physical id : 0\n"
         "core id     : 0\n");
+    // clang-format on
 
     EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 1);
 }
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_no_smt)
 {
+    // clang-format off
     mem_file_ptr memfp(
         "processor   : 0\n"
         "physical id : 0\n"
@@ -180,12 +183,14 @@ TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_no_smt)
         "processor   : 1\n"
         "physical id : 0\n"
         "core id     : 1\n");
+    // clang-format on
 
     EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 2);
 }
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_hyperthreading)
 {
+    // clang-format off
     mem_file_ptr memfp(
         "processor      :0 \n"
         "physical id    :0 \n"
@@ -199,12 +204,14 @@ TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, dual_core_hyperthreading)
         "processor      :3 \n"
         "physical id    :0 \n"
         "core id        :1 \n");
+    // clang-format on
 
     EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 2);
 }
 
 TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, quad_core_dual_socket)
 {
+    // clang-format off
     mem_file_ptr memfp(
         "processor      : 0 \n"
         "physical id    : 0 \n"
@@ -221,6 +228,7 @@ TEST(procmetrix_impl_linux_cpu_count_physical_cpuinfo, quad_core_dual_socket)
         "processor      : 3 \n"
         "physical id    : 1 \n"
         "core id        : 1 \n");
+    // clang-format on
 
     EXPECT_EQ(procmetrix_impl_linux_cpu_count_physical_cpuinfo(memfp.get()), 4);
 }
@@ -242,12 +250,14 @@ TEST(procmetrix_impl_linux_procstat_count_cpus, empty)
 
 TEST(procmetrix_impl_linux_procstat_count_cpus, count)
 {
+    // clang-format off
     mem_file_ptr memfp(
         "cpu\n"
         "cpu0\n"
         "cpu1\n"
         "cpu2\n"
         "whatver");
+    // clang-format on
 
     EXPECT_EQ(procmetrix_impl_linux_procstat_count_cpus(memfp.get()), 3);
 }
@@ -267,6 +277,7 @@ TEST(procmetrix_impl_linux_cpuinfo_count_processors, empty)
 
 TEST(procmetrix_impl_linux_cpuinfo_count_processors, count)
 {
+    // clang-format off
     mem_file_ptr memfp(
         "processor      : 0\n"
         "physical id    : 0\n"
@@ -276,6 +287,7 @@ TEST(procmetrix_impl_linux_cpuinfo_count_processors, count)
         "physical id    : 0\n"
         "siblings       : 8\n"
         "core id        : 0\n");
+    // clang-format on
 
     EXPECT_EQ(procmetrix_impl_linux_cpuinfo_count_processors(memfp.get()), 2);
 }
@@ -355,9 +367,11 @@ TEST(procmetrix_impl_linux_cpu_times_per_cpu, empty_file)
 TEST(procmetrix_impl_linux_cpu_times_per_cpu, single_line)
 {
     // One total and one cpu
+    // clang-format off
     mem_file_ptr memfp(
         "cpu\n"
         "cpu0 1000 2000 3000 4000");
+    // clang-format on
 
     // Read into one line
     size_t read_count = 0;
@@ -430,12 +444,14 @@ TEST(procmetrix_impl_linux_cpu_times_per_cpu, multi_line)
 TEST(procmetrix_impl_linux_cpu_times_per_cpu, array_too_small)
 {
     // One total and 4 cpus
+    // clang-format off
     mem_file_ptr memfp(
         "cpu\n"
         "cpu0 1000 2000 3000 4000\n"
         "cpu1 1250 2250 3250 4250\n"
         "cpu2 1500 2500 3500 4500\n"
         "cpu3 1750 2750 3750 4750\n");
+    // clang-format on
 
     // The provided array is smaller than the actual count
     size_t read_count = 0;
@@ -677,11 +693,13 @@ TEST(procmetrix_impl_linux_cpuinfo_freqs, overflow)
     size_t read_count = 0;
     procmetrix_cpu_freq_t cpu_freq[2];
 
+    // clang-format off
     mem_file_ptr memfp(
         "cpu MHz   : 1000\n"
         "cpu MHz   : 2000\n"
         "cpu MHz   : 3000\n"
         "cpu MHz   : 4000\n");
+    // clang-format on
 
     // Returns "more data was available"
     EXPECT_EQ(
