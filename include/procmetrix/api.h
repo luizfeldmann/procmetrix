@@ -1,8 +1,8 @@
 //! @file
 //! @brief Macros for API import/export
 
-#ifndef _PROCMETRIX_API_H_
-#define _PROCMETRIX_API_H_
+#ifndef PROCMETRIX_API_H
+#define PROCMETRIX_API_H
 
 #ifdef _WIN32
     #ifdef PROCMETRIX_SHARED
@@ -18,4 +18,4 @@
     #define PROCMETRIX_API
 #endif // _WIN32
 
-#endif // _PROCMETRIX_API_H_
+#endif // PROCMETRIX_API_H

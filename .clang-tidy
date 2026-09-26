@@ -1,0 +1,89 @@
+Checks: >
+  bugprone-*,
+  clang-analyzer-*,
+  llvm-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-multi-level-implicit-pointer-conversion,
+  -llvm-header-guard,
+  -performance-enum-size,
+  -readability-braces-around-statements,
+  -readability-function-cognitive-complexity,
+  -readability-magic-numbers,
+
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'src/.*|include/.*'
+FormatStyle: file
+
+CheckOptions:
+  # Namespaces
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+
+  # Classes / structs
+  - key: readability-identifier-naming.ClassCase
+    value: lower_case
+
+  - key: readability-identifier-naming.StructCase
+    value: lower_case
+
+  # Functions / methods
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case
+
+  # Variables
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+
+  - key: readability-identifier-naming.LocalVariableCase
+    value: lower_case
+
+  - key: readability-identifier-length.IgnoredVariableNames
+    value: 'fd|fp'
+
+  # Members
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: _
+
+  # Globals
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+
+  - key: readability-identifier-naming.GlobalVariablePrefix
+    value: g_
+
+  # Constants
+  - key: readability-identifier-naming.ConstantCase
+    value: lower_case
+
+  # Enums
+  - key: readability-identifier-naming.EnumCase
+    value: lower_case
+
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+
+  # Typedefs / aliases
+  - key: readability-identifier-naming.TypedefCase
+    value: lower_case
+
+  - key: readability-identifier-naming.TypedefSuffix
+    value: _t
+
+  - key: readability-identifier-naming.TypeAliasCase
+    value: lower_case
+
+  - key: readability-identifier-naming.TypeAliasSuffix
+    value: _t

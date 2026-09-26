@@ -1,0 +1,14 @@
+include(default)
+
+[settings]
+build_type=Debug
+compiler=clang
+compiler.version=19
+compiler.libcxx=libstdc++11
+compiler.cppstd=gnu17
+
+[conf]
+user.procmetrix:run_tests=True
+user.procmetrix:profile_name=linux-debug-clang
+
+tools.build:compiler_executables={"c": "clang", "cpp": "clang++"}

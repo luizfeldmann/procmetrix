@@ -1,8 +1,8 @@
 //! @file
-//! @brief Main public header for the library. 
+//! @brief Main public header for the library.
 
-#ifndef _PROCMETRIX_H_
-#define _PROCMETRIX_H_
+#ifndef PROCMETRIX_H
+#define PROCMETRIX_H
 
 //! @defgroup version Version
 //! Library version information.
@@ -20,4 +20,4 @@
 //! Processes' information.
 #include <procmetrix/proc.h>
 
-#endif // _PROCMETRIX_H_
+#endif // PROCMETRIX_H

@@ -7,8 +7,8 @@
     #include <Windows.h>
 #else
     // Linux
-    #include <unistd.h>
     #include <linux/limits.h>
+    #include <unistd.h>
 #endif
 
 // Impl

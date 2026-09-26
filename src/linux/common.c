@@ -7,7 +7,7 @@
 
 // Impl
 
-FILE *procmetrix_impl_linux_open_file_rdonly_cloexec(const char *path)
+FILE* procmetrix_impl_linux_open_file_rdonly_cloexec(const char* path)
 {
     int fd = open(path, O_RDONLY);
     if (fd < 0)
@@ -17,7 +17,7 @@ FILE *procmetrix_impl_linux_open_file_rdonly_cloexec(const char *path)
     fcntl(fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-    FILE *fp = fdopen(fd, "r");
+    FILE* fp = fdopen(fd, "r");
     if (fp == NULL)
         close(fd);
 

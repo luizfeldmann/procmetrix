@@ -1,8 +1,8 @@
 //! @file
 //! @brief Common error codes for the library.
 
-#ifndef _PROCMETRIX_ERROR_H_
-#define _PROCMETRIX_ERROR_H_
+#ifndef PROCMETRIX_ERROR_H
+#define PROCMETRIX_ERROR_H
 
 // Lib
 #include <procmetrix/api.h>
@@ -31,7 +31,8 @@ extern "C"
         //! Unable to open the file for reading
         PROCMETRIX_ERROR_FILE_READ,
 
-        //! Unable to parse the contents of some data returned by the operating system.
+        //! Unable to parse the contents of some data
+        //! returned by the operating system.
         PROCMETRIX_ERROR_MALFORMED,
 
         //! Failed allocation.
@@ -45,4 +46,4 @@ extern "C"
 }
 #endif // __cplusplus
 
-#endif // _PROCMETRIX_ERROR_H_
+#endif // PROCMETRIX_ERROR_H

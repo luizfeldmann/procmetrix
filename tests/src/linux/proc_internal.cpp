@@ -29,48 +29,48 @@ TEST(procmetrix_impl_linux_proc_pid_stat_read_ppid, parent)
 
 /** Memory info */
 
-TEST(procmetrix_impl_linux_proc_read_statm, null_args) 
+TEST(procmetrix_impl_linux_proc_read_statm, null_args)
 {
     // Null input
     procmetrix_proc_memory_info_t memory_info { 0 };
     EXPECT_EQ(
-        procmetrix_impl_linux_proc_read_statm(nullptr, &memory_info), 
+        procmetrix_impl_linux_proc_read_statm(nullptr, &memory_info),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
-        
+
     // Null output
-    const char buf[]{"1 2 3 4 5 6 7"};
+    const char buf[] { "1 2 3 4 5 6 7" };
     EXPECT_EQ(
-        procmetrix_impl_linux_proc_read_statm(buf, nullptr), 
+        procmetrix_impl_linux_proc_read_statm(buf, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 }
 
-TEST(procmetrix_impl_linux_proc_read_statm, invalid) 
+TEST(procmetrix_impl_linux_proc_read_statm, invalid)
 {
     // Only 6 of the required 7 fields
-    const char buf[]{"1 2 3 4 5 6"};
+    const char buf[] { "1 2 3 4 5 6" };
     procmetrix_proc_memory_info_t memory_info { 0 };
 
     EXPECT_EQ(
-        procmetrix_impl_linux_proc_read_statm(buf, &memory_info), 
+        procmetrix_impl_linux_proc_read_statm(buf, &memory_info),
         PROCMETRIX_ERROR_MALFORMED);
 }
 
-TEST(procmetrix_impl_linux_proc_read_statm, valid) 
+TEST(procmetrix_impl_linux_proc_read_statm, valid)
 {
-    const char buf[]{"4062 1899 1572 1208 0 139 0"};
+    const char buf[] { "4062 1899 1572 1208 0 139 0" };
     procmetrix_proc_memory_info_t memory_info { 0 };
 
     EXPECT_EQ(
-        procmetrix_impl_linux_proc_read_statm(buf, &memory_info), 
+        procmetrix_impl_linux_proc_read_statm(buf, &memory_info),
         PROCMETRIX_ERROR_NONE);
-    
-    EXPECT_EQ(memory_info.vms,      4096 * 4062);
-    EXPECT_EQ(memory_info.rss,      4096 * 1899);
-    EXPECT_EQ(memory_info.shared,   4096 * 1572);
-    EXPECT_EQ(memory_info.text,     4096 * 1208);
-    EXPECT_EQ(memory_info.lib,      4096 * 0);
-    EXPECT_EQ(memory_info.data,     4096 * 139);
-    EXPECT_EQ(memory_info.dirty,    4096 * 0);
+
+    EXPECT_EQ(memory_info.vms, 4096 * 4062);
+    EXPECT_EQ(memory_info.rss, 4096 * 1899);
+    EXPECT_EQ(memory_info.shared, 4096 * 1572);
+    EXPECT_EQ(memory_info.text, 4096 * 1208);
+    EXPECT_EQ(memory_info.lib, 4096 * 0);
+    EXPECT_EQ(memory_info.data, 4096 * 139);
+    EXPECT_EQ(memory_info.dirty, 4096 * 0);
 }
 
 /** CPU times */
@@ -84,7 +84,7 @@ TEST(procmetrix_impl_linux_proc_pid_stat_read_cpu_times, null_args)
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // Null outputs
-    const char buf[]{"1 (systemd) S"};
+    const char buf[] { "1 (systemd) S" };
     EXPECT_EQ(
         procmetrix_impl_linux_proc_pid_stat_read_cpu_times(buf, nullptr),
         PROCMETRIX_ERROR_INVALID_ARGUMENT);
@@ -93,7 +93,7 @@ TEST(procmetrix_impl_linux_proc_pid_stat_read_cpu_times, null_args)
 TEST(procmetrix_impl_linux_proc_pid_stat_read_cpu_times, invalid)
 {
     // Missing fields
-    const char buf[]{"1 (systemd) S"};
+    const char buf[] { "1 (systemd) S" };
     procmetrix_proc_cpu_times_t cpu_times;
 
     EXPECT_EQ(
@@ -103,7 +103,9 @@ TEST(procmetrix_impl_linux_proc_pid_stat_read_cpu_times, invalid)
 
 TEST(procmetrix_impl_linux_proc_pid_stat_read_cpu_times, valid)
 {
-    const char buf[]{"1 (systemd) S 1 2 3 4 5 6 7 8 9 10 1100 1200 1300 1400"};
+    const char buf[] {
+        "1 (systemd) S 1 2 3 4 5 6 7 8 9 10 1100 1200 1300 1400"
+    };
     procmetrix_proc_cpu_times_t cpu_times;
 
     EXPECT_EQ(

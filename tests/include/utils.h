@@ -1,5 +1,5 @@
-#ifndef _TEST__UTILS_H_
-#define _TEST__UTILS_H_
+#ifndef TEST_UTILS_H
+#define TEST_UTILS_H
 
 // STD
 #include <string>
@@ -7,4 +7,4 @@
 //! Gets the working directory
 std::string get_working_dir();
 
-#endif // _TEST__UTILS_H_
+#endif // _TEST_UTILS_H_
