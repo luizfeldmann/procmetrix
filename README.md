@@ -19,6 +19,7 @@ A lightweight C library for retrieving system metrics such as CPU utilization, f
 
 ## Supported operating systems
 
+- FreeBSD
 - Linux
 - Windows
 - ...more soon.

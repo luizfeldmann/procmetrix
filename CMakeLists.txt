@@ -72,6 +72,15 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "src/windows/mem.c"
     # CPU
     "src/windows/cpu.c")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # Common
+    # Process
+    "src/freebsd/proc.c"
+    # Memory
+    "src/freebsd/mem.c"
+    # CPU
+    "src/freebsd/cpu.c")
 endif()
 
 # Only build tests if enabled

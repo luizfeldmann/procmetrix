@@ -1,0 +1,31 @@
+// Lib
+#include <procmetrix/cpu.h>
+
+// Impl
+
+size_t procmetrix_cpu_count_physical(void)
+{
+    return 0;
+}
+
+size_t procmetrix_cpu_count_logical(void)
+{
+    return 0;
+}
+
+procmetrix_error_t procmetrix_cpu_times_total(procmetrix_cpu_times_t* cpu_times)
+{
+    return PROCMETRIX_NOT_IMPLEMENTED;
+}
+
+procmetrix_error_t procmetrix_cpu_times_per_cpu(
+    procmetrix_cpu_times_t* cpu_times, size_t max_count, size_t* read_count)
+{
+    return PROCMETRIX_NOT_IMPLEMENTED;
+}
+
+procmetrix_error_t procmetrix_cpu_freqs(
+    procmetrix_cpu_freq_t* cpu_freqs, size_t max_count, size_t* read_count)
+{
+    return PROCMETRIX_NOT_IMPLEMENTED;
+}
