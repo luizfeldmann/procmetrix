@@ -1,5 +1,4 @@
 // Lib
-#include "procmetrix/error.h"
 #include <procmetrix/mem.h>
 
 // Internal
