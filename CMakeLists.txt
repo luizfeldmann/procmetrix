@@ -75,12 +75,15 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Common
+    "include/internal/freebsd/common_freebsd_internal.h"
+    "src/freebsd/common.c"
     # Process
     "src/freebsd/proc.c"
     # Memory
     "src/freebsd/mem.c"
     # CPU
     "src/freebsd/cpu.c")
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE kvm)
 endif()
 
 # Only build tests if enabled

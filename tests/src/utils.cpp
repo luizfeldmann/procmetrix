@@ -9,7 +9,7 @@
     // Linux
     #include <linux/limits.h>
     #include <unistd.h>
-#elif defined (__FreeBSD__)
+#elif defined(__FreeBSD__)
     #include <sys/syslimits.h>
     #include <unistd.h>
 #else
