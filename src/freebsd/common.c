@@ -35,7 +35,7 @@ procmetrix_impl_bsd_sysctlbyname(const char* name, void* buf, size_t len)
 
     // Check the expected size was read
     // Could mean the expected name and type dont match
-    if (oldlenp != len)
+    if (oldlenp > len)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     return PROCMETRIX_ERROR_NONE;

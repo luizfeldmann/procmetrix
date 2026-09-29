@@ -233,14 +233,23 @@ TEST(procmetrix_cpu_utilization_ratio, div_by_zero)
 
 TEST(procmetrix_cpu_utilization_ratio, delay)
 {
-    // Get utilization between a time difference
+    // Get current cpu times counters
     procmetrix_cpu_times before { 0 };
-    procmetrix_cpu_times after { 0 };
-    procmetrix_cpu_times delta { 0 };
-
     procmetrix_cpu_times_total(&before);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Burn some CPU
+    auto end =
+        std::chrono::steady_clock::now() + std::chrono::milliseconds(500);
+    volatile size_t size_effect = 0;
+    while (std::chrono::steady_clock::now() < end)
+        ++size_effect;
+
+    // Get new counters after the work
+    procmetrix_cpu_times after { 0 };
     procmetrix_cpu_times_total(&after);
+
+    // Difference in counters
+    procmetrix_cpu_times delta { 0 };
     procmetrix_cpu_times_delta(&before, &after, &delta);
 
     // CPU utilization is not zero
