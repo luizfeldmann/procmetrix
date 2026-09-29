@@ -6,10 +6,12 @@
 #include <internal/freebsd/common_freebsd_internal.h>
 
 // STD
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 
 // System
+#include <kvm.h>
 #include <libutil.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
@@ -164,7 +166,61 @@ procmetrix_get_proc_cwd(procmetrix_pid_t pid, char* dst_cwd, size_t dst_len)
 procmetrix_error_t procmetrix_get_proc_cmdline(
     procmetrix_pid_t pid, procmetrix_proc_cmdline_t* cmdline)
 {
-    return PROCMETRIX_NOT_IMPLEMENTED;
+    // Sanity
+    if (NULL == cmdline)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+    memset(cmdline, 0, sizeof(*cmdline));
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open kernel virtual memory
+    kvm_t* kvm = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, "kvm_open failed");
+    if (NULL == kvm)
+        return PROCMETRIX_ERROR_UNKNOWN;
+
+    // Open the process
+    int cnt = 0;
+    struct kinfo_proc* proc =
+        kvm_getprocs(kvm, KERN_PROC_PID, (pid_t)pid, &cnt);
+
+    if (NULL == proc || 1 != cnt)
+    {
+        kvm_close(kvm);
+        return PROCMETRIX_ERROR_UNKNOWN;
+    }
+
+    // Get the arguments
+    size_t argc = 0;
+    char** argv = kvm_getargv(kvm, proc, 0);
+
+    if (argv == NULL)
+    {
+        kvm_close(kvm);
+        return PROCMETRIX_ERROR_UNKNOWN;
+    }
+
+    // Count the arguments
+    for (size_t i = 0; argv[i] != NULL; ++i)
+        argc = i + 1;
+
+    // Allocate the output
+    cmdline->argv = calloc(argc, sizeof(char*));
+    if (NULL == cmdline->argv)
+    {
+        kvm_close(kvm);
+        return PROCMETRIX_ERROR_OUT_OF_MEMORY;
+    }
+    cmdline->argc = argc;
+
+    // Copy the output
+    for (size_t i = 0; argv[i] != NULL; ++i)
+        cmdline->argv[i] = strdup(argv[i]);
+
+    // Cleanup
+    kvm_close(kvm);
+
+    return PROCMETRIX_ERROR_NONE;
 }
 
 procmetrix_error_t procmetrix_get_proc_environ(
