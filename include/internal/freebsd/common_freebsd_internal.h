@@ -22,6 +22,11 @@ extern "C"
     procmetrix_error_t procmetrix_impl_bsd_sysctl(
         int* mib, unsigned int miblen, void* buf, size_t len);
 
+    //! Allocates a buffer containing the result of a sysctl
+    //! @private
+    procmetrix_error_t procmetrix_impl_bsd_sysctl_alloc(
+        int* mib, unsigned int miblen, void** buf, size_t* buflen);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
