@@ -83,7 +83,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "src/freebsd/mem.c"
     # CPU
     "src/freebsd/cpu.c")
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE kvm)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE kvm util)
 endif()
 
 # Shared code for POSIX systems

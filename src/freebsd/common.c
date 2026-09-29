@@ -23,39 +23,39 @@ static procmetrix_error_t procmetrix_error_from_errno(int err)
 }
 
 procmetrix_error_t
-procmetrix_impl_bsd_sysctlbyname(const char* name, void* buf, size_t len)
+procmetrix_impl_bsd_sysctlbyname(const char* name, void* buf, size_t buflen)
 {
     // Sanity
-    if (NULL == name || NULL == buf || 0 == len)
+    if (NULL == name || NULL == buf || 0 == buflen)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Read the data
-    size_t oldlenp = len;
-    if (0 != sysctlbyname(name, buf, &oldlenp, NULL, 0))
+    size_t readlen = buflen;
+    if (0 != sysctlbyname(name, buf, &readlen, NULL, 0))
         return procmetrix_error_from_errno(errno);
 
     // Check the expected size was read
     // Could mean the expected name and type dont match
-    if (oldlenp > len)
+    if (readlen > buflen)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     return PROCMETRIX_ERROR_NONE;
 }
 
-procmetrix_error_t
-procmetrix_impl_bsd_sysctl(int* mib, unsigned int miblen, void* buf, size_t len)
+procmetrix_error_t procmetrix_impl_bsd_sysctl(
+    int* mib, unsigned int miblen, void* buf, size_t buflen)
 {
     // Sanity
-    if (NULL == mib || 0 == miblen || NULL == buf || 0 == len)
+    if (NULL == mib || 0 == miblen || NULL == buf || 0 == buflen)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     // Read the data
-    size_t oldlenp = len;
-    if (0 != sysctl(mib, miblen, buf, &len, NULL, 0))
+    size_t readlen = buflen;
+    if (0 != sysctl(mib, miblen, buf, &readlen, NULL, 0))
         return procmetrix_error_from_errno(errno);
 
     // Check the expected size was read
-    if (oldlenp != len)
+    if (readlen > buflen)
         return PROCMETRIX_ERROR_INVALID_ARGUMENT;
 
     return PROCMETRIX_ERROR_NONE;

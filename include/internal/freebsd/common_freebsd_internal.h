@@ -20,7 +20,7 @@ extern "C"
     //! A thin wrapper around sysctl
     //! @private
     procmetrix_error_t procmetrix_impl_bsd_sysctl(
-        int* mib, unsigned int miblen, void* buf, size_t len);
+        int* mib, unsigned int miblen, void* buf, size_t buflen);
 
     //! Allocates a buffer containing the result of a sysctl
     //! @private
