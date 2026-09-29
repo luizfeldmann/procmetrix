@@ -86,6 +86,14 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE kvm)
 endif()
 
+# Shared code for POSIX systems
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR
+    CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # Process
+    "src/posix/proc.c")
+endif()
+
 # Only build tests if enabled
 option(PROCMETRIX_BUILD_TESTS "Build unit tests" ON)
 

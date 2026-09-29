@@ -1,16 +1,6 @@
 // Lib
 #include <procmetrix/proc.h>
 
-procmetrix_pid_t procmetrix_get_pid()
-{
-    return 0;
-}
-
-bool procmetrix_pid_exists(procmetrix_pid_t pid)
-{
-    return false;
-}
-
 procmetrix_error_t
 procmetrix_list_pids(procmetrix_pid_t** list, size_t* out_count)
 {
