@@ -34,10 +34,8 @@ jobs:
               llvm19 \
               python312 \
               py312-pip \
-              py312-sqlite3
-    
-            python3 -m venv .venv
-            . .venv/bin/activate
+              py312-sqlite3 \
+              python
 
             pip install --upgrade pip
             pip install conan
@@ -47,14 +45,14 @@ jobs:
 
       - name: Build
         shell: vmsh {0}
-        run: |
-          . .venv/bin/activate
-          conan build . --build=missing --profile=conan/profiles/${{inputs.conan-profile}}
+        run: conan build . --build=missing --profile=conan/profiles/${{inputs.conan-profile}}
 
       - name: clang-tidy
         shell: vmsh {0}
         if: inputs.clang-tidy
-        run: $(find /usr/local -path '/usr/local/llvm*/bin/run-clang-tidy' -type f) -quiet -p "$(find build -name compile_commands.json -printf '%h\n' | head -n1)"
+        run: |
+            export PATH="/usr/local/llvm19/bin:$PATH"
+            run-clang-tidy -quiet -p "$(find build -name compile_commands.json -printf '%h\n' | head -n1)"
 
       - name: Coverage
         shell: vmsh {0}
