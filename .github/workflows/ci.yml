@@ -107,6 +107,23 @@ jobs:
       coverage: true
       clang-tidy: true
 
+  # FreeBSD builds
+  freebsd-release:
+    uses: ./.github/workflows/build-freebsd.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: freebsd-release
+
+  freebsd-debug-cov-san:
+    uses: ./.github/workflows/build-freebsd.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: freebsd-debug-cov-san
+      coverage: true
+      clang-tidy: true
+
   # Publish Doxygen as GitHub Pages
   publish-docs:
     # Only when updating main
@@ -123,6 +140,8 @@ jobs:
       - windows-release
       - windows-debug
       - windows-clang-cov-san
+      - freebsd-release
+      - freebsd-debug-cov-san
 
     runs-on: ubuntu-latest
 

@@ -72,6 +72,26 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "src/windows/mem.c"
     # CPU
     "src/windows/cpu.c")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # Common
+    "include/internal/freebsd/common_freebsd_internal.h"
+    "src/freebsd/common.c"
+    # Process
+    "src/freebsd/proc.c"
+    # Memory
+    "src/freebsd/mem.c"
+    # CPU
+    "src/freebsd/cpu.c")
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE kvm util)
+endif()
+
+# Shared code for POSIX systems
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR
+    CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # Process
+    "src/posix/proc.c")
 endif()
 
 # Only build tests if enabled

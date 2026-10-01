@@ -5,10 +5,15 @@
 #ifdef _WIN32
     // Windows
     #include <Windows.h>
-#else
+#elif defined(__linux__)
     // Linux
     #include <linux/limits.h>
     #include <unistd.h>
+#elif defined(__FreeBSD__)
+    #include <sys/syslimits.h>
+    #include <unistd.h>
+#else
+    #error Unsupported system
 #endif
 
 // Impl

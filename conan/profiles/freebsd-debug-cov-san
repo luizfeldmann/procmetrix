@@ -1,0 +1,17 @@
+include(default)
+
+[settings]
+build_type=Debug
+
+[conf]
+user.procmetrix:run_tests=True
+user.procmetrix:profile_name=freebsd-debug-cov-san
+
+tools.build:cflags = ["-fno-omit-frame-pointer", "-fsanitize=address", "-fsanitize=undefined", "-fprofile-instr-generate", "-fcoverage-mapping"]
+tools.build:cxxflags=["-fno-omit-frame-pointer", "-fsanitize=address", "-fsanitize=undefined", "-fprofile-instr-generate", "-fcoverage-mapping"]
+tools.build:exelinkflags=["-fsanitize=address", "-fsanitize=undefined", "-fprofile-instr-generate"]
+
+[runenv]
+LLVM_PROFILE_FILE=%m-%p.profraw
+ASAN_OPTIONS+=halt_on_error=1
+UBSAN_OPTIONS+=print_stacktrace=1:halt_on_error=1

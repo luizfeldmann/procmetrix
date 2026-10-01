@@ -1,0 +1,79 @@
+on:
+  workflow_call:
+    inputs:
+      conan-profile:
+        type: string
+        required: true
+      coverage:
+        type: boolean
+        required: false
+        default: false
+      clang-tidy:
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  freebsd-build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+    
+      - uses: vmactions/freebsd-vm@v1
+        with:
+          sync: nfs
+          custom-shell-name: vmsh
+          prepare: |
+            pkg update
+            pkg install -y \
+              git \
+              bash \
+              cmake \
+              ninja \
+              llvm19 \
+              python312 \
+              py312-pip \
+              py312-sqlite3 \
+              python
+
+            pip install --upgrade pip
+            pip install conan
+            conan profile detect --force
+
+          cache-after-prepare: true
+
+      - name: Build
+        shell: vmsh {0}
+        run: conan build . --build=missing --profile=conan/profiles/${{inputs.conan-profile}}
+
+      - name: clang-tidy
+        shell: vmsh {0}
+        if: inputs.clang-tidy
+        run: |
+            export PATH="/usr/local/llvm19/bin:$PATH"
+            run-clang-tidy -quiet -p "$(find build -name compile_commands.json -printf '%h\n' | head -n1)"
+
+      - name: Coverage
+        shell: vmsh {0}
+        if: inputs.coverage
+        run: |
+          mkdir -p coverage
+          llvm-profdata merge -sparse $(find build -type f -name '*.profraw') -o coverage/coverage.profdata
+          UNIT_TESTS=$(find build -type f -name 'unitTests' | head -n 1)
+          llvm-cov export -format=lcov -instr-profile=coverage/coverage.profdata "$UNIT_TESTS" src > coverage/coverage.lcov
+          llvm-cov show -format=html -instr-profile=coverage/coverage.profdata --output-dir=coverage "$UNIT_TESTS" src
+
+      - name: Upload coverage
+        if: inputs.coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{inputs.conan-profile}}
+          path: coverage
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{inputs.conan-profile}}
+          path: build/**/test-results*.xml

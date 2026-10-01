@@ -1,6 +1,7 @@
 # IDE
 .vs
 .vscode
+.clangd
 CMakeUserPresets.json
 
 # Build output
