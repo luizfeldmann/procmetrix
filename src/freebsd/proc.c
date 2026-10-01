@@ -3,6 +3,7 @@
 #include <procmetrix/proc.h>
 
 // Internal
+#include <internal/algo.h>
 #include <internal/freebsd/common_freebsd_internal.h>
 
 // STD
@@ -226,7 +227,51 @@ procmetrix_error_t procmetrix_get_proc_cmdline(
 procmetrix_error_t procmetrix_get_proc_environ(
     procmetrix_pid_t pid, procmetrix_proc_environ_t* proc_environ)
 {
-    return PROCMETRIX_NOT_IMPLEMENTED;
+    // Sanity
+    if (NULL == proc_environ)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+    memset(proc_environ, 0, sizeof(*proc_environ));
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open kernel virtual memory
+    kvm_t* kvm = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, "kvm_open failed");
+    if (NULL == kvm)
+        return PROCMETRIX_ERROR_UNKNOWN;
+
+    // Open the process
+    int cnt = 0;
+    struct kinfo_proc* proc =
+        kvm_getprocs(kvm, KERN_PROC_PID, (pid_t)pid, &cnt);
+
+    if (NULL == proc || 1 != cnt)
+    {
+        kvm_close(kvm);
+        return PROCMETRIX_ERROR_UNKNOWN;
+    }
+
+    // Get the environment
+    size_t envc = 0;
+    char** envv = kvm_getenvv(kvm, proc, 0);
+
+    if (envv == NULL)
+    {
+        kvm_close(kvm);
+        return PROCMETRIX_ERROR_UNKNOWN;
+    }
+
+    // Count the variables
+    for (size_t i = 0; envv[i] != NULL; ++i)
+        envc = i + 1;
+
+    procmetrix_error_t status = procmetrix_split_environ_vars(
+        (const char* const*)envv, envc, proc_environ);
+
+    // Cleanup
+    kvm_close(kvm);
+
+    return status;
 }
 
 procmetrix_error_t procmetrix_get_proc_memory_info(
