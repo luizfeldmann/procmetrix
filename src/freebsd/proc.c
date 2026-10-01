@@ -1,5 +1,4 @@
 // Lib
-#include "procmetrix/error.h"
 #include <procmetrix/proc.h>
 
 // Internal
@@ -10,6 +9,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 // System
 #include <kvm.h>
@@ -17,6 +17,13 @@
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <sys/user.h>
+
+// Util
+
+double procmetrix_impl_bsd_timeval_to_double(const struct timeval* time)
+{
+    return (double)time->tv_sec + ((double)time->tv_usec / 1000000.0);
+}
 
 // Impl
 
@@ -277,11 +284,62 @@ procmetrix_error_t procmetrix_get_proc_environ(
 procmetrix_error_t procmetrix_get_proc_memory_info(
     procmetrix_pid_t pid, procmetrix_proc_memory_info_t* memory_info)
 {
-    return PROCMETRIX_NOT_IMPLEMENTED;
+    // Sanity
+    if (NULL == memory_info)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+    memset(memory_info, 0, sizeof(*memory_info));
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Page size
+    long page_size = sysconf(_SC_PAGESIZE);
+    if (page_size <= 0)
+        return PROCMETRIX_ERROR_UNKNOWN;
+
+    // Open the process
+    struct kinfo_proc* info = kinfo_getproc((pid_t)pid);
+    if (NULL == info)
+        return PROCMETRIX_ERROR_UNKNOWN;
+
+    memory_info->vms = (uint64_t)info->ki_size;
+    memory_info->rss = (uint64_t)info->ki_rssize * (uint64_t)page_size;
+    memory_info->text = (uint64_t)info->ki_tsize * (uint64_t)page_size;
+    memory_info->data = (uint64_t)info->ki_dsize * (uint64_t)page_size;
+
+    // Cleanup
+    free(info);
+
+    return PROCMETRIX_ERROR_NONE;
 }
 
 procmetrix_error_t procmetrix_get_proc_cpu_times(
     procmetrix_pid_t pid, procmetrix_proc_cpu_times_t* cpu_times)
 {
-    return PROCMETRIX_NOT_IMPLEMENTED;
+    // Sanity
+    if (NULL == cpu_times)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+    memset(cpu_times, 0, sizeof(*cpu_times));
+
+    if (0 == pid)
+        return PROCMETRIX_ERROR_INVALID_ARGUMENT;
+
+    // Open the process
+    struct kinfo_proc* info = kinfo_getproc((pid_t)pid);
+    if (NULL == info)
+        return PROCMETRIX_ERROR_UNKNOWN;
+
+    cpu_times->user =
+        procmetrix_impl_bsd_timeval_to_double(&info->ki_rusage.ru_utime);
+    cpu_times->system =
+        procmetrix_impl_bsd_timeval_to_double(&info->ki_rusage.ru_stime);
+    cpu_times->children_user =
+        procmetrix_impl_bsd_timeval_to_double(&info->ki_rusage_ch.ru_utime);
+    cpu_times->children_system =
+        procmetrix_impl_bsd_timeval_to_double(&info->ki_rusage_ch.ru_stime);
+
+    // Cleanup
+    free(info);
+
+    return PROCMETRIX_ERROR_NONE;
 }
