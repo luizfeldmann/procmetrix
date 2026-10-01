@@ -41,7 +41,7 @@ procmetrix_list_pids(procmetrix_pid_t** list, size_t* out_count)
     // Read list of process infos
     int cntp = 0;
     struct kinfo_proc* proc_list = kinfo_getallproc(&cntp);
-    if (NULL == proc_list)
+    if (NULL == proc_list || 0 == cntp)
         return PROCMETRIX_ERROR_UNKNOWN;
 
     // Alloc output array
@@ -211,6 +211,12 @@ procmetrix_error_t procmetrix_get_proc_cmdline(
     // Count the arguments
     for (size_t i = 0; argv[i] != NULL; ++i)
         argc = i + 1;
+
+    if (argc == 0)
+    {
+        kvm_close(kvm);
+        return PROCMETRIX_ERROR_UNKNOWN;
+    }
 
     // Allocate the output
     cmdline->argv = calloc(argc, sizeof(char*));
