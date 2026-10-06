@@ -99,7 +99,7 @@ static PyGetSetDef virtual_memory_getters[] = {
 
 static PyType_Slot virtual_memory_slots[] = {
     { Py_tp_getset, virtual_memory_getters },
-    { 0, nullptr },
+    { 0, NULL },
 };
 
 static PyType_Spec virtual_memory_spec = {
@@ -131,7 +131,6 @@ static PyObject* system_virtual_memory(PyObject* self, PyObject* args)
         return py_procmetrix_error(status);
     }
 
-    // Return dict
     return (PyObject*)wrapper;
 }
 
@@ -194,7 +193,7 @@ static PyGetSetDef swap_memory_getters[] = {
 
 static PyType_Slot swap_memory_slots[] = {
     { Py_tp_getset, swap_memory_getters },
-    { 0, nullptr },
+    { 0, NULL },
 };
 
 static PyType_Spec swap_memory_spec = {
@@ -226,7 +225,6 @@ static PyObject* system_swap_memory(PyObject* self, PyObject* args)
         return py_procmetrix_error(status);
     }
 
-    // Return dict
     return (PyObject*)wrapper;
 }
 
