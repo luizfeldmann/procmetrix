@@ -119,7 +119,7 @@ static PyObject* system_virtual_memory(PyObject* self, PyObject* args)
         (virtual_memory_wrapper_t*)PyObject_CallNoArgs(virtual_memory_type);
 
     if (NULL == wrapper)
-        return py_procmetrix_error(PROCMETRIX_ERROR_UNKNOWN);
+        return NULL;
 
     // Read the virtual memory
     procmetrix_error_t status =
@@ -199,7 +199,7 @@ static PyType_Slot swap_memory_slots[] = {
 
 static PyType_Spec swap_memory_spec = {
     "procmetrix.SystemSwapMemory",
-    sizeof(virtual_memory_wrapper_t),
+    sizeof(swap_memory_wrapper_t),
     0,
     Py_TPFLAGS_DEFAULT,
     swap_memory_slots,
@@ -215,7 +215,7 @@ static PyObject* system_swap_memory(PyObject* self, PyObject* args)
         (swap_memory_wrapper_t*)PyObject_CallNoArgs(swap_memory_type);
 
     if (NULL == wrapper)
-        return py_procmetrix_error(PROCMETRIX_ERROR_UNKNOWN);
+        return NULL;
 
     // Read swap memory
     procmetrix_error_t status = procmetrix_system_swap_memory(&wrapper->smem);

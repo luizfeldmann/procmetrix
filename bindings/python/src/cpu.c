@@ -133,7 +133,7 @@ static PyObject* system_cpu_times_total(PyObject* self, PyObject* args)
         (cpu_times_wrapper_t*)PyObject_CallNoArgs(cpu_times_type);
 
     if (NULL == wrapper)
-        return py_procmetrix_error(PROCMETRIX_ERROR_UNKNOWN);
+        return NULL;
 
     // Read total cpu times
     procmetrix_error_t status = procmetrix_cpu_times_total(&wrapper->times);
@@ -155,35 +155,55 @@ static PyObject* system_cpu_times_per_cpu(PyObject* self, PyObject* args)
     if (0 == ncpus)
         return py_procmetrix_error(PROCMETRIX_ERROR_UNKNOWN);
 
-    // Read all the times
+    // Alloc results array
     procmetrix_cpu_times_t* cpu_times =
         PyMem_Calloc(ncpus, sizeof(procmetrix_cpu_times_t));
 
+    if (NULL == cpu_times)
+        return NULL;
+
+    // Read all the times
     size_t read_count = 0;
     procmetrix_error_t status =
         procmetrix_cpu_times_per_cpu(cpu_times, ncpus, &read_count);
 
-    // Convert to the python object format
-    PyObject* result = NULL;
     if (PROCMETRIX_ERROR_NONE != status)
-        result = py_procmetrix_error(status);
-    else
     {
-        // Copy each item
-        result = PyList_New(read_count);
-        for (size_t i = 0; i < read_count; ++i)
+        PyMem_Free(cpu_times);
+        return py_procmetrix_error(status);
+    }
+
+    // Create output list
+    PyObject* list = PyList_New(read_count);
+    if (NULL == list)
+    {
+        PyMem_Free(cpu_times);
+        return NULL;
+    }
+
+    // Copy each item
+    for (size_t i = 0; i < read_count; ++i)
+    {
+        // Allocate the item
+        cpu_times_wrapper_t* wrapper =
+            (cpu_times_wrapper_t*)PyObject_CallNoArgs(cpu_times_type);
+
+        if (NULL == wrapper)
         {
-            cpu_times_wrapper_t* wrapper =
-                (cpu_times_wrapper_t*)PyObject_CallNoArgs(cpu_times_type);
-            memcpy(&wrapper->times, &cpu_times[i], sizeof(*cpu_times));
-            PyList_SetItem(result, i, (PyObject*)wrapper);
+            Py_DECREF(list);
+            list = NULL;
+            break;
         }
+
+        // Perform copy
+        memcpy(&wrapper->times, &cpu_times[i], sizeof(*cpu_times));
+        PyList_SetItem(list, i, (PyObject*)wrapper);
     }
 
     // Cleanup
     PyMem_Free(cpu_times);
 
-    return result;
+    return list;
 }
 
 static PyObject* cpu_times_delta(PyObject* self, PyObject* args)
@@ -195,13 +215,15 @@ static PyObject* cpu_times_delta(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "OO", &before, &after))
         return NULL;
 
-    if (!PyObject_IsInstance(before, cpu_times_type) ||
-        !PyObject_IsInstance(after, cpu_times_type))
+    if (1 != PyObject_IsInstance(before, cpu_times_type) ||
+        1 != PyObject_IsInstance(after, cpu_times_type))
         return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // Allocate output
     cpu_times_wrapper_t* delta =
         (cpu_times_wrapper_t*)PyObject_CallNoArgs(cpu_times_type);
+    if (NULL == delta)
+        return NULL;
 
     // Calculate the delta
     procmetrix_error_t status = procmetrix_cpu_times_delta(
@@ -226,7 +248,7 @@ static PyObject* cpu_times_sum(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "O", &cpu_times))
         return NULL;
 
-    if (!PyObject_IsInstance(cpu_times, cpu_times_type))
+    if (1 != PyObject_IsInstance(cpu_times, cpu_times_type))
         return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // Calculate sum
@@ -242,7 +264,7 @@ static PyObject* cpu_utilization_ratio(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "O", &cpu_times))
         return NULL;
 
-    if (!PyObject_IsInstance(cpu_times, cpu_times_type))
+    if (1 != PyObject_IsInstance(cpu_times, cpu_times_type))
         return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     return PyFloat_FromDouble(procmetrix_cpu_utilization_ratio(
