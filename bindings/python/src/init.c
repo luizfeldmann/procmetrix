@@ -13,6 +13,7 @@ PyMODINIT_FUNC PyInit_pyprocmetrix()
 
     // Register each topic
     pyprocmetrix_init_mem(module);
+    pyprocmetrix_init_cpu(module);
 
     return module;
 }

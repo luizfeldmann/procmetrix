@@ -88,7 +88,7 @@ static PyGetSetDef virtual_memory_getters[] = {
     { (char*)"free",        vm_free },
     { (char*)"active",      vm_active },
     { (char*)"inactive",    vm_inactive },
-    { (char*)"buufers",     vm_buffers },
+    { (char*)"buffers",     vm_buffers },
     { (char*)"cached",      vm_cached },
     { (char*)"shared",      vm_shared },
     { (char*)"slab",        vm_slab },
@@ -119,10 +119,7 @@ static PyObject* system_virtual_memory(PyObject* self, PyObject* args)
         (virtual_memory_wrapper_t*)PyObject_CallNoArgs(virtual_memory_type);
 
     if (NULL == wrapper)
-    {
-        py_procmetrix_error(PROCMETRIX_ERROR_UNKNOWN);
-        return NULL;
-    }
+        return py_procmetrix_error(PROCMETRIX_ERROR_UNKNOWN);
 
     // Read the virtual memory
     procmetrix_error_t status =
@@ -218,10 +215,7 @@ static PyObject* system_swap_memory(PyObject* self, PyObject* args)
         (swap_memory_wrapper_t*)PyObject_CallNoArgs(swap_memory_type);
 
     if (NULL == wrapper)
-    {
-        py_procmetrix_error(PROCMETRIX_ERROR_UNKNOWN);
-        return NULL;
-    }
+        return py_procmetrix_error(PROCMETRIX_ERROR_UNKNOWN);
 
     // Read swap memory
     procmetrix_error_t status = procmetrix_system_swap_memory(&wrapper->smem);
