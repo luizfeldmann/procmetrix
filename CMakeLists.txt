@@ -112,3 +112,6 @@ install(
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+# Build language bindings
+add_subdirectory(bindings/python)
