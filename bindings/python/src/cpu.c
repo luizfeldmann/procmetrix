@@ -9,6 +9,20 @@
 #include <string.h>
 
 // ============================================================================
+// CPU Count
+// ============================================================================
+
+static PyObject* cpu_count_physical(PyObject* self, PyObject* args)
+{
+    return PyLong_FromUnsignedLongLong(procmetrix_cpu_count_physical());
+}
+
+static PyObject* cpu_count_logical(PyObject* self, PyObject* args)
+{
+    return PyLong_FromUnsignedLongLong(procmetrix_cpu_count_logical());
+}
+
+// ============================================================================
 // CPU Times
 // ============================================================================
 
@@ -172,6 +186,69 @@ static PyObject* system_cpu_times_per_cpu(PyObject* self, PyObject* args)
     return result;
 }
 
+static PyObject* cpu_times_delta(PyObject* self, PyObject* args)
+{
+    // Parse inputs
+    PyObject* before = NULL;
+    PyObject* after = NULL;
+
+    if (!PyArg_ParseTuple(args, "OO", &before, &after))
+        return NULL;
+
+    if (!PyObject_IsInstance(before, cpu_times_type) ||
+        !PyObject_IsInstance(after, cpu_times_type))
+        return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Allocate output
+    cpu_times_wrapper_t* delta =
+        (cpu_times_wrapper_t*)PyObject_CallNoArgs(cpu_times_type);
+
+    // Calculate the delta
+    procmetrix_error_t status = procmetrix_cpu_times_delta(
+        &((cpu_times_wrapper_t*)before)->times,
+        &((cpu_times_wrapper_t*)after)->times,
+        &delta->times);
+
+    if (PROCMETRIX_ERROR_NONE != status)
+    {
+        Py_DECREF(delta);
+        return py_procmetrix_error(status);
+    }
+
+    return (PyObject*)delta;
+}
+
+static PyObject* cpu_times_sum(PyObject* self, PyObject* args)
+{
+    // Parse inputs
+    PyObject* cpu_times = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &cpu_times))
+        return NULL;
+
+    if (!PyObject_IsInstance(cpu_times, cpu_times_type))
+        return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    // Calculate sum
+    return PyFloat_FromDouble(
+        procmetrix_cpu_times_sum(&((cpu_times_wrapper_t*)cpu_times)->times));
+}
+
+static PyObject* cpu_utilization_ratio(PyObject* self, PyObject* args)
+{
+    // Parse inputs
+    PyObject* cpu_times = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &cpu_times))
+        return NULL;
+
+    if (!PyObject_IsInstance(cpu_times, cpu_times_type))
+        return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
+
+    return PyFloat_FromDouble(procmetrix_cpu_utilization_ratio(
+        &((cpu_times_wrapper_t*)cpu_times)->times));
+}
+
 // ============================================================================
 // CPU Freqs
 // ============================================================================
@@ -181,9 +258,16 @@ static PyObject* system_cpu_times_per_cpu(PyObject* self, PyObject* args)
 // ============================================================================
 
 static PyMethodDef methods[] = {
-    // System memory
-    { "cpu_times_total", system_cpu_times_total, METH_VARARGS },
-    { "cpu_times_per_cpu", system_cpu_times_per_cpu, METH_VARARGS },
+    // CPU counts
+    { "cpu_count_logical", cpu_count_logical, METH_NOARGS },
+    { "cpu_count_physical", cpu_count_physical, METH_NOARGS },
+    // CPU times
+    { "cpu_times_total", system_cpu_times_total, METH_NOARGS },
+    { "cpu_times_per_cpu", system_cpu_times_per_cpu, METH_NOARGS },
+    // CPU times derived statistics
+    { "cpu_times_delta", cpu_times_delta, METH_VARARGS },
+    { "cpu_times_sum", cpu_times_sum, METH_VARARGS },
+    { "cpu_utilization_ratio", cpu_utilization_ratio, METH_VARARGS },
     // End of list
     { NULL, NULL, 0 }
 };

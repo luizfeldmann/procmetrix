@@ -236,8 +236,8 @@ static PyObject* system_swap_memory(PyObject* self, PyObject* args)
 
 static PyMethodDef methods[] = {
     // System memory
-    { "virtual_memory", system_virtual_memory, METH_VARARGS },
-    { "swap_memory", system_swap_memory, METH_VARARGS },
+    { "virtual_memory", system_virtual_memory, METH_NOARGS },
+    { "swap_memory", system_swap_memory, METH_NOARGS },
     // End of list
     { NULL, NULL, 0 }
 };
