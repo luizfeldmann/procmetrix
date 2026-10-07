@@ -11,7 +11,7 @@
 
 typedef struct virtual_memory_wrapper
 {
-    PyObject_HEAD;
+    PyObject_HEAD
     procmetrix_virtual_memory_t vmem;
 } virtual_memory_wrapper_t;
 
@@ -140,7 +140,7 @@ static PyObject* system_virtual_memory(PyObject* self, PyObject* args)
 
 typedef struct swap_memory_wrapper
 {
-    PyObject_HEAD;
+    PyObject_HEAD
     procmetrix_swap_memory_t smem;
 } swap_memory_wrapper_t;
 

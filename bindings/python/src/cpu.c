@@ -28,7 +28,7 @@ static PyObject* cpu_count_logical(PyObject* self, PyObject* args)
 
 typedef struct cpu_times_wrapper
 {
-    PyObject_HEAD;
+    PyObject_HEAD
     procmetrix_cpu_times_t times;
 } cpu_times_wrapper_t;
 
@@ -289,7 +289,7 @@ static PyObject* cpu_utilization_ratio(PyObject* self, PyObject* args)
 
 typedef struct cpu_freq_wrapper
 {
-    PyObject_HEAD;
+    PyObject_HEAD
     procmetrix_cpu_freq_t freqs;
 } cpu_freq_wrapper_t;
 
