@@ -29,3 +29,8 @@ if (MSVC)
     target_link_options(pyprocmetrix PRIVATE
         "$<$<CONFIG:Debug>:/NODEFAULTLIB:${PY_DEBUG_LIB}>")
 endif()
+
+# This component is installed when generating the python wheel
+install(TARGETS pyprocmetrix
+    COMPONENT PythonBinding # from pyproject.toml
+    DESTINATION pyprocmetrix)

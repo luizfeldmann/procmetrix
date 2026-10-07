@@ -1,0 +1,34 @@
+[build-system]
+requires = ["conan-py-build"]
+build-backend = "conan_py_build.build"
+
+[project]
+name = "pyprocmetrix"
+version = "1.0.0"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+
+[tool.conan-py-build]
+extra-arguments = [
+    "-c=user.procmetrix:install_component=PythonBinding"
+]
+
+[tool.conan-py-build.sdist]
+include = [
+    "tests",
+    "bindings/python"
+]
+
+[tool.conan-py-build.wheel]
+packages = ["bindings/python/modules/pyprocmetrix"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["bindings/python/tests"]
+strict_config = true
+strict_markers = true
+addopts = [
+    "-ra",
+]

@@ -8,6 +8,7 @@ CMakeUserPresets.json
 # Build output
 out
 build
+dist
 
 # CTest
 Testing
@@ -15,3 +16,6 @@ Testing
 # Reports
 coverage
 report
+
+# Python
+**/__pycache__
