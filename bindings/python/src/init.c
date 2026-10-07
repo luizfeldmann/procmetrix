@@ -38,16 +38,22 @@ int pyprocmetrix_register_type(
 static int pyprocmetrix_exec(PyObject* module)
 {
     // Add version constants
-    if (PyModule_AddIntConstant(
-            module, "version_major", procmetrix_version_major()) != PY_INIT_OK)
+    if (PyModule_AddObjectRef(
+            module,
+            "version_major",
+            PyLong_FromUnsignedLong(procmetrix_version_major())) != PY_INIT_OK)
         return PY_INIT_FAIL;
 
-    if (PyModule_AddIntConstant(
-            module, "version_minor", procmetrix_version_minor()) != PY_INIT_OK)
+    if (PyModule_AddObjectRef(
+            module,
+            "version_minor",
+            PyLong_FromUnsignedLong(procmetrix_version_minor())) != PY_INIT_OK)
         return PY_INIT_FAIL;
 
-    if (PyModule_AddIntConstant(
-            module, "version_patch", procmetrix_version_patch()) != PY_INIT_OK)
+    if (PyModule_AddObjectRef(
+            module,
+            "version_patch",
+            PyLong_FromUnsignedLong(procmetrix_version_patch())) != PY_INIT_OK)
         return PY_INIT_FAIL;
 
     // Register each topic
