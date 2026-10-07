@@ -9,6 +9,7 @@ add_library(pyprocmetrix MODULE
     "src/error.c"
     "src/cpu.c"
     "src/mem.c"
+    "src/proc.c"
     "src/init.c")
 
 target_include_directories(pyprocmetrix PUBLIC "include")

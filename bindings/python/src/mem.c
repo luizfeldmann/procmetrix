@@ -9,7 +9,7 @@
 // Virtual Memory
 // ============================================================================
 
-typedef struct
+typedef struct virtual_memory_wrapper
 {
     PyObject_HEAD;
     procmetrix_virtual_memory_t vmem;
@@ -80,7 +80,7 @@ static PyObject* vm_ratio(PyObject* self, void* closure)
     return PyFloat_FromDouble(((virtual_memory_wrapper_t*)self)->vmem.ratio);
 }
 
-static PyGetSetDef virtual_memory_getters[] = {
+static PyGetSetDef g_getters_virtual_memory[] = {
     // clang-format off
     { (char*)"total",       vm_total },
     { (char*)"available",   vm_available },
@@ -97,26 +97,26 @@ static PyGetSetDef virtual_memory_getters[] = {
     { NULL },
 };
 
-static PyType_Slot virtual_memory_slots[] = {
-    { Py_tp_getset, virtual_memory_getters },
+static PyType_Slot g_slots_virtual_memory[] = {
+    { Py_tp_getset, g_getters_virtual_memory },
     { 0, NULL },
 };
 
-static PyType_Spec virtual_memory_spec = {
+static PyType_Spec g_type_spec_virtual_memory = {
     "procmetrix.SystemVirtualMemory",
     sizeof(virtual_memory_wrapper_t),
     0,
     Py_TPFLAGS_DEFAULT,
-    virtual_memory_slots,
+    g_slots_virtual_memory,
 };
-
-// assigned in the registration
-static PyObject* virtual_memory_type = NULL;
 
 static PyObject* system_virtual_memory(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     virtual_memory_wrapper_t* wrapper =
-        (virtual_memory_wrapper_t*)PyObject_CallNoArgs(virtual_memory_type);
+        (virtual_memory_wrapper_t*)PyObject_CallNoArgs(
+            state->types[PROCMETRIX_TYPE_VIRTUAL_MEMORY]);
 
     if (NULL == wrapper)
         return NULL;
@@ -138,7 +138,7 @@ static PyObject* system_virtual_memory(PyObject* self, PyObject* args)
 // Swap Memory
 // ============================================================================
 
-typedef struct
+typedef struct swap_memory_wrapper
 {
     PyObject_HEAD;
     procmetrix_swap_memory_t smem;
@@ -179,7 +179,7 @@ static PyObject* swap_ratio(PyObject* self, void* closure)
     return PyFloat_FromDouble(((swap_memory_wrapper_t*)self)->smem.ratio);
 }
 
-static PyGetSetDef swap_memory_getters[] = {
+static PyGetSetDef g_getters_swap_memory[] = {
     // clang-format off
     { (char*)"total",       swap_total },
     { (char*)"used",        swap_used },
@@ -191,27 +191,27 @@ static PyGetSetDef swap_memory_getters[] = {
     { NULL },
 };
 
-static PyType_Slot swap_memory_slots[] = {
-    { Py_tp_getset, swap_memory_getters },
+static PyType_Slot g_slots_swap_memory[] = {
+    { Py_tp_getset, g_getters_swap_memory },
     { 0, NULL },
 };
 
-static PyType_Spec swap_memory_spec = {
+static PyType_Spec g_type_spec_swap_memory = {
     "procmetrix.SystemSwapMemory",
     sizeof(swap_memory_wrapper_t),
     0,
     Py_TPFLAGS_DEFAULT,
-    swap_memory_slots,
+    g_slots_swap_memory,
 };
-
-// assigned in the registration
-static PyObject* swap_memory_type = NULL;
 
 static PyObject* system_swap_memory(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     // Allocate object
     swap_memory_wrapper_t* wrapper =
-        (swap_memory_wrapper_t*)PyObject_CallNoArgs(swap_memory_type);
+        (swap_memory_wrapper_t*)PyObject_CallNoArgs(
+            state->types[PROCMETRIX_TYPE_SWAP_MEMORY]);
 
     if (NULL == wrapper)
         return NULL;
@@ -232,7 +232,7 @@ static PyObject* system_swap_memory(PyObject* self, PyObject* args)
 // Registration
 // ============================================================================
 
-static PyMethodDef methods[] = {
+static PyMethodDef g_methods_mem[] = {
     // System memory
     { "virtual_memory", system_virtual_memory, METH_NOARGS },
     { "swap_memory", system_swap_memory, METH_NOARGS },
@@ -240,15 +240,30 @@ static PyMethodDef methods[] = {
     { NULL, NULL, 0 }
 };
 
-void pyprocmetrix_init_mem(PyObject* module)
+int pyprocmetrix_init_mem(PyObject* module)
 {
-    // Register types
-    virtual_memory_type = PyType_FromSpec(&virtual_memory_spec);
-    PyModule_AddObjectRef(module, "SystemVirtualMemory", virtual_memory_type);
+    py_procmetrix_module_state_t* state = PyModule_GetState(module);
 
-    swap_memory_type = PyType_FromSpec(&swap_memory_spec);
-    PyModule_AddObjectRef(module, "SystemSwapMemory", swap_memory_type);
+    // Register types
+    if (pyprocmetrix_register_type(
+            module,
+            state,
+            "SystemVirtualMemory",
+            PROCMETRIX_TYPE_VIRTUAL_MEMORY,
+            &g_type_spec_virtual_memory) != PY_INIT_OK)
+        return PY_INIT_FAIL;
+
+    if (pyprocmetrix_register_type(
+            module,
+            state,
+            "SystemSwapMemory",
+            PROCMETRIX_TYPE_SWAP_MEMORY,
+            &g_type_spec_swap_memory) != PY_INIT_OK)
+        return PY_INIT_FAIL;
 
     // Register methods
-    PyModule_AddFunctions(module, methods);
+    if (PyModule_AddFunctions(module, g_methods_mem) != PY_INIT_OK)
+        return PY_INIT_FAIL;
+
+    return PY_INIT_OK;
 }

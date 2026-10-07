@@ -26,7 +26,7 @@ static PyObject* cpu_count_logical(PyObject* self, PyObject* args)
 // CPU Times
 // ============================================================================
 
-typedef struct
+typedef struct cpu_times_wrapper
 {
     PyObject_HEAD;
     procmetrix_cpu_times_t times;
@@ -92,7 +92,7 @@ static PyObject* cpu_times_dpc(PyObject* self, void* closure)
     return PyFloat_FromDouble(((cpu_times_wrapper_t*)self)->times.dpc);
 }
 
-static PyGetSetDef cpu_times_getters[] = {
+static PyGetSetDef g_getters_cpu_times[] = {
     // clang-format off
     { (char*)"user",        cpu_times_user },
     { (char*)"system",      cpu_times_system },
@@ -110,27 +110,27 @@ static PyGetSetDef cpu_times_getters[] = {
     { NULL },
 };
 
-static PyType_Slot cpu_times_slots[] = {
-    { Py_tp_getset, cpu_times_getters },
+static PyType_Slot g_slots_cpu_times[] = {
+    { Py_tp_getset, g_getters_cpu_times },
+    // Null-terminated list
     { 0, NULL },
 };
 
-static PyType_Spec cpu_times_spec = {
-    "procmetrix.SystemCpuTimes",
-    sizeof(cpu_times_wrapper_t),
-    0,
-    Py_TPFLAGS_DEFAULT,
-    cpu_times_slots,
+static PyType_Spec g_type_spec_cpu_times = {
+    "procmetrix.SystemCpuTimes", // name
+    sizeof(cpu_times_wrapper_t), // basicsize
+    0,                           // itemsize
+    Py_TPFLAGS_DEFAULT,          // flags
+    g_slots_cpu_times,           // slots
 };
-
-// assigned in the registration
-static PyObject* cpu_times_type = NULL;
 
 static PyObject* system_cpu_times_total(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     // Allocate object
-    cpu_times_wrapper_t* wrapper =
-        (cpu_times_wrapper_t*)PyObject_CallNoArgs(cpu_times_type);
+    cpu_times_wrapper_t* wrapper = (cpu_times_wrapper_t*)PyObject_CallNoArgs(
+        state->types[PROCMETRIX_TYPE_CPU_TIMES]);
 
     if (NULL == wrapper)
         return NULL;
@@ -149,6 +149,8 @@ static PyObject* system_cpu_times_total(PyObject* self, PyObject* args)
 
 static PyObject* system_cpu_times_per_cpu(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     // Get the number of CPUs
     size_t ncpus = procmetrix_cpu_count_logical();
     if (0 == ncpus)
@@ -173,7 +175,7 @@ static PyObject* system_cpu_times_per_cpu(PyObject* self, PyObject* args)
     }
 
     // Create output list
-    PyObject* list = PyList_New(read_count);
+    PyObject* list = PyList_New((Py_ssize_t)read_count);
     if (NULL == list)
     {
         PyMem_Free(cpu_times);
@@ -185,7 +187,8 @@ static PyObject* system_cpu_times_per_cpu(PyObject* self, PyObject* args)
     {
         // Allocate the item
         cpu_times_wrapper_t* wrapper =
-            (cpu_times_wrapper_t*)PyObject_CallNoArgs(cpu_times_type);
+            (cpu_times_wrapper_t*)PyObject_CallNoArgs(
+                state->types[PROCMETRIX_TYPE_CPU_TIMES]);
 
         if (NULL == wrapper)
         {
@@ -196,7 +199,7 @@ static PyObject* system_cpu_times_per_cpu(PyObject* self, PyObject* args)
 
         // Perform copy
         memcpy(&wrapper->times, &cpu_times[i], sizeof(*cpu_times));
-        PyList_SetItem(list, i, (PyObject*)wrapper);
+        PyList_SetItem(list, (Py_ssize_t)i, (PyObject*)wrapper);
     }
 
     // Cleanup
@@ -207,6 +210,8 @@ static PyObject* system_cpu_times_per_cpu(PyObject* self, PyObject* args)
 
 static PyObject* cpu_times_delta(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     // Parse inputs
     PyObject* before = NULL;
     PyObject* after = NULL;
@@ -214,13 +219,15 @@ static PyObject* cpu_times_delta(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "OO", &before, &after))
         return NULL;
 
-    if (1 != PyObject_IsInstance(before, cpu_times_type) ||
-        1 != PyObject_IsInstance(after, cpu_times_type))
+    if (1 != PyObject_IsInstance(
+                 before, state->types[PROCMETRIX_TYPE_CPU_TIMES]) ||
+        1 !=
+            PyObject_IsInstance(after, state->types[PROCMETRIX_TYPE_CPU_TIMES]))
         return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // Allocate output
-    cpu_times_wrapper_t* delta =
-        (cpu_times_wrapper_t*)PyObject_CallNoArgs(cpu_times_type);
+    cpu_times_wrapper_t* delta = (cpu_times_wrapper_t*)PyObject_CallNoArgs(
+        state->types[PROCMETRIX_TYPE_CPU_TIMES]);
     if (NULL == delta)
         return NULL;
 
@@ -241,13 +248,16 @@ static PyObject* cpu_times_delta(PyObject* self, PyObject* args)
 
 static PyObject* cpu_times_sum(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     // Parse inputs
     PyObject* cpu_times = NULL;
 
     if (!PyArg_ParseTuple(args, "O", &cpu_times))
         return NULL;
 
-    if (1 != PyObject_IsInstance(cpu_times, cpu_times_type))
+    if (1 !=
+        PyObject_IsInstance(cpu_times, state->types[PROCMETRIX_TYPE_CPU_TIMES]))
         return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     // Calculate sum
@@ -257,13 +267,16 @@ static PyObject* cpu_times_sum(PyObject* self, PyObject* args)
 
 static PyObject* cpu_utilization_ratio(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     // Parse inputs
     PyObject* cpu_times = NULL;
 
     if (!PyArg_ParseTuple(args, "O", &cpu_times))
         return NULL;
 
-    if (1 != PyObject_IsInstance(cpu_times, cpu_times_type))
+    if (1 !=
+        PyObject_IsInstance(cpu_times, state->types[PROCMETRIX_TYPE_CPU_TIMES]))
         return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
 
     return PyFloat_FromDouble(procmetrix_cpu_utilization_ratio(
@@ -274,7 +287,7 @@ static PyObject* cpu_utilization_ratio(PyObject* self, PyObject* args)
 // CPU Freqs
 // ============================================================================
 
-typedef struct
+typedef struct cpu_freq_wrapper
 {
     PyObject_HEAD;
     procmetrix_cpu_freq_t freqs;
@@ -295,7 +308,7 @@ static PyObject* cpu_freq_max(PyObject* self, void* closure)
     return PyFloat_FromDouble(((cpu_freq_wrapper_t*)self)->freqs.freq_max);
 }
 
-static PyGetSetDef cpu_freq_getters[] = {
+static PyGetSetDef g_getters_cpu_freq[] = {
     // clang-format off
     { (char*)"cur", cpu_freq_cur },
     { (char*)"min", cpu_freq_min },
@@ -304,24 +317,23 @@ static PyGetSetDef cpu_freq_getters[] = {
     { NULL },
 };
 
-static PyType_Slot cpu_freq_slots[] = {
-    { Py_tp_getset, cpu_freq_getters },
+static PyType_Slot g_slots_cpu_freq[] = {
+    { Py_tp_getset, g_getters_cpu_freq },
     { 0, NULL },
 };
 
-static PyType_Spec cpu_freq_spec = {
-    "procmetrix.SystemCpuFreq",
-    sizeof(cpu_freq_wrapper_t),
-    0,
-    Py_TPFLAGS_DEFAULT,
-    cpu_freq_slots,
+static PyType_Spec g_type_spec_cpu_freq = {
+    "procmetrix.SystemCpuFreq", // name
+    sizeof(cpu_freq_wrapper_t), // basicsize
+    0,                          // itemsize
+    Py_TPFLAGS_DEFAULT,         // flags
+    g_slots_cpu_freq,           // slots
 };
-
-// assigned in the registration
-static PyObject* cpu_freq_type = NULL;
 
 static PyObject* cpu_freqs(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     // Get the number of CPUs
     size_t ncpus = procmetrix_cpu_count_logical();
     if (0 == ncpus)
@@ -346,7 +358,7 @@ static PyObject* cpu_freqs(PyObject* self, PyObject* args)
     }
 
     // Create output list
-    PyObject* list = PyList_New(read_count);
+    PyObject* list = PyList_New((Py_ssize_t)read_count);
     if (NULL == list)
     {
         PyMem_Free(cpu_freqs);
@@ -357,8 +369,8 @@ static PyObject* cpu_freqs(PyObject* self, PyObject* args)
     for (size_t i = 0; i < read_count; ++i)
     {
         // Allocate the item
-        cpu_freq_wrapper_t* wrapper =
-            (cpu_freq_wrapper_t*)PyObject_CallNoArgs(cpu_freq_type);
+        cpu_freq_wrapper_t* wrapper = (cpu_freq_wrapper_t*)PyObject_CallNoArgs(
+            state->types[PROCMETRIX_TYPE_CPU_FREQS]);
 
         if (NULL == wrapper)
         {
@@ -369,7 +381,7 @@ static PyObject* cpu_freqs(PyObject* self, PyObject* args)
 
         // Perform copy
         memcpy(&wrapper->freqs, &cpu_freqs[i], sizeof(*cpu_freqs));
-        PyList_SetItem(list, i, (PyObject*)wrapper);
+        PyList_SetItem(list, (Py_ssize_t)i, (PyObject*)wrapper);
     }
 
     // Cleanup
@@ -380,6 +392,8 @@ static PyObject* cpu_freqs(PyObject* self, PyObject* args)
 
 static PyObject* cpu_freqs_average(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     // Validate input is a list
     PyObject* list = NULL;
     if (!PyArg_ParseTuple(args, "O", &list))
@@ -399,8 +413,9 @@ static PyObject* cpu_freqs_average(PyObject* self, PyObject* args)
     for (size_t i = 0; i < count; ++i)
     {
         // Get the item and check it's format
-        PyObject* item = PyList_GetItem(list, i);
-        if (1 != PyObject_IsInstance(item, cpu_freq_type))
+        PyObject* item = PyList_GetItem(list, (Py_ssize_t)i);
+        if (1 !=
+            PyObject_IsInstance(item, state->types[PROCMETRIX_TYPE_CPU_FREQS]))
         {
             PyMem_Free(cpu_freqs);
             return py_procmetrix_error(PROCMETRIX_ERROR_INVALID_ARGUMENT);
@@ -414,8 +429,8 @@ static PyObject* cpu_freqs_average(PyObject* self, PyObject* args)
     }
 
     // Allocate the output
-    cpu_freq_wrapper_t* wrapper =
-        (cpu_freq_wrapper_t*)PyObject_CallNoArgs(cpu_freq_type);
+    cpu_freq_wrapper_t* wrapper = (cpu_freq_wrapper_t*)PyObject_CallNoArgs(
+        state->types[PROCMETRIX_TYPE_CPU_FREQS]);
     if (NULL == wrapper)
     {
         PyMem_Free(cpu_freqs);
@@ -440,9 +455,11 @@ static PyObject* cpu_freqs_average(PyObject* self, PyObject* args)
 
 static PyObject* cpu_freq_system(PyObject* self, PyObject* args)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
     // Allocate the result
-    cpu_freq_wrapper_t* wrapper =
-        (cpu_freq_wrapper_t*)PyObject_CallNoArgs(cpu_freq_type);
+    cpu_freq_wrapper_t* wrapper = (cpu_freq_wrapper_t*)PyObject_CallNoArgs(
+        state->types[PROCMETRIX_TYPE_CPU_FREQS]);
     if (NULL == wrapper)
         return NULL;
 
@@ -462,7 +479,7 @@ static PyObject* cpu_freq_system(PyObject* self, PyObject* args)
 // Registration
 // ============================================================================
 
-static PyMethodDef methods[] = {
+static PyMethodDef g_methods_cpu[] = {
     // CPU counts
     { "cpu_count_logical", cpu_count_logical, METH_NOARGS },
     { "cpu_count_physical", cpu_count_physical, METH_NOARGS },
@@ -481,15 +498,30 @@ static PyMethodDef methods[] = {
     { NULL, NULL, 0 }
 };
 
-void pyprocmetrix_init_cpu(PyObject* module)
+int pyprocmetrix_init_cpu(PyObject* module)
 {
-    // Register types
-    cpu_times_type = PyType_FromSpec(&cpu_times_spec);
-    PyModule_AddObjectRef(module, "SystemCpuTimes", cpu_times_type);
+    py_procmetrix_module_state_t* state = PyModule_GetState(module);
 
-    cpu_freq_type = PyType_FromSpec(&cpu_freq_spec);
-    PyModule_AddObjectRef(module, "SystemCpuFreq", cpu_freq_type);
+    // Register types
+    if (pyprocmetrix_register_type(
+            module,
+            state,
+            "SystemCpuTimes",
+            PROCMETRIX_TYPE_CPU_TIMES,
+            &g_type_spec_cpu_times) != PY_INIT_OK)
+        return PY_INIT_FAIL;
+
+    if (pyprocmetrix_register_type(
+            module,
+            state,
+            "SystemCpuFreq",
+            PROCMETRIX_TYPE_CPU_FREQS,
+            &g_type_spec_cpu_freq) != PY_INIT_OK)
+        return PY_INIT_FAIL;
 
     // Register methods
-    PyModule_AddFunctions(module, methods);
+    if (PyModule_AddFunctions(module, g_methods_cpu) != PY_INIT_OK)
+        return PY_INIT_FAIL;
+
+    return PY_INIT_OK;
 }
