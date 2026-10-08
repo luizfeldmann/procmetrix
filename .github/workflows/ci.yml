@@ -35,8 +35,11 @@ jobs:
       # Check all the packages have the same version number
       - name: version check
         run: |
+          pip install --upgrade pip && pip install conan
+
           CONAN_VERSION=$(conan inspect . --format=json | jq -r .version)
           PYTHON_VERSION=$(yq -r '.project.version' pyproject.toml)
+
           if [ "$CONAN_VERSION" != "$PYTHON_VERSION" ]; then
             echo "Version mismatch:"
             echo " Conan: $CONAN_VERSION"
