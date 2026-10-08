@@ -12,6 +12,7 @@ dist
 
 # CTest
 Testing
+.pytest_cache
 
 # Reports
 coverage

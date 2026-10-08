@@ -9,9 +9,7 @@ license = { text = "MIT" }
 requires-python = ">=3.10"
 
 [tool.conan-py-build]
-extra-arguments = [
-    "-c=user.procmetrix:install_component=PythonBinding"
-]
+extra-profile = "conan/profiles/python-bindings"
 
 [tool.conan-py-build.sdist]
 include = [
