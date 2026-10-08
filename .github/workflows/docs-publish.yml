@@ -1,0 +1,25 @@
+on:
+  workflow_call:
+
+jobs:
+  docs-publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: doxygen-html
+          path: docs/html
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/html
+
+      - id: deployment
+        uses: actions/deploy-pages@v5

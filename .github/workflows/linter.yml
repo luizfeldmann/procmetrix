@@ -1,0 +1,30 @@
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Check all sources follow the coding style
+      - name: clang-format
+        run: |
+          find src include tests bindings \
+          \( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' \) \
+          -exec clang-format --style=file --dry-run --Werror {} +
+
+      # Check all the packages have the same version number
+      - name: version check
+        run: |
+          pip install --upgrade pip && pip install conan
+
+          CONAN_VERSION=$(conan inspect . --format=json | jq -r .version)
+          PYTHON_VERSION=$(yq -r '.project.version' pyproject.toml)
+
+          if [ "$CONAN_VERSION" != "$PYTHON_VERSION" ]; then
+            echo "Version mismatch:"
+            echo " Conan: $CONAN_VERSION"
+            echo " Python: $PYTHON_VERSION"
+            exit 1
+          fi
