@@ -21,36 +21,15 @@ permissions:
 jobs:
   # Linter
   lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
+    uses: ./.github/workflows/linter.yml
+    permissions:
+      contents: read
 
-      - name: clang-format
-        run: |
-          find src include tests \
-          \( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' \) \
-          -exec clang-format --style=file --dry-run --Werror {} +
-
-  # Doxygen
-  doxygen:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Install doxygen
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y doxygen
-
-      - name: Run doxygen
-        run: doxygen
-
-      - name: Upload documentation
-        uses: actions/upload-artifact@v4
-        with:
-          name: doxygen-html
-          path: docs/html
-          if-no-files-found: error
+  # Documentation
+  docs-generate:
+    uses: ./.github/workflows/docs-generate.yml
+    permissions:
+      contents: read
 
   # Linux builds
   linux-release:
@@ -125,13 +104,13 @@ jobs:
       clang-tidy: true
 
   # Publish Doxygen as GitHub Pages
-  publish-docs:
+  docs-publish:
     # Only when updating main
     if: github.event_name == 'push' && github.ref_name == 'main'
     needs:
       # Require checks to pass
       - lint
-      - doxygen
+      - docs-generate
       # Requires all builds to pass
       - linux-release
       - linux-debug-clang
@@ -143,30 +122,9 @@ jobs:
       - freebsd-release
       - freebsd-debug-cov-san
 
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/docs-publish.yml
 
     permissions:
       contents: read
       pages: write
       id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: doxygen-html
-          path: docs/html
-
-      - uses: actions/configure-pages@v6
-
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: docs/html
-
-      - id: deployment
-        uses: actions/deploy-pages@v5

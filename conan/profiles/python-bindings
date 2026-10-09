@@ -1,0 +1,5 @@
+[conf]
+user.procmetrix:install_component=PythonBinding
+
+[buildenv]
+WHEEL_ABI=abi3

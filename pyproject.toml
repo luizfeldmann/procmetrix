@@ -1,0 +1,57 @@
+[build-system]
+requires = ["conan-py-build"]
+build-backend = "conan_py_build.build"
+
+[project]
+name = "pyprocmetrix"
+version = "1.0.0"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+
+[tool.conan-py-build]
+extra-profile = "conan/profiles/python-bindings"
+
+[tool.conan-py-build.sdist]
+include = [
+    "tests",
+    "bindings/python"
+]
+
+[tool.conan-py-build.wheel]
+packages = ["bindings/python/modules/pyprocmetrix"]
+
+[project.optional-dependencies]
+lint = ["ruff"]
+test = ["pytest>=8", "psutil"]
+
+[tool.pytest.ini_options]
+testpaths = ["bindings/python/tests"]
+strict_config = true
+strict_markers = true
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(levelname)s %(module)s.%(funcName)s:%(lineno)d: %(message)s"
+addopts = [
+    "-ra",
+    "-vv",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["bindings/python"]
+exclude = ["conanfile.py"]
+
+[tool.ruff.lint]
+select = [
+    "B",    # flake8-bugbear
+    "D",    # Documentation
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # import sorting
+    "PT",   # pytest
+    "UP",   # pyupgrade
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pyprocmetrix"]
