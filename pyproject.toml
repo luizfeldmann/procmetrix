@@ -28,8 +28,12 @@ test = ["pytest>=8", "psutil"]
 testpaths = ["bindings/python/tests"]
 strict_config = true
 strict_markers = true
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(levelname)s %(module)s.%(funcName)s:%(lineno)d: %(message)s"
 addopts = [
     "-ra",
+    "-vv",
 ]
 
 [tool.ruff]

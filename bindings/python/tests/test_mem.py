@@ -26,6 +26,12 @@ class TestVirtualMemory:
         assert my_vmem.free == pytest.approx(their_vmem.free, rel)
         assert my_vmem.ratio == pytest.approx(their_vmem.percent / 100.0, rel)
 
+        helpers.logger.info("total=%s", helpers.format_bytes(my_vmem.total))
+        helpers.logger.info("available=%s", helpers.format_bytes(my_vmem.available))
+        helpers.logger.info("used=%s", helpers.format_bytes(my_vmem.used))
+        helpers.logger.info("free=%s", helpers.format_bytes(my_vmem.free))
+        helpers.logger.info("ratio=%.2f %%", my_vmem.ratio * 100.0)
+
         # Other metrics
         if helpers.IS_UNIX:
             assert my_vmem.active == pytest.approx(their_vmem.active, rel)

@@ -1,7 +1,27 @@
 """General helpers for the tests."""
 
+import logging
 import os
 import sys
+
+# Utils
+logger = logging.getLogger("tests")
+
+
+def format_bytes(size: int) -> str:
+    """Format a number of bytes."""
+    units = ["B", "KB", "MB", "GB", "TB", "PB"]
+
+    value = float(size)
+
+    for unit in units:
+        if value < 1024.0 or unit == units[-1]:
+            return f"{value:.2f} {unit}"
+
+        value /= 1024.0
+
+    raise AssertionError("unreachable")
+
 
 # Platform detection:
 

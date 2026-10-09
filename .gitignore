@@ -10,9 +10,10 @@ out
 build
 dist
 
-# CTest
+# Testing/Linting tools
 Testing
 .pytest_cache
+.ruff_cache
 
 # Reports
 coverage
