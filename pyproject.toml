@@ -21,7 +21,8 @@ include = [
 packages = ["bindings/python/modules/pyprocmetrix"]
 
 [project.optional-dependencies]
-test = ["pytest>=8"]
+lint = ["ruff"]
+test = ["pytest>=8", "psutil"]
 
 [tool.pytest.ini_options]
 testpaths = ["bindings/python/tests"]
@@ -30,3 +31,23 @@ strict_markers = true
 addopts = [
     "-ra",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["bindings/python"]
+exclude = ["conanfile.py"]
+
+[tool.ruff.lint]
+select = [
+    "B",    # flake8-bugbear
+    "D",    # Documentation
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # import sorting
+    "PT",   # pytest
+    "UP",   # pyupgrade
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pyprocmetrix"]
