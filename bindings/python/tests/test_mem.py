@@ -36,12 +36,23 @@ class TestVirtualMemory:
         if helpers.IS_UNIX:
             assert my_vmem.active == pytest.approx(their_vmem.active, rel)
             assert my_vmem.inactive == pytest.approx(their_vmem.inactive, rel)
+        else:
+            assert my_vmem.active == 0
+            assert my_vmem.inactive == 0
+
         if helpers.IS_LINUX:
             assert my_vmem.slab == pytest.approx(their_vmem.slab, rel)
+        else:
+            assert my_vmem.slab == 0
+
         if helpers.IS_LINUX or helpers.IS_BSD:
             assert my_vmem.buffers == pytest.approx(their_vmem.buffers, rel)
             assert my_vmem.cached == pytest.approx(their_vmem.cached, rel)
             assert my_vmem.shared == pytest.approx(their_vmem.shared, rel)
+        else:
+            assert my_vmem.buffers == 0
+            assert my_vmem.cached == 0
+            assert my_vmem.shared == 0
 
     def test_types_virtual_memory(self):
         """Check the stub and runtime types for virtual memory."""

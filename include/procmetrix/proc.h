@@ -145,7 +145,7 @@ extern "C"
 
         //! The amount of memory devoted to executable code
         //! Matches CODE column in "top"
-        //! (Linux only)
+        //! (Linux, BSD only)
         uint64_t text;
 
         //! The memory used by shared libraries
@@ -155,7 +155,7 @@ extern "C"
         //! DRS (data resident set)
         //! The amount of physical memory devoted to other than executable code
         //! Matches DATA column in "top"
-        //! (Linux only)
+        //! (Linux, BSD only)
         uint64_t data;
 
         //! The number of dirty pages
@@ -179,11 +179,11 @@ extern "C"
         double system;
 
         //! User time of all child processes
-        //! (Linux only)
+        //! (Linux, BSD only)
         double children_user;
 
         //! system time of all child processes
-        //! (Linux only)
+        //! (Linux, BSD only)
         double children_system;
     } procmetrix_proc_cpu_times_t;
 

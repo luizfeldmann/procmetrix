@@ -42,9 +42,13 @@ class TestCpuTimes:
         #  Other metrics
         if helpers.IS_UNIX:
             assert my_times.nice == pytest.approx(their_times.nice, rel)
+        else:
+            assert my_times.nice == 0
 
         if helpers.IS_LINUX or helpers.IS_BSD:
             assert my_times.irq == pytest.approx(their_times.irq, rel)
+        else:
+            assert my_times.irq == 0
 
         if helpers.IS_LINUX:
             assert my_times.iowait == pytest.approx(their_times.iowait, rel)
@@ -52,10 +56,19 @@ class TestCpuTimes:
             assert my_times.steal == pytest.approx(their_times.steal, rel)
             assert my_times.guest == pytest.approx(their_times.guest, rel)
             assert my_times.guest_nice == pytest.approx(their_times.guest_nice, rel)
+        else:
+            assert my_times.iowait == 0
+            assert my_times.softirq == 0
+            assert my_times.steal == 0
+            assert my_times.guest == 0
+            assert my_times.guest_nice == 0
 
         if helpers.IS_WINDOWS:
             assert my_times.dpc == pytest.approx(their_times.dpc, rel)
             assert my_times.interrupt == pytest.approx(their_times.interrupt, rel)
+        else:
+            assert my_times.dpc == 0
+            assert my_times.interrupt == 0
 
     def test_parity_psutil_cpu_times_total(self):
         """Check the total CPU times match psutil's."""

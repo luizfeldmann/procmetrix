@@ -127,3 +127,28 @@ def get_proc_cmdline(pid: int) -> list[str]:
 
 def get_proc_environ(pid: int) -> dict[str, str]:
     """Get a dict of the process' environment variables."""
+
+class ProcessMemory:
+    """Memory used by a process."""
+
+    rss: int
+    vms: int
+    shared: int
+    text: int
+    lib: int
+    data: int
+    dirty: int
+
+def get_proc_memory_info(pid: int) -> ProcessMemory:
+    """Read the memory information of a process."""
+
+class ProcessCpuTimes:
+    """Accumulated CPU times used by a process, in seconds."""
+
+    user: float
+    system: float
+    children_user: float
+    children_system: float
+
+def get_proc_cpu_times(pid: int) -> ProcessCpuTimes:
+    """Read the process' usage of CPU in times per mode."""

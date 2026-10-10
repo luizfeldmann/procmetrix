@@ -235,6 +235,200 @@ static PyObject* get_proc_environ(PyObject* self, PyObject* args)
 }
 
 // ============================================================================
+// Process' Memory
+// ============================================================================
+
+typedef struct proc_memory_wrapper
+{
+    PyObject_HEAD
+    procmetrix_proc_memory_info_t proc_mem;
+} proc_memory_wrapper_t;
+
+static PyObject* proc_mem_rss(PyObject* self, void* closure)
+{
+    return PyLong_FromUnsignedLongLong(
+        ((proc_memory_wrapper_t*)self)->proc_mem.rss);
+}
+
+static PyObject* proc_mem_vms(PyObject* self, void* closure)
+{
+    return PyLong_FromUnsignedLongLong(
+        ((proc_memory_wrapper_t*)self)->proc_mem.vms);
+}
+
+static PyObject* proc_mem_shared(PyObject* self, void* closure)
+{
+    return PyLong_FromUnsignedLongLong(
+        ((proc_memory_wrapper_t*)self)->proc_mem.shared);
+}
+
+static PyObject* proc_mem_text(PyObject* self, void* closure)
+{
+    return PyLong_FromUnsignedLongLong(
+        ((proc_memory_wrapper_t*)self)->proc_mem.text);
+}
+
+static PyObject* proc_mem_lib(PyObject* self, void* closure)
+{
+    return PyLong_FromUnsignedLongLong(
+        ((proc_memory_wrapper_t*)self)->proc_mem.lib);
+}
+
+static PyObject* proc_mem_data(PyObject* self, void* closure)
+{
+    return PyLong_FromUnsignedLongLong(
+        ((proc_memory_wrapper_t*)self)->proc_mem.data);
+}
+
+static PyObject* proc_mem_dirty(PyObject* self, void* closure)
+{
+    return PyLong_FromUnsignedLongLong(
+        ((proc_memory_wrapper_t*)self)->proc_mem.dirty);
+}
+
+static PyGetSetDef g_getters_proc_mem[] = {
+    // clang-format off
+    { (char*)"rss",     proc_mem_rss },
+    { (char*)"vms",     proc_mem_vms },
+    { (char*)"shared",  proc_mem_shared },
+    { (char*)"text",    proc_mem_text },
+    { (char*)"lib",     proc_mem_lib },
+    { (char*)"data",    proc_mem_data },
+    { (char*)"dirty",   proc_mem_dirty },
+    // clang-format on
+    { NULL },
+};
+
+static PyType_Slot g_slots_proc_mem[] = {
+    { Py_tp_getset, g_getters_proc_mem },
+    { 0, NULL },
+};
+
+static PyType_Spec g_type_spec_proc_mem = {
+    "procmetrix.ProcessMemory",    // name
+    sizeof(proc_memory_wrapper_t), // basicsize
+    0,                             // itemsize
+    Py_TPFLAGS_DEFAULT,            // flags
+    g_slots_proc_mem,              // slots
+};
+
+static PyObject* get_proc_memory_info(PyObject* self, PyObject* args)
+{
+    // Input args
+    procmetrix_pid_t pid = 0;
+    if (!PyArg_ParseTuple(args, "I", &pid))
+        return NULL;
+
+    // Allocate the result
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
+    proc_memory_wrapper_t* wrapper =
+        (proc_memory_wrapper_t*)PyObject_CallNoArgs(
+            state->types[PROCMETRIX_TYPE_PROCESS_MEMORY]);
+
+    if (NULL == wrapper)
+        return NULL;
+
+    // Get the memory info
+    procmetrix_error_t status =
+        procmetrix_get_proc_memory_info(pid, &wrapper->proc_mem);
+
+    if (PROCMETRIX_ERROR_NONE != status)
+    {
+        Py_DECREF(wrapper);
+        return py_procmetrix_error(status);
+    }
+
+    return (PyObject*)wrapper;
+}
+
+// ============================================================================
+// Process' CPU use
+// ============================================================================
+
+typedef struct proc_cpu_times_wrapper
+{
+    PyObject_HEAD
+    procmetrix_proc_cpu_times_t proc_cpu;
+} proc_cpu_times_wrapper_t;
+
+static PyObject* proc_cpu_user(PyObject* self, void* closure)
+{
+    return PyFloat_FromDouble(((proc_cpu_times_wrapper_t*)self)->proc_cpu.user);
+}
+
+static PyObject* proc_cpu_system(PyObject* self, void* closure)
+{
+    return PyFloat_FromDouble(
+        ((proc_cpu_times_wrapper_t*)self)->proc_cpu.system);
+}
+
+static PyObject* proc_cpu_children_user(PyObject* self, void* closure)
+{
+    return PyFloat_FromDouble(
+        ((proc_cpu_times_wrapper_t*)self)->proc_cpu.children_user);
+}
+
+static PyObject* proc_cpu_children_system(PyObject* self, void* closure)
+{
+    return PyFloat_FromDouble(
+        ((proc_cpu_times_wrapper_t*)self)->proc_cpu.children_system);
+}
+
+static PyGetSetDef g_getters_proc_cpu_times[] = {
+    // clang-format off
+    { (char*)"user",            proc_cpu_user },
+    { (char*)"system",          proc_cpu_system },
+    { (char*)"children_user",   proc_cpu_children_user },
+    { (char*)"children_system", proc_cpu_children_system },
+    // clang-format on
+    { NULL },
+};
+
+static PyType_Slot g_slots_proc_cpu_times[] = {
+    { Py_tp_getset, g_getters_proc_cpu_times },
+    { 0, NULL },
+};
+
+static PyType_Spec g_type_spec_proc_cpu_times = {
+    "procmetrix.ProcessCpuTimes",     // name
+    sizeof(proc_cpu_times_wrapper_t), // basicsize
+    0,                                // itemsize
+    Py_TPFLAGS_DEFAULT,               // flags
+    g_slots_proc_cpu_times,           // slots
+};
+
+static PyObject* get_proc_cpu_times(PyObject* self, PyObject* args)
+{
+    // Input args
+    procmetrix_pid_t pid = 0;
+    if (!PyArg_ParseTuple(args, "I", &pid))
+        return NULL;
+
+    // Allocate the result
+    py_procmetrix_module_state_t* state = PyModule_GetState(self);
+
+    proc_cpu_times_wrapper_t* wrapper =
+        (proc_cpu_times_wrapper_t*)PyObject_CallNoArgs(
+            state->types[PROCMETRIX_TYPE_PROCESS_CPU_USAGE]);
+
+    if (NULL == wrapper)
+        return NULL;
+
+    // Get the cpu usage times
+    procmetrix_error_t status =
+        procmetrix_get_proc_cpu_times(pid, &wrapper->proc_cpu);
+
+    if (PROCMETRIX_ERROR_NONE != status)
+    {
+        Py_DECREF(wrapper);
+        return py_procmetrix_error(status);
+    }
+
+    return (PyObject*)wrapper;
+}
+
+// ============================================================================
 // Registration
 // ============================================================================
 
@@ -248,12 +442,33 @@ static PyMethodDef g_methods_proc[] = {
     { "get_proc_cwd", get_proc_cwd, METH_VARARGS },
     { "get_proc_cmdline", get_proc_cmdline, METH_VARARGS },
     { "get_proc_environ", get_proc_environ, METH_VARARGS },
+    { "get_proc_memory_info", get_proc_memory_info, METH_VARARGS },
+    { "get_proc_cpu_times", get_proc_cpu_times, METH_VARARGS },
     // End of list
     { NULL, NULL, 0 }
 };
 
 int pyprocmetrix_init_proc(PyObject* module)
 {
+    py_procmetrix_module_state_t* state = PyModule_GetState(module);
+
+    // Register types
+    if (pyprocmetrix_register_type(
+            module,
+            state,
+            "ProcessMemory",
+            PROCMETRIX_TYPE_PROCESS_MEMORY,
+            &g_type_spec_proc_mem) != PY_INIT_OK)
+        return PY_INIT_FAIL;
+
+    if (pyprocmetrix_register_type(
+            module,
+            state,
+            "ProcessCpuTimes",
+            PROCMETRIX_TYPE_PROCESS_CPU_USAGE,
+            &g_type_spec_proc_cpu_times) != PY_INIT_OK)
+        return PY_INIT_FAIL;
+
     // Register methods
     if (PyModule_AddFunctions(module, g_methods_proc) != PY_INIT_OK)
         return PY_INIT_FAIL;
