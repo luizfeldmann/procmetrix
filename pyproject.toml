@@ -22,7 +22,7 @@ packages = ["bindings/python/modules/pyprocmetrix"]
 
 [project.optional-dependencies]
 lint = ["ruff"]
-test = ["pytest>=8", "psutil"]
+test = ["pytest>=8", "pytest-rerunfailures", "psutil"]
 
 [tool.pytest.ini_options]
 testpaths = ["bindings/python/tests"]

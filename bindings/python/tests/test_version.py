@@ -11,7 +11,7 @@ def test_version_matches_metadata():
     assert pyprocmetrix.__version__ == version("pyprocmetrix")
 
 
-def test_version_types():
+def test_types_version():
     """Checks the correct types for the version constants."""
     assert isinstance(pyprocmetrix.version_major, int)
     assert_type(pyprocmetrix.version_major, int)

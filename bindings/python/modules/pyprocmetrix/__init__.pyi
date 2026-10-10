@@ -98,3 +98,32 @@ def cpu_freqs_average(freqs: list[SystemCpuFreq]) -> SystemCpuFreq:
 
 def cpu_freq_system() -> SystemCpuFreq:
     """Estimates the system-wide CPU frequencies."""
+
+# Process:
+
+def get_pid() -> int:
+    """Get the ID of the current process."""
+
+def pid_exists(pid: int) -> bool:
+    """Check if a process ID exists."""
+
+def list_pids() -> list[int]:
+    """Return a list of running PIDs."""
+
+def get_proc_parent_pid(pid: int) -> int:
+    """Get the PID of the parent process."""
+
+def get_proc_name(pid: int) -> str:
+    """Get the process' name."""
+
+def get_proc_exe(pid: int) -> str:
+    """Get the process' executable's full path."""
+
+def get_proc_cwd(pid: int) -> str:
+    """Get the process' current working directory."""
+
+def get_proc_cmdline(pid: int) -> list[str]:
+    """Get the list of the process' command line arguments."""
+
+def get_proc_environ(pid: int) -> dict[str, str]:
+    """Get a dict of the process' environment variables."""

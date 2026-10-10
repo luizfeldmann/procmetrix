@@ -13,7 +13,7 @@ from . import helpers
 class TestVirtualMemory:
     """Tests virtual memory metrics."""
 
-    def test_virtual_memory_parity_psutil(self):
+    def test_parity_psutil_virtual_memory(self):
         """Compares the virtual memory to the results of psutil."""
         my_vmem = pyprocmetrix.virtual_memory()
         their_vmem = psutil.virtual_memory()
@@ -43,7 +43,7 @@ class TestVirtualMemory:
             assert my_vmem.cached == pytest.approx(their_vmem.cached, rel)
             assert my_vmem.shared == pytest.approx(their_vmem.shared, rel)
 
-    def test_virtual_memory_types(self):
+    def test_types_virtual_memory(self):
         """Check the stub and runtime types for virtual memory."""
         vmem = pyprocmetrix.virtual_memory()
         assert isinstance(vmem, pyprocmetrix.SystemVirtualMemory)
@@ -86,7 +86,7 @@ class TestVirtualMemory:
 class TestSwapMemory:
     """Test swap memory metrics."""
 
-    def test_swap_memory_parity_psutil(self):
+    def test_parity_psutil_swap_memory(self):
         """Compares the swap memory to the results of psutil."""
         my_smem = pyprocmetrix.swap_memory()
         their_smem = psutil.swap_memory()
@@ -100,7 +100,7 @@ class TestSwapMemory:
         assert my_smem.swap_out == pytest.approx(their_smem.sout, rel)
         assert my_smem.ratio == pytest.approx(their_smem.percent / 100.0, rel)
 
-    def test_swap_memory_types(self):
+    def test_types_swap_memory(self):
         """Check the stub and runtime types for swap memory."""
         smem = pyprocmetrix.swap_memory()
         assert isinstance(smem, pyprocmetrix.SystemSwapMemory)

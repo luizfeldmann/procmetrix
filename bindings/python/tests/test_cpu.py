@@ -14,14 +14,14 @@ from . import helpers
 class TestNumCpus:
     """Tests numbers of cpus."""
 
-    def test_cpu_count_logical_parity_psutil(self):
+    def test_parity_psutil_cpu_count_logical(self):
         """Check the reported number of logical CPUs matches psutil."""
         cpu_count_logical = pyprocmetrix.cpu_count_logical()
         helpers.logger.info("cpu_count_logical=%d", cpu_count_logical)
 
         assert cpu_count_logical == psutil.cpu_count(logical=True)
 
-    def test_cpu_count_physical_parity_psutil(self):
+    def test_parity_psutil_cpu_count_physical(self):
         """Check the reported number of physical CPUs matches psutil."""
         cpu_count_physical = pyprocmetrix.cpu_count_physical()
         helpers.logger.info("cpu_count_physical=%d", cpu_count_physical)
@@ -57,13 +57,13 @@ class TestCpuTimes:
             assert my_times.dpc == pytest.approx(their_times.dpc, rel)
             assert my_times.interrupt == pytest.approx(their_times.interrupt, rel)
 
-    def test_cpu_times_total_parity_psutil(self):
+    def test_parity_psutil_cpu_times_total(self):
         """Check the total CPU times match psutil's."""
         my_times = pyprocmetrix.cpu_times_total()
         their_times = psutil.cpu_times(percpu=False)
         self._compare_cpu_times(my_times, their_times)
 
-    def test_cpu_times_total_types(self):
+    def test_types_cpu_times_total(self):
         """Check the types returned by cpu_times_total."""
         cpu_times = pyprocmetrix.cpu_times_total()
         assert isinstance(cpu_times, pyprocmetrix.SystemCpuTimes)
@@ -105,7 +105,7 @@ class TestCpuTimes:
         assert isinstance(cpu_times.dpc, float)
         assert_type(cpu_times.dpc, float)
 
-    def test_cpu_times_per_cpu_parity_psutil(self):
+    def test_parity_psutil_cpu_times_per_cpu(self):
         """Check the per-CPU times match psutil's."""
         my_times = pyprocmetrix.cpu_times_per_cpu()
         their_times = psutil.cpu_times(percpu=True)
@@ -115,7 +115,7 @@ class TestCpuTimes:
         for i in range(0, len(my_times)):
             self._compare_cpu_times(my_times[i], their_times[i])
 
-    def test_cpu_times_per_cpu_types(self):
+    def test_types_cpu_times_per_cpu(self):
         """Check the types returned by cpu_times_per_cpu."""
         cpu_times = pyprocmetrix.cpu_times_per_cpu()
 
@@ -130,7 +130,7 @@ class TestCpuTimes:
         while time.perf_counter() < end:
             x += 1
 
-    def test_cpu_utilization_ratio_parity_psutil(self):
+    def test_parity_psutil_cpu_utilization_ratio(self):
         """Checks the total CPU utilization matches psutil."""
         # First sample
         psutil.cpu_percent(interval=None, percpu=False)
@@ -160,7 +160,7 @@ class TestCpuFreqs:
         assert my_freq.min == pytest.approx(their_freq.min, rel)
         assert my_freq.max == pytest.approx(their_freq.max, rel)
 
-    def test_cpu_freqs_per_cpu_parity_psutil(self):
+    def test_parity_psutil_cpu_freqs_per_cpu(self):
         """Compare per-CPU frequency with psutil."""
         my_freqs = pyprocmetrix.cpu_freqs()
         their_freqs = psutil.cpu_freq(percpu=True)
@@ -170,9 +170,35 @@ class TestCpuFreqs:
         for i in range(0, len(my_freqs)):
             self._compare_cpu_freqs(my_freqs[i], their_freqs[i])
 
-    def test_cpu_freqs_system_parity_psutil(self):
+    def test_parity_psutil_cpu_freqs_system(self):
         """Compare system-wide CPU frequency with psutil."""
         my_freq = pyprocmetrix.cpu_freq_system()
         their_freq = psutil.cpu_freq(percpu=False)
 
         self._compare_cpu_freqs(my_freq, their_freq)
+
+    def test_types_cpu_freqs(self):
+        """Check the types of the CPU frequency object."""
+        cpu_freqs = pyprocmetrix.cpu_freqs()
+
+        # The method returns a list
+        assert isinstance(cpu_freqs, list)
+        assert_type(cpu_freqs, list[pyprocmetrix.SystemCpuFreq])
+
+        # Every element in the list is a CPU frequency
+        assert all(isinstance(freq, pyprocmetrix.SystemCpuFreq) for freq in cpu_freqs)
+
+        # Get the average of the list
+        average_freq = pyprocmetrix.cpu_freqs_average(cpu_freqs)
+        assert isinstance(average_freq, pyprocmetrix.SystemCpuFreq)
+        assert_type(average_freq, pyprocmetrix.SystemCpuFreq)
+
+        # The types of the members of the frequency struct
+        assert isinstance(average_freq.cur, float)
+        assert_type(average_freq.cur, float)
+
+        assert isinstance(average_freq.min, float)
+        assert_type(average_freq.min, float)
+
+        assert isinstance(average_freq.max, float)
+        assert_type(average_freq.max, float)
