@@ -38,6 +38,7 @@ jobs:
       contents: read
     with:
       conan-profile: linux-release
+      export-pkg: true
 
   linux-debug-clang:
     uses: ./.github/workflows/build-linux.yml
@@ -69,6 +70,7 @@ jobs:
       contents: read
     with:
       conan-profile: windows-release
+      export-pkg: true
 
   windows-debug:
     uses: ./.github/workflows/build-windows.yml
@@ -93,6 +95,7 @@ jobs:
       contents: read
     with:
       conan-profile: freebsd-release
+      export-pkg: true
 
   freebsd-debug-cov-san:
     uses: ./.github/workflows/build-freebsd.yml

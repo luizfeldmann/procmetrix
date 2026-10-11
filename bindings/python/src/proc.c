@@ -38,7 +38,7 @@ static PyObject* list_pids(PyObject* self, PyObject* args)
     }
 
     // Allocate output list
-    PyObject* py_list = PyList_New(count);
+    PyObject* py_list = PyList_New((Py_ssize_t)count);
     if (NULL == py_list)
     {
         procmetrix_free_pids(&native_list);
@@ -153,7 +153,7 @@ static PyObject* get_proc_cmdline(PyObject* self, PyObject* args)
     }
 
     // Allocate output list
-    PyObject* list = PyList_New(cmdline.argc);
+    PyObject* list = PyList_New((Py_ssize_t)cmdline.argc);
     if (NULL == list)
     {
         procmetrix_free_proc_cmdline(&cmdline);
