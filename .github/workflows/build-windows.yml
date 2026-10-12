@@ -12,6 +12,10 @@ on:
         type: boolean
         required: false
         default: false
+      export-pkg:
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   windows-build-and-test:
@@ -28,6 +32,21 @@ jobs:
 
       - name: Build
         run: conan build . --build=missing --profile=conan\profiles\${{inputs.conan-profile}}
+
+      - name: Export
+        if: inputs.export-pkg
+        shell: pwsh
+        run: |
+          conan export-pkg . --profile=conan\profiles\${{inputs.conan-profile}}
+
+          $conanInspect = conan inspect . --format=json | ConvertFrom-Json
+          $packageRef = "$($conanInspect.name)/$($conanInspect.version)"
+
+          $conanProfile = conan profile show --format=json --profile=conan\profiles\${{ inputs.conan-profile }} | ConvertFrom-Json
+          $packageFile = "$($conanInspect.name)-$($conanInspect.version)-$($conanProfile.host.settings.os)-$($conanProfile.host.settings.arch)-$($conanProfile.host.settings.compiler)-$($conanProfile.host.settings.'compiler.version')-$($conanProfile.host.settings.build_type)"
+          
+          New-Item -ItemType Directory -Path dist -Force > $null
+          conan cache save --file="dist/$packageFile.tgz" "$($packageRef):*"
 
       - name: clang-tidy
         if: inputs.clang-tidy
@@ -61,3 +80,10 @@ jobs:
         with:
           name: test-results-${{inputs.conan-profile}}
           path: build/**/test-results*.xml
+
+      - name: Upload conan package
+        if: inputs.export-pkg
+        uses: actions/upload-artifact@v4
+        with:
+          name: conan-package-${{inputs.conan-profile}}
+          path: dist/*.tgz

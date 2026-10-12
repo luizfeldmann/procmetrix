@@ -60,3 +60,7 @@ BraceWrapping:
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
   SplitEmptyFunction: true
+
+# Special cases
+StatementMacros:
+  - PyObject_HEAD

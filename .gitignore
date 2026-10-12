@@ -2,15 +2,26 @@
 .vs
 .vscode
 .clangd
+
 CMakeUserPresets.json
 
 # Build output
 out
 build
+dist
 
-# CTest
+# Testing/Linting tools
 Testing
 
 # Reports
 coverage
 report
+
+# Python
+.venv
+.pytest_cache
+.ruff_cache
+.python-version
+**/__pycache__
+venv
+wheelhouse

@@ -12,6 +12,10 @@ on:
         type: boolean
         required: false
         default: false
+      export-pkg:
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   freebsd-build-and-test:
@@ -27,6 +31,7 @@ jobs:
           prepare: |
             pkg update
             pkg install -y \
+              jq \
               git \
               bash \
               cmake \
@@ -46,6 +51,21 @@ jobs:
       - name: Build
         shell: vmsh {0}
         run: conan build . --build=missing --profile=conan/profiles/${{inputs.conan-profile}}
+
+      - name: Export
+        if: inputs.export-pkg
+        shell: vmsh {0}
+        run: |
+          conan export-pkg . --profile=conan/profiles/${{inputs.conan-profile}}
+
+          conan inspect . --format=json > inspect.json
+          conan profile show --format=json --profile=conan/profiles/${{inputs.conan-profile}} > profile.json
+
+          CONAN_PACKAGE=$(jq -r '.name + "/" + .version' inspect.json)
+          CONAN_PROFILE=$(jq -r '.name + "-" + .version' inspect.json)-$(jq -r '[.host.settings.os, .host.settings.arch, .host.settings.compiler, .host.settings["compiler.version"], .host.settings.build_type] | join("-")' profile.json)
+
+          mkdir -p dist
+          conan cache save --file=dist/$CONAN_PROFILE.tgz "$CONAN_PACKAGE:*"
 
       - name: clang-tidy
         shell: vmsh {0}
@@ -77,3 +97,10 @@ jobs:
         with:
           name: test-results-${{inputs.conan-profile}}
           path: build/**/test-results*.xml
+
+      - name: Upload conan package
+        if: inputs.export-pkg
+        uses: actions/upload-artifact@v4
+        with:
+          name: conan-package-${{inputs.conan-profile}}
+          path: dist/*.tgz

@@ -1,0 +1,20 @@
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        required: true
+
+jobs:
+  build-python-wheels:
+    runs-on: ${{ inputs.runs-on }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pypa/cibuildwheel@v4.3.1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{inputs.runs-on}}
+          path: ./wheelhouse/*.whl

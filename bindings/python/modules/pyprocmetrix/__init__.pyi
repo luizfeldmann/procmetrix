@@ -1,0 +1,154 @@
+from typing import Final
+
+# Version:
+
+version_major: Final[int]
+"""Major version of the library."""
+
+version_minor: Final[int]
+"""Minor version of the library."""
+
+version_patch: Final[int]
+"""Patch version of the library."""
+
+# Memory:
+
+class SystemVirtualMemory:
+    """Statistics about system memory usage."""
+
+    ratio: float
+    total: int
+    available: int
+    used: int
+    free: int
+    active: int
+    inactive: int
+    buffers: int
+    cached: int
+    shared: int
+    slab: int
+
+def virtual_memory() -> SystemVirtualMemory:
+    """Read statistics about system memory usage in bytes."""
+
+class SystemSwapMemory:
+    """Statistics about system swap memory usage."""
+
+    ratio: float
+    total: int
+    used: int
+    free: int
+    swap_in: int
+    swap_out: int
+
+def swap_memory() -> SystemSwapMemory:
+    """Return system swap memory statistics in bytes."""
+
+# CPU:
+
+def cpu_count_logical() -> int:
+    """Return the number of logical CPUs in the system."""
+
+def cpu_count_physical() -> int:
+    """Return the number of physical cores."""
+
+class SystemCpuTimes:
+    """Every attribute represents the seconds the CPU has spent in the given mode."""
+
+    user: float
+    system: float
+    idle: float
+    nice: float
+    iowait: float
+    irq: float
+    softirq: float
+    steal: float
+    guest: float
+    guest_nice: float
+    interrupt: float
+    dpc: float
+
+def cpu_times_total() -> SystemCpuTimes:
+    """Return system total CPU times."""
+
+def cpu_times_per_cpu() -> list[SystemCpuTimes]:
+    """Return the CPU times for each logical CPU in the system."""
+
+def cpu_times_delta(before: SystemCpuTimes, after: SystemCpuTimes) -> SystemCpuTimes:
+    """Return the time difference between two time snapshots."""
+
+def cpu_times_sum(delta: SystemCpuTimes) -> float:
+    """Return the total elapsed time from a delta."""
+
+def cpu_utilization_ratio(delta: SystemCpuTimes) -> float:
+    """Return the busy/usage ratio from a times delta."""
+
+class SystemCpuFreq:
+    """The current and range of CPU frequency [MHz]."""
+
+    cur: float
+    min: float
+    max: float
+
+def cpu_freqs() -> list[SystemCpuFreq]:
+    """Read the frequencies for each CPU."""
+
+def cpu_freqs_average(freqs: list[SystemCpuFreq]) -> SystemCpuFreq:
+    """Calculate the average frequency from the array of per-CPU frequencies."""
+
+def cpu_freq_system() -> SystemCpuFreq:
+    """Estimates the system-wide CPU frequencies."""
+
+# Process:
+
+def get_pid() -> int:
+    """Get the ID of the current process."""
+
+def pid_exists(pid: int) -> bool:
+    """Check if a process ID exists."""
+
+def list_pids() -> list[int]:
+    """Return a list of running PIDs."""
+
+def get_proc_parent_pid(pid: int) -> int:
+    """Get the PID of the parent process."""
+
+def get_proc_name(pid: int) -> str:
+    """Get the process' name."""
+
+def get_proc_exe(pid: int) -> str:
+    """Get the process' executable's full path."""
+
+def get_proc_cwd(pid: int) -> str:
+    """Get the process' current working directory."""
+
+def get_proc_cmdline(pid: int) -> list[str]:
+    """Get the list of the process' command line arguments."""
+
+def get_proc_environ(pid: int) -> dict[str, str]:
+    """Get a dict of the process' environment variables."""
+
+class ProcessMemory:
+    """Memory used by a process."""
+
+    rss: int
+    vms: int
+    shared: int
+    text: int
+    lib: int
+    data: int
+    dirty: int
+
+def get_proc_memory_info(pid: int) -> ProcessMemory:
+    """Read the memory information of a process."""
+
+class ProcessCpuTimes:
+    """Accumulated CPU times used by a process, in seconds."""
+
+    user: float
+    system: float
+    children_user: float
+    children_system: float
+
+def get_proc_cpu_times(pid: int) -> ProcessCpuTimes:
+    """Read the process' usage of CPU in times per mode."""

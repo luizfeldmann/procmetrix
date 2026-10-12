@@ -13,9 +13,10 @@ A lightweight C library for retrieving system metrics such as CPU utilization, f
 - CPU frequency information
 - Memory usage information
 - Current process metrics
-- Written in C
 - Cross-platform
 - No dependencies
+- Written in C
+- Bindings for Python available
 
 ## Supported operating systems
 

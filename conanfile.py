@@ -92,8 +92,10 @@ class Recipe(ConanFile):
     def package(self):
         copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
 
+        install_component = self.conf.get("user.procmetrix:install_component", default="Development")
+
         cmake = CMake(self)
-        cmake.install()
+        cmake.install(component=install_component)
 
     def package_info(self):
         self.cpp_info.libs = [ self.name ]

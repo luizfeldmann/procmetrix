@@ -109,6 +109,13 @@ install(
     TARGETS ${CMAKE_PROJECT_NAME}
     EXPORT ${CMAKE_PROJECT_NAME}Targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT Development # This target is the main C library
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT Development
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+        COMPONENT Development
+    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        COMPONENT Development)
+
+# Build language bindings
+add_subdirectory(bindings/python)
