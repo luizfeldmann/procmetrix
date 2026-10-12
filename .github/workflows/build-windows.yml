@@ -46,7 +46,7 @@ jobs:
           $packageFile = "$($conanInspect.name)-$($conanInspect.version)-$($conanProfile.host.settings.os)-$($conanProfile.host.settings.arch)-$($conanProfile.host.settings.compiler)-$($conanProfile.host.settings.'compiler.version')-$($conanProfile.host.settings.build_type)"
           
           New-Item -ItemType Directory -Path dist -Force > $null
-          conan cache save --file="dist/$packageFile.tgz" "$packageRef:*"
+          conan cache save --file="dist/$packageFile.tgz" "$($packageRef):*"
 
       - name: clang-tidy
         if: inputs.clang-tidy

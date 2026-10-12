@@ -37,7 +37,7 @@ test-sources = [
 archs = ["auto"]
 
 [tool.cibuildwheel.windows]
-archs = ["auto"]
+archs = ["native"]
 
 [tool.pytest.ini_options]
 testpaths = ["bindings/python/tests"]

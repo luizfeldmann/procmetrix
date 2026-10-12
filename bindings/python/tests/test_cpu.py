@@ -64,7 +64,7 @@ class TestCpuTimes:
             assert my_times.guest_nice == 0
 
         if helpers.IS_WINDOWS and per_cpu:
-            # when per_cpu=True: 
+            # when per_cpu=True:
             # psutil gets actual values for 'dpc' and 'interrupt' using 'NtQuerySystemInformation'
             # procmetrix does the same
             assert my_times.dpc == pytest.approx(their_times.dpc, rel)

@@ -73,7 +73,7 @@ class TestOwnProcess:
         if helpers.IS_WINDOWS:
             # psutil converts all env vars names to upper-case in Windows
             # procmetrix' get_proc_environ keeps them as-is
-            # in order to test the parity, this test emulates the upper-case 
+            # in order to test the parity, this test emulates the upper-case
             environ = {k.upper(): v for k, v in environ.items()}
 
         assert environ == psutil.Process().environ()
