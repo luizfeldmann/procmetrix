@@ -1,0 +1,50 @@
+on:
+  workflow_call:
+
+jobs:
+  build-python-wheels-freebsd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: vmactions/freebsd-vm@v1
+        with:
+          sync: nfs
+          custom-shell-name: vmsh
+          prepare: |
+            pkg update
+            pkg install -y \
+              jq \
+              git \
+              bash \
+              cmake \
+              ninja \
+              llvm19 \
+              python312 \
+              py312-pip \
+              py312-sqlite3 \
+              python
+
+            pip install --upgrade pip
+            pip install "build" "yq" "conan"
+
+            conan profile detect --force
+
+          cache-after-prepare: true
+
+      - name: Build
+        shell: vmsh {0}
+        run: python -m build
+
+      - name: Test
+        shell: vmsh {0}
+        run: |
+          pip install typing_extensions $(tomlq -r '.project["optional-dependencies"].test[]' pyproject.toml)
+          pip install dist/*.whl
+          pytest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: freebsd-wheels
+          path: ./dist/*.whl

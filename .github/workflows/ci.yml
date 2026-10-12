@@ -125,6 +125,13 @@ jobs:
     needs:
       - windows-release
 
+  freebsd-python-wheels:
+    uses: ./.github/workflows/build-python-wheels-freebsd.yml
+    permissions:
+      contents: read
+    needs:
+      - freebsd-release
+
   # Publish Doxygen as GitHub Pages
   docs-publish:
     # Only when updating main
@@ -146,6 +153,7 @@ jobs:
       # Require Python bindings to pass
       - linux-python-wheels
       - windows-python-wheels
+      - freebsd-python-wheels
 
     uses: ./.github/workflows/docs-publish.yml
 

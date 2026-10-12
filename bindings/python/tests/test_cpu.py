@@ -26,6 +26,9 @@ class TestNumCpus:
         cpu_count_physical = pyprocmetrix.cpu_count_physical()
         helpers.logger.info("cpu_count_physical=%d", cpu_count_physical)
 
+        if helpers.IS_BSD:
+            pytest.skip("psutil (7.2.2) does not implement an exact count for BSD")
+
         assert cpu_count_physical == psutil.cpu_count(logical=False)
 
 
@@ -185,6 +188,11 @@ class TestCpuFreqs:
         my_freqs = pyprocmetrix.cpu_freqs()
         their_freqs = psutil.cpu_freq(percpu=True)
 
+        if helpers.IS_FREEBSD and len(their_freqs) == 0:
+            # psutil (7.2.2) tries to sysctl dev.cpu.X.freq, which doesnt exist in VMs
+            # procmetrix can fallback to sysctl hw.clockrate
+            pytest.skip("psutil couldn't read CPU freq")
+
         if helpers.IS_WINDOWS:
             # On Windows, psutil returns only CPU 0
             my_freqs = [my_freqs[0]]
@@ -197,6 +205,10 @@ class TestCpuFreqs:
     def test_parity_psutil_cpu_freqs_system(self):
         """Compare system-wide CPU frequency with psutil."""
         their_freq = psutil.cpu_freq(percpu=False)
+
+        if helpers.IS_FREEBSD and their_freq is None:
+            # psutil has no fallback for virtualized systems not exposing sysctl dev.cpu.X.freq
+            pytest.skip("psutil couldn't read CPU freq")
 
         if helpers.IS_WINDOWS:
             # in Windows psutil returns the freqs of CPU 0
