@@ -1,0 +1,30 @@
+on:
+  workflow_call:
+
+jobs:
+  combine-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: coverage-*
+          path: coverage
+      
+      - name: Combine .lcov files
+        run: |
+          mkdir -p coverage/combined
+          find coverage -name '*.lcov' -exec sed -i 's/\r$//' {} +
+          lcov $(find coverage -type f -name '*.lcov' | sed 's/^/-a /') -o coverage/combined/combined-coverage.lcov
+
+      - name: HTML report
+        run: genhtml coverage/combined/combined-coverage.lcov --output-directory=coverage/combined
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-combined
+          path: coverage/combined

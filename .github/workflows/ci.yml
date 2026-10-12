@@ -40,28 +40,22 @@ jobs:
       conan-profile: linux-release
       export-pkg: true
 
-  linux-debug-clang:
+  linux-debug:
     uses: ./.github/workflows/build-linux.yml
     permissions:
       contents: read
     with:
-      conan-profile: linux-debug-clang
+      conan-profile: linux-debug
+      export-pkg: true
+
+  linux-clang-cov-san:
+    uses: ./.github/workflows/build-linux.yml
+    permissions:
+      contents: read
+    with:
+      conan-profile: linux-clang-cov-san
       clang-tidy: true
-
-  linux-debug-coverage:
-    uses: ./.github/workflows/build-linux.yml
-    permissions:
-      contents: read
-    with:
-      conan-profile: linux-debug-coverage
       coverage: true
-
-  linux-debug-sanitizer:
-    uses: ./.github/workflows/build-linux.yml
-    permissions:
-      contents: read
-    with:
-      conan-profile: linux-debug-sanitizer
 
   # Windows builds
   windows-release:
@@ -78,6 +72,7 @@ jobs:
       contents: read
     with:
       conan-profile: windows-debug
+      export-pkg: true
 
   windows-clang-cov-san:
     uses: ./.github/workflows/build-windows.yml
@@ -105,6 +100,16 @@ jobs:
       conan-profile: freebsd-debug-cov-san
       coverage: true
       clang-tidy: true
+
+  # Combine reports
+  combine-coverage:
+    uses: ./.github/workflows/combine-coverage.yml
+    permissions:
+      contents: read
+    needs:
+      - linux-clang-cov-san
+      - windows-clang-cov-san
+      - freebsd-debug-cov-san
 
   # Build python wheels
   linux-python-wheels:
@@ -140,16 +145,20 @@ jobs:
       # Require checks to pass
       - lint
       - docs-generate
+      - combine-coverage
+
       # Requires all builds to pass
       - linux-release
-      - linux-debug-clang
-      - linux-debug-coverage
-      - linux-debug-sanitizer
+      - linux-debug
+      - linux-clang-cov-san
+
       - windows-release
       - windows-debug
       - windows-clang-cov-san
+
       - freebsd-release
       - freebsd-debug-cov-san
+
       # Require Python bindings to pass
       - linux-python-wheels
       - windows-python-wheels

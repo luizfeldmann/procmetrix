@@ -1,0 +1,23 @@
+include(default)
+
+[settings]
+build_type=Debug
+compiler=clang
+compiler.version=19
+compiler.libcxx=libstdc++11
+compiler.cppstd=gnu17
+
+[conf]
+user.procmetrix:run_tests=True
+user.procmetrix:profile_name=linux-clang-cov-san
+
+tools.build:compiler_executables={"c": "clang", "cpp": "clang++"}
+
+tools.build:cflags = ["-fno-omit-frame-pointer", "-fsanitize=address", "-fsanitize=undefined", "-fprofile-instr-generate", "-fcoverage-mapping"]
+tools.build:cxxflags=["-fno-omit-frame-pointer", "-fsanitize=address", "-fsanitize=undefined", "-fprofile-instr-generate", "-fcoverage-mapping"]
+tools.build:exelinkflags=["-fsanitize=address", "-fsanitize=undefined", "-fprofile-instr-generate"]
+
+[runenv]
+LLVM_PROFILE_FILE=%m-%p.profraw
+ASAN_OPTIONS+=halt_on_error=1
+UBSAN_OPTIONS+=print_stacktrace=1:halt_on_error=1
