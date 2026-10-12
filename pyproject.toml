@@ -24,6 +24,21 @@ packages = ["bindings/python/modules/pyprocmetrix"]
 lint = ["ruff"]
 test = ["pytest>=8", "pytest-rerunfailures", "psutil"]
 
+[tool.cibuildwheel]
+build = "cp310-*"
+test-extras = ["test"]
+test-command = "pytest"
+test-sources = [
+    "pyproject.toml",
+    "bindings/python/tests",
+]
+
+[tool.cibuildwheel.linux]
+archs = ["auto"]
+
+[tool.cibuildwheel.windows]
+archs = ["auto"]
+
 [tool.pytest.ini_options]
 testpaths = ["bindings/python/tests"]
 strict_config = true

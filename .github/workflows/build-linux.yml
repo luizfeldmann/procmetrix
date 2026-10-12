@@ -67,7 +67,7 @@ jobs:
           CONAN_PROFILE=$(jq -r '.name + "-" + .version' inspect.json)-$(jq -r '[.host.settings.os, .host.settings.arch, .host.settings.compiler, .host.settings["compiler.version"], .host.settings.build_type] | join("-")' profile.json)
 
           mkdir -p dist
-          conan cache save --file=dist/$CONAN_PROFILE.tgz $CONAN_PACKAGE
+          conan cache save --file=dist/$CONAN_PROFILE.tgz "$CONAN_PACKAGE:*"
 
       - name: clang-tidy
         if: inputs.clang-tidy

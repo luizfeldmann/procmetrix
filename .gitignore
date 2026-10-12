@@ -2,7 +2,7 @@
 .vs
 .vscode
 .clangd
-.python-version
+
 CMakeUserPresets.json
 
 # Build output
@@ -12,12 +12,16 @@ dist
 
 # Testing/Linting tools
 Testing
-.pytest_cache
-.ruff_cache
 
 # Reports
 coverage
 report
 
 # Python
+.venv
+.pytest_cache
+.ruff_cache
+.python-version
 **/__pycache__
+venv
+wheelhouse

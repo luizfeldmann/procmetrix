@@ -1,7 +1,8 @@
 """Version-related tests."""
 
 from importlib.metadata import version
-from typing import assert_type
+
+from typing_extensions import assert_type
 
 import pyprocmetrix
 

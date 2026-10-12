@@ -1,10 +1,10 @@
 """CPU metrics tests."""
 
 import time
-from typing import assert_type
 
 import psutil
 import pytest
+from typing_extensions import assert_type
 
 import pyprocmetrix
 
