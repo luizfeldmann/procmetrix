@@ -212,6 +212,8 @@ static PyObject* get_proc_environ(PyObject* self, PyObject* args)
     for (size_t i = 0; i < proc_environ.count; ++i)
     {
         procmetrix_proc_environ_var_t* var = &proc_environ.vars[i];
+        if (NULL == var->name || NULL == var->value)
+            continue;
 
         PyObject* value = PyUnicode_FromString(var->value);
 

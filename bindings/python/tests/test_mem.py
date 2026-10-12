@@ -51,8 +51,11 @@ class TestVirtualMemory:
             assert my_vmem.shared == pytest.approx(their_vmem.shared, rel)
         else:
             assert my_vmem.buffers == 0
-            assert my_vmem.cached == 0
             assert my_vmem.shared == 0
+
+            # we implement 'cached' for Windows but psutil (<=7.2.2) doesn't
+            if helpers.IS_WINDOWS:
+                assert my_vmem.cached != 0
 
     def test_types_virtual_memory(self):
         """Check the stub and runtime types for virtual memory."""

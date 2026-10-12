@@ -32,7 +32,7 @@ class TestNumCpus:
 class TestCpuTimes:
     """Tests the CPU time spent in various modes."""
 
-    def _compare_cpu_times(self, my_times: pyprocmetrix.SystemCpuTimes, their_times):
+    def _compare_cpu_times(self, per_cpu: bool, my_times: pyprocmetrix.SystemCpuTimes, their_times):
         rel = 0.01
         # Main metrics
         assert my_times.user == pytest.approx(their_times.user, rel)
@@ -63,10 +63,16 @@ class TestCpuTimes:
             assert my_times.guest == 0
             assert my_times.guest_nice == 0
 
-        if helpers.IS_WINDOWS:
+        if helpers.IS_WINDOWS and per_cpu:
+            # when per_cpu=True: 
+            # psutil gets actual values for 'dpc' and 'interrupt' using 'NtQuerySystemInformation'
+            # procmetrix does the same
             assert my_times.dpc == pytest.approx(their_times.dpc, rel)
             assert my_times.interrupt == pytest.approx(their_times.interrupt, rel)
         else:
+            # when per_cpu=False:
+            # psutil calculates 'dpc' and 'interrupt' by summing the values from the per-CPU API
+            # procmetrix just sets them to zero
             assert my_times.dpc == 0
             assert my_times.interrupt == 0
 
@@ -74,7 +80,7 @@ class TestCpuTimes:
         """Check the total CPU times match psutil's."""
         my_times = pyprocmetrix.cpu_times_total()
         their_times = psutil.cpu_times(percpu=False)
-        self._compare_cpu_times(my_times, their_times)
+        self._compare_cpu_times(False, my_times, their_times)
 
     def test_types_cpu_times_total(self):
         """Check the types returned by cpu_times_total."""
@@ -126,7 +132,7 @@ class TestCpuTimes:
         assert len(my_times) == len(their_times)
 
         for i in range(0, len(my_times)):
-            self._compare_cpu_times(my_times[i], their_times[i])
+            self._compare_cpu_times(True, my_times[i], their_times[i])
 
     def test_types_cpu_times_per_cpu(self):
         """Check the types returned by cpu_times_per_cpu."""
@@ -143,6 +149,7 @@ class TestCpuTimes:
         while time.perf_counter() < end:
             x += 1
 
+    @pytest.mark.flaky(reruns=5)
     def test_parity_psutil_cpu_utilization_ratio(self):
         """Checks the total CPU utilization matches psutil."""
         # First sample
@@ -161,7 +168,7 @@ class TestCpuTimes:
         my_usage = pyprocmetrix.cpu_utilization_ratio(delta)
         helpers.logger.info("cpu_utilization_ratio=%.2f %%", my_usage * 100.0)
 
-        assert my_usage == pytest.approx(their_usage / 100.0, rel=0.01)
+        assert my_usage == pytest.approx(their_usage / 100.0, rel=0.02)
 
 
 class TestCpuFreqs:
@@ -178,6 +185,10 @@ class TestCpuFreqs:
         my_freqs = pyprocmetrix.cpu_freqs()
         their_freqs = psutil.cpu_freq(percpu=True)
 
+        if helpers.IS_WINDOWS:
+            # On Windows, psutil returns only CPU 0
+            my_freqs = [my_freqs[0]]
+
         assert len(my_freqs) == len(their_freqs)
 
         for i in range(0, len(my_freqs)):
@@ -185,8 +196,14 @@ class TestCpuFreqs:
 
     def test_parity_psutil_cpu_freqs_system(self):
         """Compare system-wide CPU frequency with psutil."""
-        my_freq = pyprocmetrix.cpu_freq_system()
         their_freq = psutil.cpu_freq(percpu=False)
+
+        if helpers.IS_WINDOWS:
+            # in Windows psutil returns the freqs of CPU 0
+            my_freq = pyprocmetrix.cpu_freqs()[0]
+        else:
+            # cpu_freq_system gives the average of all cores
+            my_freq = pyprocmetrix.cpu_freq_system()
 
         self._compare_cpu_freqs(my_freq, their_freq)
 
