@@ -33,10 +33,11 @@ jobs:
             jq \
             git \
             build-essential \
-            gcovr \
+            llvm \
             cmake \
             clang \
             clang-tidy \
+            libclang-rt-dev \
             python3 \
             python3-pip \
             python3-venv
@@ -77,7 +78,11 @@ jobs:
         if: inputs.coverage
         run: |
           mkdir -p coverage
-          gcovr --root . --filter "^src/" --cobertura coverage/cobertura.xml --html-details coverage/index.html
+          llvm-profdata merge -sparse $(find build -type f -name '*.profraw') -o coverage/coverage.profdata
+          UNIT_TESTS=$(find build -type f -name 'unitTests' | head -n 1)
+          llvm-cov export -format=lcov -instr-profile=coverage/coverage.profdata "$UNIT_TESTS" src > coverage/coverage.lcov
+          llvm-cov show -format=html -instr-profile=coverage/coverage.profdata --output-dir=coverage "$UNIT_TESTS" src
+          sed -i "s|^SF:$PWD/|SF:|g" coverage/coverage.lcov
 
       - name: Upload coverage
         if: inputs.coverage

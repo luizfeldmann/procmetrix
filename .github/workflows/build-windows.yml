@@ -58,14 +58,19 @@ jobs:
 
       - name: Coverage
         if: inputs.coverage
-        shell: cmd
+        shell: pwsh
         run: |
-          if not exist coverage mkdir coverage
-          dir /s /b build\*.profraw > coverage\profraws.txt
-          dir /s /b build\unitTests.exe > coverage\unitTests.txt
-          llvm-profdata merge -sparse @coverage\profraws.txt -o coverage\coverage.profdata
-          llvm-cov export -format=lcov -instr-profile=coverage\coverage.profdata @coverage\unitTests.txt src > coverage\coverage.lcov
-          llvm-cov show -format=html -instr-profile=coverage\coverage.profdata --output-dir=coverage @coverage\unitTests.txt src
+          New-Item -ItemType Directory -Force -Path coverage | Out-Null
+
+          $profraws = Get-ChildItem build -Recurse -Filter *.profraw | Select-Object -ExpandProperty FullName
+          $unitTests = $unitTests = Get-ChildItem build -Recurse -Filter unitTests.exe | Select-Object -First 1 -ExpandProperty FullName
+
+          llvm-profdata merge -sparse $profraws -o coverage\coverage.profdata
+          llvm-cov export -format=lcov -instr-profile="coverage\coverage.profdata" $unitTests src > "coverage\coverage.lcov"
+          llvm-cov show -format=html -instr-profile="coverage\coverage.profdata" --output-dir=coverage $unitTests src
+
+          $root = [regex]::Escape((Get-Location).Path)
+          (Get-Content "coverage/coverage.lcov") -replace "^SF:$root[\\/]", 'SF:' -replace '\\', '/' | Set-Content "coverage/coverage.lcov"
 
       - name: Upload coverage
         if: inputs.coverage
