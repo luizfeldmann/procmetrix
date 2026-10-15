@@ -30,11 +30,11 @@ A lightweight C library for retrieving system metrics such as CPU utilization, f
 - C99 or newer
 
 - **Build requiremens**
-    - Conan
-    - CMake
+  - Conan
+  - CMake
 
 - **Testing requirements**
-    - GTest
+  - GTest
 
 # Building
 
@@ -58,6 +58,7 @@ ctest
 The latest documentation is [published here](https://luizfeldmann.github.io/procmetrix/).
 
 You can also build the docs yourself by running:
+
 ```sh
 doxygen
 ```

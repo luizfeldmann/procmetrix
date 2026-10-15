@@ -14,8 +14,8 @@ Checks: >
   -readability-function-cognitive-complexity,
   -readability-magic-numbers,
 
-WarningsAsErrors: '*'
-HeaderFilterRegex: 'src/.*|include/.*'
+WarningsAsErrors: "*"
+HeaderFilterRegex: "src/.*|include/.*"
 FormatStyle: file
 
 CheckOptions:
@@ -48,7 +48,7 @@ CheckOptions:
     value: lower_case
 
   - key: readability-identifier-length.IgnoredVariableNames
-    value: 'fd|fp'
+    value: "fd|fp"
 
   # Members
   - key: readability-identifier-naming.MemberCase
