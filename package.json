@@ -1,0 +1,51 @@
+{
+  "name": "procmetrix",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": {
+    "name": "Luiz Gustavo Pfitscher e Feldmann"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luizfeldmann/procmetrix"
+  },
+  "scripts": {
+    "lint:check": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format:check": "prettier . --check",
+    "format:fix": "prettier . --write",
+    "build": "vite build",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "os": [
+    "linux",
+    "win32",
+    "freebsd"
+  ],
+  "type": "module",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "@typescript-eslint/eslint-plugin": "^8.71.2",
+    "@typescript-eslint/parser": "^8.71.2",
+    "eslint": "^10.12.0",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  },
+  "files": []
+}
