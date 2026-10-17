@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 jobs:
-  lint:
+  lint-cpp-python:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -33,10 +33,33 @@ jobs:
         run: |
           CONAN_VERSION=$(conan inspect . --format=json | jq -r .version)
           PYTHON_VERSION=$(yq -r '.project.version' pyproject.toml)
+          NODEJS_VERSION=$(jq -r .version package.json)
 
-          if [ "$CONAN_VERSION" != "$PYTHON_VERSION" ]; then
+          if [ "$CONAN_VERSION" != "$PYTHON_VERSION" ] || \
+             [ "$CONAN_VERSION" != "$NODEJS_VERSION" ]; then
             echo "Version mismatch:"
             echo " Conan: $CONAN_VERSION"
             echo " Python: $PYTHON_VERSION"
+            echo " NodeJS: $NODEJS_VERSION"
             exit 1
           fi
+
+  # Format and lint node package
+  lint-nodejs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: npm install
+        run: npm ci
+
+      - name: prettier
+        run: npm run format:check
+
+      - name: eslint
+        run: npm run lint:check

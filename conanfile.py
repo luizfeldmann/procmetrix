@@ -59,6 +59,10 @@ class Recipe(ConanFile):
     def _build_python(self):
         return self.conf.get("user.procmetrix:build_python", default=False, check_type=bool)
 
+    @property
+    def _build_nodejs(self):
+        return self.conf.get("user.procmetrix:build_nodejs", default=False, check_type=bool)
+
     def build_requirements(self):
         if self._build_tests:
             self.test_requires("gtest/1.16.0")
@@ -72,6 +76,7 @@ class Recipe(ConanFile):
 
         tc = CMakeToolchain(self)
         tc.cache_variables["PROCMETRIX_BUILD_PYTHON"] = self._build_python
+        tc.cache_variables["PROCMETRIX_BUILD_NODEJS"] = self._build_nodejs
         tc.cache_variables["PROCMETRIX_BUILD_TESTS"] =  self._build_tests
         tc.cache_variables["PROCMETRIX_SHARED"] = self.options.shared
 

@@ -16,7 +16,10 @@
     "format:fix": "prettier . --write",
     "build": "vite build",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "conan:build": "conan build . --profile=default --profile=conan/profiles/nodejs-bindings",
+    "cmake:install": "cmake --install build/Release --component=NodeBinding --prefix=dist",
+    "postinstall": "npm run conan:build && npm run cmake:install"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -35,6 +38,9 @@
       "require": "./dist/index.cjs"
     }
   },
+  "dependencies": {
+    "node-addon-api": "^8.9.2"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.5",
@@ -45,7 +51,17 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2",
     "vite": "^8.3.4",
+    "vite-plugin-dts": "^5.1.2",
     "vitest": "^5.0.5"
   },
-  "files": []
+  "files": [
+    "CMakeLists.txt",
+    "conanfile.py",
+    "conan/profiles/nodejs-bindings",
+    "src",
+    "include",
+    "bindings/nodejs/CMakeLists.txt",
+    "bindings/nodejs/src",
+    "dist/**/*.{js,cjs,d.ts,map}"
+  ]
 }

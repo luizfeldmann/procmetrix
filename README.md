@@ -17,6 +17,7 @@ A lightweight C library for retrieving system metrics such as CPU utilization, f
 - No dependencies
 - Written in C
 - Bindings for Python available
+- Bindings for NodeJS available
 
 ## Supported operating systems
 
@@ -51,6 +52,10 @@ To build the language bindings as well:
 # Build also the CPython extension
 # (This only compiles the .so/.pyd, see below how to build a wheel)
 conan build . --profile=default --profile=conan/profiles/python-bindings
+
+# Build the NodeJS addon
+# (This only compiles the .node addon, see below how to build an npm package)
+conan build . --profile=default --profile=conan/profiles/nodejs-bindings
 ```
 
 To build the _Python_ wheels:
@@ -58,6 +63,20 @@ To build the _Python_ wheels:
 ```sh
 pip install build
 python -m build
+```
+
+To build the _npm_ package
+
+```sh
+npm install
+# Build the JavaScript part of the bindings:
+npm run build
+# Build the native part of the bindings:
+npm run conan:build
+# Copy the native build and js build to the same dir:
+npm run cmake:install
+# Package to a .tgz
+npm pack
 ```
 
 # Testing
@@ -74,6 +93,14 @@ Run tests of the _Python_ module with:
 ```sh
 pip install ".[test]"
 pytest
+```
+
+Run tests of the npm package (in development mode) with:
+
+```sh
+npm install
+npm run conan:build
+npm run test
 ```
 
 # Documentation

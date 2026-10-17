@@ -123,3 +123,7 @@ if(PROCMETRIX_BUILD_PYTHON)
     add_subdirectory(bindings/python)
 endif()
 
+option(PROCMETRIX_BUILD_NODEJS "Build NodeJS Bindings" OFF)
+if (PROCMETRIX_BUILD_NODEJS)
+    add_subdirectory(bindings/nodejs)
+endif()
