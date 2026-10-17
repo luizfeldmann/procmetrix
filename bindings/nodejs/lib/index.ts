@@ -16,8 +16,7 @@ function findAddonInBuildTree() {
     throw new Error("Multiple builds present in the build tree");
 
   // Single match
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require(matches[0]);
+  return matches[0];
 }
 
 //! Indicates if this is running as npm run dev or after a build
@@ -25,12 +24,17 @@ declare const __PROCMETRIX_DEV__: boolean;
 
 //! Finds and loads the addon (.node) file
 function findAddon() {
-  // This is a built deployment load the addon from this module
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  if (!__PROCMETRIX_DEV__) return require("./native/procmetrix.node");
+  let addon_path;
+  if (!__PROCMETRIX_DEV__) {
+    // This is a built deployment, load the addon from this module
+    addon_path = "./native/procmetrix.node";
+  } else {
+    // Editable mode, find the built file in the source tree
+    addon_path = findAddonInBuildTree();
+  }
 
-  // Editable mode, find the built file in the source tree
-  return findAddonInBuildTree();
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require(addon_path);
 }
 export interface Procmetrix {
   add(a: number, b: number): number;

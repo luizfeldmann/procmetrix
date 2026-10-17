@@ -1,3 +1,5 @@
+# This target uses C++
+enable_language(CXX)
 
 # Find Node
 find_program(NODE_EXECUTABLE node REQUIRED)

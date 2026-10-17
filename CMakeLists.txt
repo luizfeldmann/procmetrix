@@ -98,7 +98,6 @@ endif()
 option(PROCMETRIX_BUILD_TESTS "Build unit tests" ON)
 
 if(PROCMETRIX_BUILD_TESTS)
-    enable_language(CXX)
     enable_testing()
     add_subdirectory(tests)
 endif()

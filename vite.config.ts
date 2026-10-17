@@ -16,6 +16,7 @@ export default defineConfig(({ command }) => ({
     __PROCMETRIX_DEV__: command === "serve",
   },
   build: {
+    minify: false,
     sourcemap: true,
     lib: {
       entry: "bindings/nodejs/lib/index.ts",
@@ -27,7 +28,11 @@ export default defineConfig(({ command }) => ({
     },
     rollupOptions: {
       // Native addon (.node) is not bundled by vite
-      external: [/procmetrix\.node$/],
+      external: [/node:/, /procmetrix\.node$/],
+      output: {
+        exports: "named",
+      },
+      platform: "node",
     },
   },
   test: {

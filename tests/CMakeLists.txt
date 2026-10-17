@@ -1,3 +1,6 @@
+# This target uses C++
+enable_language(CXX)
+
 # Use CTest
 include(CTest)
 
