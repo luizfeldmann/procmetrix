@@ -1,4 +1,5 @@
 [conf]
+user.procmetrix:build_python=True
 user.procmetrix:install_component=PythonBinding
 
 [buildenv]

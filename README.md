@@ -38,19 +38,42 @@ A lightweight C library for retrieving system metrics such as CPU utilization, f
 
 # Building
 
-Build using [conan](https://conan.io/):
+Build the _C_ library using [conan](https://conan.io/):
 
 ```sh
+# Build only the C library
 conan build .
+```
+
+To build the language bindings as well:
+
+```sh
+# Build also the CPython extension
+# (This only compiles the .so/.pyd, see below how to build a wheel)
+conan build . --profile=default --profile=conan/profiles/python-bindings
+```
+
+To build the _Python_ wheels:
+
+```sh
+pip install build
+python -m build
 ```
 
 # Testing
 
-Run unit tests with:
+Run unit tests of the _C_ library with:
 
 ```sh
 cd build/Release
 ctest
+```
+
+Run tests of the _Python_ module with:
+
+```sh
+pip install ".[test]"
+pytest
 ```
 
 # Documentation

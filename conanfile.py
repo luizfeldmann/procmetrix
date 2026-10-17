@@ -50,6 +50,10 @@ class Recipe(ConanFile):
     def _skip_tests(self):
         return self.conf.get("tools.build:skip_test", default=False)
 
+    @property
+    def _build_python(self):
+        return self.conf.get("user.procmetrix:build_python", default=False, check_type=bool)
+
     def build_requirements(self):
         if not self._skip_tests:
             self.test_requires("gtest/1.16.0")
@@ -62,6 +66,7 @@ class Recipe(ConanFile):
         deps.generate()
 
         tc = CMakeToolchain(self)
+        tc.cache_variables["PROCMETRIX_BUILD_PYTHON"] = self._build_python
         tc.cache_variables["PROCMETRIX_BUILD_TESTS"] = not self._skip_tests
         tc.cache_variables["PROCMETRIX_SHARED"] = self.options.shared
 

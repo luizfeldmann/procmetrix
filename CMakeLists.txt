@@ -118,4 +118,8 @@ install(
         COMPONENT Development)
 
 # Build language bindings
-add_subdirectory(bindings/python)
+option(PROCMETRIX_BUILD_PYTHON "Build Python Bindings" OFF)
+if(PROCMETRIX_BUILD_PYTHON)
+    add_subdirectory(bindings/python)
+endif()
+
