@@ -15,7 +15,7 @@ Checks: >
   -readability-magic-numbers,
 
 WarningsAsErrors: "*"
-HeaderFilterRegex: "src/.*|include/.*"
+HeaderFilterRegex: "^(src|include|bindings|tests)/.*"
 FormatStyle: file
 
 CheckOptions:

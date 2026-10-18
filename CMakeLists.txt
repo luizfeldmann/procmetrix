@@ -22,6 +22,7 @@ target_sources(
         "src/algo.c"
         "src/cpu.c"
         "src/proc.c"
+        "src/error.c"
     # GENERATED FILES
         "${VERSION_FILE}"
     # PUBLIC INCLUDES
