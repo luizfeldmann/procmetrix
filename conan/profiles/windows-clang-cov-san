@@ -10,6 +10,8 @@ compiler.runtime_version=v144
 
 [conf]
 user.procmetrix:run_tests=True
+user.procmetrix:build_python=True
+user.procmetrix:build_nodejs=True
 user.procmetrix:profile_name=windows-clang-cov-san
 
 tools.cmake.cmaketoolchain:generator=Ninja

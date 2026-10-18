@@ -9,6 +9,8 @@ compiler.cppstd=gnu17
 
 [conf]
 user.procmetrix:run_tests=True
+user.procmetrix:build_python=True
+user.procmetrix:build_nodejs=True
 user.procmetrix:profile_name=linux-clang-cov-san
 
 tools.build:compiler_executables={"c": "clang", "cpp": "clang++"}
