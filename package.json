@@ -17,7 +17,7 @@
     "build": "vite build",
     "test": "vitest run",
     "clean": "rm -rf dist",
-    "conan:build": "conan build . --profile=default --profile=conan/profiles/nodejs-bindings",
+    "conan:build": "conan build . --profile=conan/profiles/nodejs-bindings",
     "cmake:install": "cmake --install build/Release --component=NodeBinding --prefix=dist",
     "postinstall": "npm run conan:build && npm run cmake:install"
   },
@@ -64,5 +64,10 @@
     "bindings/nodejs/CMakeLists.txt",
     "bindings/nodejs/src",
     "dist/**/*.{js,cjs,d.ts,map}"
-  ]
+  ],
+  "binary": {
+    "napi_versions": [
+      8
+    ]
+  }
 }
