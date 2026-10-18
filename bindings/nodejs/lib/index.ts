@@ -1,3 +1,5 @@
+import { Procmetrix } from "./procmetrix";
+
 //! Finds the addon in the native build tree
 function findAddonInBuildTree() {
   // glob is a dev dependency
@@ -35,9 +37,6 @@ function findAddon() {
 
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require(addon_path);
-}
-export interface Procmetrix {
-  add(a: number, b: number): number;
 }
 
 const procmetrix = findAddon() as Procmetrix;

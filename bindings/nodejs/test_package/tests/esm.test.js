@@ -1,8 +1,10 @@
+import os from "node:os";
 import { describe, expect, test } from "vitest";
 import procmetrix from "procmetrix";
 
 describe("ESM import", () => {
-  test("add", () => {
-    expect(procmetrix.add(1, 2)).toBe(3);
+  test("CPUs count", () => {
+    const ncpu = os.cpus().length;
+    expect(procmetrix.cpu_count_logical()).toBe(ncpu);
   });
 });
