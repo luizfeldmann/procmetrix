@@ -50,7 +50,8 @@ target_include_directories(procmetrix-js PUBLIC "src")
 
 target_link_libraries(procmetrix-js PRIVATE
     node-headers
-    node-addon-api)
+    node-addon-api
+    procmetrix)
 
 set_target_properties(procmetrix-js PROPERTIES
     PREFIX "" 
