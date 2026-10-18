@@ -38,9 +38,6 @@
       "require": "./dist/index.cjs"
     }
   },
-  "dependencies": {
-    "node-addon-api": "^8.9.2"
-  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.5",
