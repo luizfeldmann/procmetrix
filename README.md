@@ -68,13 +68,10 @@ python -m build
 To build the _npm_ package
 
 ```sh
+# Build the native part of the bindings:
 npm install
 # Build the JavaScript part of the bindings:
 npm run build
-# Build the native part of the bindings:
-npm run conan:build
-# Copy the native build and js build to the same dir:
-npm run cmake:install
 # Package to a .tgz
 npm pack
 ```

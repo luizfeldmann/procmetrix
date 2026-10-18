@@ -146,6 +146,8 @@ jobs:
       contents: read
     with:
       runs-on: ubuntu-latest
+      lint: true
+      upload-npm-artifact: true
     needs:
       - linux-debug
       - linux-release

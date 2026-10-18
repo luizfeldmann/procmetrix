@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 jobs:
-  lint-cpp-python:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -43,23 +43,3 @@ jobs:
             echo " NodeJS: $NODEJS_VERSION"
             exit 1
           fi
-
-  # Format and lint node package
-  lint-nodejs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: package.json
-          cache: npm
-
-      - name: npm install
-        run: npm ci
-
-      - name: prettier
-        run: npm run format:check
-
-      - name: eslint
-        run: npm run lint:check

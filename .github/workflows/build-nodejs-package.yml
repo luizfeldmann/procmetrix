@@ -4,6 +4,10 @@ on:
       runs-on:
         type: string
         required: true
+      lint:
+        type: boolean
+        required: false
+        default: false
       upload-npm-artifact:
         type: boolean
         required: false
@@ -33,18 +37,21 @@ jobs:
       - name: Install conan
         run: pip install conan && conan profile detect --force
 
-      - name: Install dependencies
+      - name: Install
         run: npm ci
 
-      - name: Build loader
+      - name: prettier
+        if: ${{ inputs.lint }}
+        run: npm run format:check
+
+      - name: eslint
+        if: ${{ inputs.lint }}
+        run: npm run lint:check
+
+      - name: Build
         run: npm run build
 
-      - name: Build bindings
-        run: |
-          npm run conan:build
-          npm run cmake:install
-
-      - name: Unit Tests
+      - name: Unit tests
         run: npm run test
 
       - name: Pack
