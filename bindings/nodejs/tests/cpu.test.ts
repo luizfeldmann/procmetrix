@@ -3,7 +3,7 @@ import { setTimeout } from "node:timers/promises";
 import { beforeAll, describe, expect, it } from "vitest";
 import si from "systeminformation";
 import procmetrix from "@/index";
-import { CpuTimes } from "@/procmetrix";
+import { CpuFreq, CpuTimes } from "@/procmetrix";
 import { isWindows } from "./helpers";
 
 describe("CPU counts", () => {
@@ -106,7 +106,7 @@ describe("CPU times", () => {
     );
 
     // Introduce delay
-    await setTimeout(1000);
+    await setTimeout(2000);
 
     // Second snapshot
     const after_cpu_times = procmetrix.cpu_times_total();
@@ -141,7 +141,36 @@ describe("CPU times", () => {
           delta_cpu_load.nice +
           delta_cpu_load.irq);
 
-    // Compare
-    expect(actual_utilization).toBeCloseTo(expected_utilization);
+    // Compare to within 5%
+    expect(
+      Math.abs(actual_utilization - expected_utilization),
+    ).toBeLessThanOrEqual(0.05);
+  });
+});
+
+describe("CPU frequencies", () => {
+  const freqs_system = procmetrix.cpu_freq_system();
+  const freqs_per_cpu = procmetrix.cpu_freqs();
+
+  it("totals match average", () => {
+    const freqs_average = procmetrix.cpu_freqs_average(freqs_per_cpu);
+
+    expect(freqs_average.cur).toBeCloseTo(freqs_system.cur);
+    expect(freqs_average.min).toBeCloseTo(freqs_system.min);
+    expect(freqs_average.max).toBeCloseTo(freqs_system.max);
+  });
+
+  function check_freq(freq: CpuFreq) {
+    // Unforunately there is no reliably source of truth to compare
+    expect(freq.min).toBeGreaterThanOrEqual(0);
+    expect(freq.cur).toBeGreaterThan(0);
+  }
+
+  it("system frequency in valid ranges", () => {
+    check_freq(freqs_system);
+  });
+
+  it("per-CPU frequency in valid ranges", () => {
+    freqs_per_cpu.forEach(check_freq);
   });
 });

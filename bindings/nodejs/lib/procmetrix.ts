@@ -18,6 +18,15 @@ export interface CpuTimes {
 }
 
 /**
+ * The current frequency and scaling range for a CPU, in Mhz
+ */
+export interface CpuFreq {
+  cur: number;
+  min: number;
+  max: number;
+}
+
+/**
  * Library for retrieving system and process metrics.
  */
 export interface Procmetrix {
@@ -56,4 +65,19 @@ export interface Procmetrix {
    * from the given time difference.
    */
   cpu_utilization_ratio(cpu_times: CpuTimes): number;
+
+  /**
+   * Reads the frequencies for each CPU.
+   */
+  cpu_freqs(): CpuFreq[];
+
+  /**
+   * Calculates the average frequency from the array of per-CPU frequencies.
+   */
+  cpu_freqs_average(cpu_freqs: CpuFreq[]): CpuFreq;
+
+  /**
+   * Estimates the system-wide CPU frequencies in MHz.
+   */
+  cpu_freq_system(): CpuFreq;
 }
