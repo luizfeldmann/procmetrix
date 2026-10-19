@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import si from "systeminformation";
 import procmetrix from "@/index";
 import { CpuTimes } from "@/procmetrix";
+import { isWindows } from "./helpers";
 
 describe("CPU counts", () => {
   let si_physical_cores: number;
@@ -29,13 +30,28 @@ describe("CPU counts", () => {
 type OsCpuTimes = os.CpuInfo["times"];
 
 describe("CPU times", () => {
-  function check_times(cpu_times: CpuTimes, cpu_load: OsCpuTimes) {
+  function check_times(
+    cpu_times: CpuTimes,
+    cpu_load: OsCpuTimes,
+    mode: "total" | "percpu",
+  ) {
     const numDigits = 1; // 1 decimal second tolerance
     expect(cpu_times.user).toBeCloseTo(cpu_load.user, numDigits);
     expect(cpu_times.system).toBeCloseTo(cpu_load.sys, numDigits);
     expect(cpu_times.idle).toBeCloseTo(cpu_load.idle, numDigits);
     expect(cpu_times.nice).toBeCloseTo(cpu_load.nice, numDigits);
-    expect(cpu_times.irq).toBeCloseTo(cpu_load.irq, numDigits);
+
+    // On Windows, SI reports interrupt time as "irq"
+    if (isWindows) {
+      expect(cpu_times.irq).toBe(0);
+
+      // Procmetrix only returns interrupt times on the per-CPU report
+      if (mode == "percpu")
+        expect(cpu_times.interrupt).toBeCloseTo(cpu_load.irq, numDigits);
+      else expect(cpu_times.interrupt).toBe(0);
+    } else {
+      expect(cpu_times.irq).toBeCloseTo(cpu_load.irq, numDigits);
+    }
   }
 
   function accumulate_cpu_times(times: OsCpuTimes[]) {
@@ -59,7 +75,7 @@ describe("CPU times", () => {
     // Accumulate totals from per-cpu array, convert from [ms] to [s]
     const cpu_load = accumulate_cpu_times(os.cpus().map((cpu) => cpu.times));
 
-    check_times(cpu_times, cpu_load);
+    check_times(cpu_times, cpu_load, "total");
   });
 
   it("matches per-cpu load", () => {
@@ -79,7 +95,7 @@ describe("CPU times", () => {
     // Compare pairs per-CPU
     expect(cpu_times.length).toBe(cpu_load.length);
     for (let i = 0; i < cpu_times.length; ++i)
-      check_times(cpu_times[i], cpu_load[i]);
+      check_times(cpu_times[i], cpu_load[i], "percpu");
   });
 
   it("matches utilization ratio", async () => {
