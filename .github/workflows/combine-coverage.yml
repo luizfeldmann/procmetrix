@@ -14,7 +14,7 @@ jobs:
         with:
           pattern: coverage-*
           path: coverage
-      
+
       - name: Combine .lcov files
         run: |
           mkdir -p coverage/combined
@@ -23,7 +23,7 @@ jobs:
 
       - name: HTML report
         run: genhtml coverage/combined/combined-coverage.lcov --output-directory=coverage/combined
-      
+
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-combined

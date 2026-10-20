@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-    
+
       - uses: vmactions/freebsd-vm@v1
         with:
           sync: nfs
@@ -71,8 +71,8 @@ jobs:
         shell: vmsh {0}
         if: inputs.clang-tidy
         run: |
-            export PATH="/usr/local/llvm19/bin:$PATH"
-            run-clang-tidy -quiet -p "$(find build -name compile_commands.json -printf '%h\n' | head -n1)"
+          export PATH="/usr/local/llvm19/bin:$PATH"
+          run-clang-tidy -quiet -p "$(find build -name compile_commands.json -printf '%h\n' | head -n1)"
 
       - name: Coverage
         shell: vmsh {0}

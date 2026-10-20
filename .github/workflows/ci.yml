@@ -119,6 +119,7 @@ jobs:
     with:
       runs-on: ubuntu-latest
     needs:
+      - linux-debug
       - linux-release
 
   windows-python-wheels:
@@ -128,6 +129,7 @@ jobs:
     with:
       runs-on: windows-latest
     needs:
+      - windows-debug
       - windows-release
 
   freebsd-python-wheels:
@@ -136,6 +138,29 @@ jobs:
       contents: read
     needs:
       - freebsd-release
+
+  # Build NodeJS packages
+  linux-nodejs-package:
+    uses: ./.github/workflows/build-nodejs-package.yml
+    permissions:
+      contents: read
+    with:
+      runs-on: ubuntu-latest
+      lint: true
+      upload-npm-artifact: true
+    needs:
+      - linux-debug
+      - linux-release
+
+  windows-nodejs-package:
+    uses: ./.github/workflows/build-nodejs-package.yml
+    permissions:
+      contents: read
+    with:
+      runs-on: windows-latest
+    needs:
+      - windows-debug
+      - windows-release
 
   # Publish Doxygen as GitHub Pages
   docs-publish:
@@ -147,22 +172,14 @@ jobs:
       - docs-generate
       - combine-coverage
 
-      # Requires all builds to pass
-      - linux-release
-      - linux-debug
-      - linux-clang-cov-san
-
-      - windows-release
-      - windows-debug
-      - windows-clang-cov-san
-
-      - freebsd-release
-      - freebsd-debug-cov-san
-
       # Require Python bindings to pass
       - linux-python-wheels
       - windows-python-wheels
       - freebsd-python-wheels
+
+      # Require NodeJS bindings to pass
+      - linux-nodejs-package
+      - windows-nodejs-package
 
     uses: ./.github/workflows/docs-publish.yml
 

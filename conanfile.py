@@ -47,11 +47,24 @@ class Recipe(ConanFile):
         self.settings.rm_safe("compiler.cppstd")
 
     @property
-    def _skip_tests(self):
-        return self.conf.get("tools.build:skip_test", default=False)
+    def _build_tests(self):
+        return not self.conf.get("tools.build:skip_test", default=False)
+
+    @property
+    def _run_tests(self):
+        run_tests = self.conf.get("user.procmetrix:run_tests", default=False, check_type=bool)
+        return run_tests and self._build_tests
+
+    @property
+    def _build_python(self):
+        return self.conf.get("user.procmetrix:build_python", default=False, check_type=bool)
+
+    @property
+    def _build_nodejs(self):
+        return self.conf.get("user.procmetrix:build_nodejs", default=False, check_type=bool)
 
     def build_requirements(self):
-        if not self._skip_tests:
+        if self._build_tests:
             self.test_requires("gtest/1.16.0")
     
     def layout(self):
@@ -62,7 +75,9 @@ class Recipe(ConanFile):
         deps.generate()
 
         tc = CMakeToolchain(self)
-        tc.cache_variables["PROCMETRIX_BUILD_TESTS"] = not self._skip_tests
+        tc.cache_variables["PROCMETRIX_BUILD_PYTHON"] = self._build_python
+        tc.cache_variables["PROCMETRIX_BUILD_NODEJS"] = self._build_nodejs
+        tc.cache_variables["PROCMETRIX_BUILD_TESTS"] =  self._build_tests
         tc.cache_variables["PROCMETRIX_SHARED"] = self.options.shared
 
         major, minor, patch = self.version.split(".")
@@ -78,8 +93,7 @@ class Recipe(ConanFile):
         cmake.build()
 
         # In the CI, run tests after the build
-        run_tests = self.conf.get("user.procmetrix:run_tests", default=False, check_type=bool)
-        if run_tests:
+        if self._run_tests:
             profile_name = self.conf.get("user.procmetrix:profile_name", default="default", check_type=str)
 
             cmake.ctest(cli_args=[

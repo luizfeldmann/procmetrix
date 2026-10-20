@@ -22,6 +22,7 @@ target_sources(
         "src/algo.c"
         "src/cpu.c"
         "src/proc.c"
+        "src/error.c"
     # GENERATED FILES
         "${VERSION_FILE}"
     # PUBLIC INCLUDES
@@ -98,7 +99,6 @@ endif()
 option(PROCMETRIX_BUILD_TESTS "Build unit tests" ON)
 
 if(PROCMETRIX_BUILD_TESTS)
-    enable_language(CXX)
     enable_testing()
     add_subdirectory(tests)
 endif()
@@ -118,4 +118,12 @@ install(
         COMPONENT Development)
 
 # Build language bindings
-add_subdirectory(bindings/python)
+option(PROCMETRIX_BUILD_PYTHON "Build Python Bindings" OFF)
+if(PROCMETRIX_BUILD_PYTHON)
+    add_subdirectory(bindings/python)
+endif()
+
+option(PROCMETRIX_BUILD_NODEJS "Build NodeJS Bindings" OFF)
+if (PROCMETRIX_BUILD_NODEJS)
+    add_subdirectory(bindings/nodejs)
+endif()

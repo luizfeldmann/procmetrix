@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./bindings/nodejs/lib"
+  },
+  "exclude": ["bindings/nodejs/tests"]
+}

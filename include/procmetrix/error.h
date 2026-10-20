@@ -42,6 +42,10 @@ extern "C"
         PROCMETRIX_NOT_IMPLEMENTED,
     } procmetrix_error_t;
 
+    //! Gets an error message string from the error code.
+    //! @details The returned pointer has static storage.
+    const char* procmetrix_error_message(procmetrix_error_t err);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

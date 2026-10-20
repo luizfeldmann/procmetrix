@@ -1,0 +1,14 @@
+{
+  "name": "procmetrix-test-package",
+  "private": "true",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "procmetrix": "file:deps/procmetrix.tgz"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.5"
+  }
+}

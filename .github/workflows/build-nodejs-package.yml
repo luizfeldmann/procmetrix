@@ -1,0 +1,90 @@
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        required: true
+      lint:
+        type: boolean
+        required: false
+        default: false
+      upload-npm-artifact:
+        type: boolean
+        required: false
+        default: false
+      upload-node-addon:
+        type: boolean
+        required: false
+        default: true
+
+jobs:
+  build-nodejs-package:
+    runs-on: ${{ inputs.runs-on }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install conan
+        run: pip install conan && conan profile detect --force
+
+      - name: Install
+        run: npm ci
+
+      - name: prettier
+        if: ${{ inputs.lint }}
+        run: npm run format:check
+
+      - name: eslint
+        if: ${{ inputs.lint }}
+        run: npm run lint:check
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Pack
+        id: pack
+        shell: bash
+        run: |
+          mkdir -p out
+          NPM_TGZ=out/$(npm pack --pack-destination out)
+          echo "NPM_TGZ=$NPM_TGZ" >> "$GITHUB_OUTPUT"
+
+      - name: Copy to test package
+        shell: bash
+        run: cp "${{ steps.pack.outputs.NPM_TGZ }}" "bindings/nodejs/test_package/deps/procmetrix.tgz"
+
+      - name: Install test package
+        working-directory: bindings/nodejs/test_package
+        run: npm install
+
+      - name: Test the package
+        working-directory: bindings/nodejs/test_package
+        run: npm run test
+
+      - name: Upload npm package
+        uses: actions/upload-artifact@v4
+        if: ${{ inputs.upload-npm-artifact }}
+        with:
+          # Source only, same for any OS
+          name: npm-package
+          path: ${{ steps.pack.outputs.NPM_TGZ }}
+
+      - name: Upload native addon
+        uses: actions/upload-artifact@v4
+        if: ${{ inputs.upload-node-addon }}
+        with:
+          name: node-addon-${{ runner.os }}
+          path: dist/native/procmetrix.node

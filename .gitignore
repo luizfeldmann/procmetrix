@@ -25,3 +25,6 @@ report
 **/__pycache__
 venv
 wheelhouse
+
+# Node
+node_modules

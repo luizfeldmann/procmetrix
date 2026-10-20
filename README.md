@@ -17,6 +17,7 @@ A lightweight C library for retrieving system metrics such as CPU utilization, f
 - No dependencies
 - Written in C
 - Bindings for Python available
+- Bindings for NodeJS available
 
 ## Supported operating systems
 
@@ -30,27 +31,73 @@ A lightweight C library for retrieving system metrics such as CPU utilization, f
 - C99 or newer
 
 - **Build requiremens**
-    - Conan
-    - CMake
+  - Conan
+  - CMake
 
 - **Testing requirements**
-    - GTest
+  - GTest
 
 # Building
 
-Build using [conan](https://conan.io/):
+Build the _C_ library using [conan](https://conan.io/):
 
 ```sh
+# Build only the C library
 conan build .
+```
+
+To build the language bindings as well:
+
+```sh
+# Build also the CPython extension
+# (This only compiles the .so/.pyd, see below how to build a wheel)
+conan build . --profile=default --profile=conan/profiles/python-bindings
+
+# Build the NodeJS addon
+# (This only compiles the .node addon, see below how to build an npm package)
+conan build . --profile=default --profile=conan/profiles/nodejs-bindings
+```
+
+To build the _Python_ wheels:
+
+```sh
+pip install build
+python -m build
+```
+
+To build the _npm_ package
+
+```sh
+# Build the native part of the bindings:
+npm install
+# Build the JavaScript part of the bindings:
+npm run build
+# Package to a .tgz
+npm pack
 ```
 
 # Testing
 
-Run unit tests with:
+Run unit tests of the _C_ library with:
 
 ```sh
 cd build/Release
 ctest
+```
+
+Run tests of the _Python_ module with:
+
+```sh
+pip install ".[test]"
+pytest
+```
+
+Run tests of the npm package (in development mode) with:
+
+```sh
+npm install
+npm run conan:build
+npm run test
 ```
 
 # Documentation
@@ -58,6 +105,7 @@ ctest
 The latest documentation is [published here](https://luizfeldmann.github.io/procmetrix/).
 
 You can also build the docs yourself by running:
+
 ```sh
 doxygen
 ```
