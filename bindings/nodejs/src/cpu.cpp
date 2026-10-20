@@ -1,6 +1,7 @@
 // Bindings
 #include "error.h"
 #include "init.h"
+#include "reflection.h"
 
 // Lib
 #include <procmetrix/cpu.h>
@@ -29,47 +30,29 @@ static Napi::Value cpu_count_logical(const Napi::CallbackInfo& info)
 }
 
 // CPU times
-struct cpu_time_field
-{
-    using cpu_time_member_t = double procmetrix_cpu_times_t::*;
 
-    const char* name;
-    cpu_time_member_t member;
+template <>
+struct reflection<procmetrix_cpu_times_t>
+{
+    using field = member_field<procmetrix_cpu_times_t, double>;
+
+    template <typename visitor_type>
+    static void accept(visitor_type&& visitor)
+    {
+        visitor(field { "user", &procmetrix_cpu_times_t::user });
+        visitor(field { "system", &procmetrix_cpu_times_t::system });
+        visitor(field { "idle", &procmetrix_cpu_times_t::idle });
+        visitor(field { "nice", &procmetrix_cpu_times_t::nice });
+        visitor(field { "iowait", &procmetrix_cpu_times_t::iowait });
+        visitor(field { "irq", &procmetrix_cpu_times_t::irq });
+        visitor(field { "softirq", &procmetrix_cpu_times_t::softirq });
+        visitor(field { "steal", &procmetrix_cpu_times_t::steal });
+        visitor(field { "guest", &procmetrix_cpu_times_t::guest });
+        visitor(field { "guestNice", &procmetrix_cpu_times_t::guest_nice });
+        visitor(field { "interrupt", &procmetrix_cpu_times_t::interrupt });
+        visitor(field { "dpc", &procmetrix_cpu_times_t::dpc });
+    }
 };
-
-static constexpr cpu_time_field g_fields_cpu_times[] = {
-    { "user", &procmetrix_cpu_times_t::user },
-    { "system", &procmetrix_cpu_times_t::system },
-    { "idle", &procmetrix_cpu_times_t::idle },
-    { "nice", &procmetrix_cpu_times_t::nice },
-    { "iowait", &procmetrix_cpu_times_t::iowait },
-    { "irq", &procmetrix_cpu_times_t::irq },
-    { "softirq", &procmetrix_cpu_times_t::softirq },
-    { "steal", &procmetrix_cpu_times_t::steal },
-    { "guest", &procmetrix_cpu_times_t::guest },
-    { "guestNice", &procmetrix_cpu_times_t::guest_nice },
-    { "interrupt", &procmetrix_cpu_times_t::interrupt },
-    { "dpc", &procmetrix_cpu_times_t::dpc },
-};
-
-static Napi::Object
-convert_cpu_times(Napi::Env env, procmetrix_cpu_times_t const& cpu_times)
-{
-    Napi::Object obj = Napi::Object::New(env);
-
-    for (const auto& field : g_fields_cpu_times)
-        obj.Set(field.name, cpu_times.*(field.member));
-
-    return obj;
-}
-
-static void
-convert_cpu_times(Napi::Object const& obj, procmetrix_cpu_times_t& cpu_times)
-{
-    for (const auto& field : g_fields_cpu_times)
-        cpu_times.*(field.member) =
-            obj.Get(field.name).As<Napi::Number>().DoubleValue();
-}
 
 static Napi::Object cpu_times_total(const Napi::CallbackInfo& info)
 {
@@ -83,7 +66,7 @@ static Napi::Object cpu_times_total(const Napi::CallbackInfo& info)
         throw make_error(env, status);
 
     // Convert
-    return convert_cpu_times(env, cpu_times);
+    return serialize(env, cpu_times);
 }
 
 static Napi::Array cpu_times_per_cpu(const Napi::CallbackInfo& info)
@@ -109,7 +92,7 @@ static Napi::Array cpu_times_per_cpu(const Napi::CallbackInfo& info)
     Napi::Array array = Napi::Array::New(env, read_count);
 
     for (size_t i = 0; i < read_count; ++i)
-        array.Set(i, convert_cpu_times(env, cpu_times[i]));
+        array.Set(i, serialize(env, cpu_times[i]));
 
     return array;
 }
@@ -122,8 +105,8 @@ static Napi::Object cpu_times_delta(const Napi::CallbackInfo& info)
     procmetrix_cpu_times_t before { 0 };
     procmetrix_cpu_times_t after { 0 };
 
-    convert_cpu_times(info[0].As<Napi::Object>(), before);
-    convert_cpu_times(info[1].As<Napi::Object>(), after);
+    parse(info[0].As<Napi::Object>(), before);
+    parse(info[1].As<Napi::Object>(), after);
 
     // Calc delta
     procmetrix_cpu_times_t delta { 0 };
@@ -133,7 +116,7 @@ static Napi::Object cpu_times_delta(const Napi::CallbackInfo& info)
     if (PROCMETRIX_ERROR_NONE != status)
         throw make_error(env, status);
 
-    return convert_cpu_times(env, delta);
+    return serialize(env, delta);
 }
 
 static Napi::Value cpu_times_sum(const Napi::CallbackInfo& info)
@@ -141,7 +124,7 @@ static Napi::Value cpu_times_sum(const Napi::CallbackInfo& info)
     Napi::Env env = info.Env();
 
     procmetrix_cpu_times_t cpu_times { 0 };
-    convert_cpu_times(info[0].As<Napi::Object>(), cpu_times);
+    parse(info[0].As<Napi::Object>(), cpu_times);
 
     const auto sum = procmetrix_cpu_times_sum(&cpu_times);
     return Napi::Number::From(env, sum);
@@ -152,7 +135,7 @@ static Napi::Value cpu_utilization_ratio(const Napi::CallbackInfo& info)
     Napi::Env env = info.Env();
 
     procmetrix_cpu_times_t cpu_times { 0 };
-    convert_cpu_times(info[0].As<Napi::Object>(), cpu_times);
+    parse(info[0].As<Napi::Object>(), cpu_times);
 
     const auto ratio = procmetrix_cpu_utilization_ratio(&cpu_times);
     return Napi::Number::From(env, ratio);
@@ -160,38 +143,19 @@ static Napi::Value cpu_utilization_ratio(const Napi::CallbackInfo& info)
 
 // CPU freqs
 
-struct cpu_freq_field
+template <>
+struct reflection<procmetrix_cpu_freq_t>
 {
-    using cpu_freq_member_t = double procmetrix_cpu_freq_t::*;
+    using field = member_field<procmetrix_cpu_freq_t, double>;
 
-    const char* name;
-    cpu_freq_member_t member;
+    template <typename visitor_type>
+    static void accept(visitor_type&& visitor)
+    {
+        visitor(field { "cur", &procmetrix_cpu_freq_t::freq_cur });
+        visitor(field { "min", &procmetrix_cpu_freq_t::freq_min });
+        visitor(field { "max", &procmetrix_cpu_freq_t::freq_max });
+    }
 };
-
-static constexpr cpu_freq_field g_fields_cpu_freq[] = {
-    { "cur", &procmetrix_cpu_freq_t::freq_cur },
-    { "min", &procmetrix_cpu_freq_t::freq_min },
-    { "max", &procmetrix_cpu_freq_t::freq_max },
-};
-
-static Napi::Object
-convert_cpu_freq(Napi::Env env, procmetrix_cpu_freq_t const& cpu_freq)
-{
-    Napi::Object obj = Napi::Object::New(env);
-
-    for (const auto& field : g_fields_cpu_freq)
-        obj.Set(field.name, cpu_freq.*(field.member));
-
-    return obj;
-}
-
-static void
-convert_cpu_freq(Napi::Object const& obj, procmetrix_cpu_freq_t& cpu_freq)
-{
-    for (const auto& field : g_fields_cpu_freq)
-        cpu_freq.*(field.member) =
-            obj.Get(field.name).As<Napi::Number>().DoubleValue();
-}
 
 static Napi::Array cpu_freqs(const Napi::CallbackInfo& info)
 {
@@ -216,7 +180,7 @@ static Napi::Array cpu_freqs(const Napi::CallbackInfo& info)
     Napi::Array array = Napi::Array::New(env, read_count);
 
     for (size_t i = 0; i < read_count; ++i)
-        array.Set(i, convert_cpu_freq(env, cpu_freqs[i]));
+        array.Set(i, serialize(env, cpu_freqs[i]));
 
     return array;
 }
@@ -232,7 +196,7 @@ static Napi::Object cpu_freqs_average(const Napi::CallbackInfo& info)
     for (size_t i = 0; i < input_array.Length(); ++i)
     {
         const auto input_item = input_array[i].AsValue().As<Napi::Object>();
-        convert_cpu_freq(input_item, cpu_freqs[i]);
+        parse(input_item, cpu_freqs[i]);
     }
 
     // Calculate the average
@@ -243,7 +207,7 @@ static Napi::Object cpu_freqs_average(const Napi::CallbackInfo& info)
     if (PROCMETRIX_ERROR_NONE != status)
         throw make_error(env, status);
 
-    return convert_cpu_freq(env, average);
+    return serialize(env, average);
 }
 
 static Napi::Object cpu_freq_system(const Napi::CallbackInfo& info)
@@ -256,7 +220,7 @@ static Napi::Object cpu_freq_system(const Napi::CallbackInfo& info)
     if (PROCMETRIX_ERROR_NONE != status)
         throw make_error(env, status);
 
-    return convert_cpu_freq(env, system_freq);
+    return serialize(env, system_freq);
 }
 
 // Init

@@ -43,6 +43,9 @@ Cpp11BracedListStyle: false
 SpaceBeforeCpp11BracedList: true
 SpacesInContainerLiterals: true
 
+# Templates
+BreakTemplateDeclarations: Yes
+
 # Scopes
 BreakBeforeBraces: Custom
 BraceWrapping:
