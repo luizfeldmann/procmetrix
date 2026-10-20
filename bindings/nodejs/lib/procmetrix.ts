@@ -27,6 +27,35 @@ export interface CpuFreq {
 }
 
 /**
+ * Statistics about system memory usage.
+ */
+export interface SystemVirtualMemory {
+  total: number;
+  available: number;
+  used: number;
+  free: number;
+  active: number;
+  inactive: number;
+  buffers: number;
+  cached: number;
+  shared: number;
+  slab: number;
+  ratio: number;
+}
+
+/**
+ * System swap memory statistics.
+ */
+export interface SystemSwapMemory {
+  total: number;
+  used: number;
+  free: number;
+  swap_in: number;
+  swap_out: number;
+  ratio: number;
+}
+
+/**
  * Library for retrieving system and process metrics.
  */
 export interface Procmetrix {
@@ -80,4 +109,14 @@ export interface Procmetrix {
    * Estimates the system-wide CPU frequencies in MHz.
    */
   cpu_freq_system(): CpuFreq;
+
+  /**
+   * Return statistics about system memory usage in bytes.
+   */
+  system_virtual_memory(): SystemVirtualMemory;
+
+  /**
+   * Return statistics about system swap memory in bytes.
+   */
+  system_swap_memory(): SystemSwapMemory;
 }

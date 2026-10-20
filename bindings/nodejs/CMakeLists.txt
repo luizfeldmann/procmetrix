@@ -48,6 +48,7 @@ target_include_directories(node-addon-api INTERFACE "${node_addon_api_SOURCE_DIR
 # Create the addon
 add_library(procmetrix-js SHARED
     "src/cpu.cpp"
+    "src/mem.cpp"
     "src/error.cpp"
     "src/init.cpp")
 
